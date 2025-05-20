@@ -1,0 +1,4 @@
+Device Type,Identification Type,Identification Value,Action Type,Action Time,Action Status
+2,Name,MYTF,Close,1,0
+3,NAME,BRANCH1,connect,2,0
+4,NAME,LOAD1,1,3,0
