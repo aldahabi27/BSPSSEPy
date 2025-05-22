@@ -116,7 +116,7 @@ def main():
     print("Loading BSPSSEPyApp GUI. Please wait...")
 
     # pylint: disable=import-outside-toplevel
-    from fun.bspssepy.app.app import launch_app 
+    from fun.bspssepy.app.app import launch_app
     launch_app()
 
 

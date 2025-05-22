@@ -68,7 +68,7 @@ class BSPSSEPyApp(App[None]):  # Inheriting from the Textual App class
     """
 
     # Defining CSS styling for the application
-    CSS_PATH = "./fun/bspssepy/app/bspssepy_app_css.tcss"
+    CSS_PATH = "./bspssepy_app_css.tcss"
 
     def __init__(self) -> None:
         """ Initialize the application. """
@@ -350,9 +350,9 @@ class BSPSSEPyApp(App[None]):  # Inheriting from the Textual App class
             self.gen_tables_row,
             self.load_bus_tables_row,
             self.brn_trn_tables_row,
-            id="main_grid"
+            id="main_grid",
         )
-
+        
         return self.main_grid
 
     def _build_details_text_area(self) -> TextArea:
