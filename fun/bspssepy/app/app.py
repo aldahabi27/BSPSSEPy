@@ -309,13 +309,13 @@ class BSPSSEPyApp(App[None]):  # Inheriting from the Textual App class
 
         self.brn_table_container_grid = Grid(
             VerticalScroll(self.brn_table),
-            id="branch_table_container"
+            id="brn_table_container"
         )
         self.brn_table_container_grid.border_title = "Branch Table"
 
         self.trn_table_container_grid = Grid(
             VerticalScroll(self.trn_table),
-            id="transformer_table_container"
+            id="trn_table_container"
         )
         self.trn_table_container_grid.border_title = "Transformer Table"
 
@@ -329,7 +329,7 @@ class BSPSSEPyApp(App[None]):  # Inheriting from the Textual App class
         self.gen_tables_row = Horizontal(
             self.agc_table_container_grid,
             self.gen_table_container_grid,
-            id="agc_generator_tables_row"
+            id="gen_tables_row"
         )
 
         self.load_bus_tables_row = Horizontal(
@@ -341,7 +341,7 @@ class BSPSSEPyApp(App[None]):  # Inheriting from the Textual App class
         self.brn_trn_tables_row = Horizontal(
             self.brn_table_container_grid,
             self.trn_table_container_grid,
-            id="branch_transformer_tables_row"
+            id="brn_trn_tables_row"
         )
 
         # === Main Grid (VerticalScroll) ===
