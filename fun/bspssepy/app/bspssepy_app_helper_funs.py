@@ -257,9 +257,8 @@ async def GetBSPSSEPyAppDFs(
     }
 
     return DataFrames
-    
 
-async def UpdateBSPSSEPyAppGUI(app: App, ResetTables: bool | None = False):
+async def update_bspssepy_app_gui(app: App, ResetTables: bool | None = False):
     
     if ResetTables:
         app.ProgressTable.clear(columns=True)
@@ -1078,7 +1077,7 @@ def ProgressBarUpdate(ProgressBar, CurrentTime, TotalTime, App=None, label=None)
         App.call_later(label.update, TimeDisplay)  # ✅ Properly schedules label update
 
 
-def AddSavFilesToTree(ParentNode, FolderPath):
+def add_sav_files_to_tree(ParentNode, FolderPath):
     """
     Recursively scans the given folder and adds .sav files as leaves 
     and subfolders as expandable nodes in the tree.
@@ -1093,7 +1092,7 @@ def AddSavFilesToTree(ParentNode, FolderPath):
             if Entry.is_dir():
                 # If it's a folder, add it as a node and recurse into it
                 FolderNode = ParentNode.add(Entry.name, expand=False)
-                AddSavFilesToTree(FolderNode, Entry.path)
+                add_sav_files_to_tree(FolderNode, Entry.path)
             elif Entry.is_file() and Entry.name.endswith(".sav"):
                 # If it's a .sav file, add it as a leaf
                 ParentNode.add_leaf(Entry.name)

@@ -1,20 +1,23 @@
-# Enables future Python features (not strictly needed here but good practice)
-from __future__ import annotations  
+"""Main executable of BSPSSEPy Application"""
 
+# Enables future Python features (not strictly needed here but good practice)
+from __future__ import annotations
+
+# Essential Imports to install missing libraries
+import subprocess
+import sys
+import pkg_resources
+from fun.bspssepy.meta import VER_NUM, BUILD_NUM, current_timestamp
 # ==========================
 #  BSPSSEPy Program Code
 # ==========================
-from datetime import datetime
-
-current_date = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-VersionNumber = "0.4"
-BuildNumber = 6
+current_date = current_timestamp()
 
 print("===========================================================")
 print("             Welcome to the BSPSSEPy Program!             ")
 print("===========================================================")
-print(f"Version: {VersionNumber}")
-print(f"Last Updated: 2 Feb 2025")
+print(f"Version: {VER_NUM}")
+print("Last Updated: 20 May 2025")
 print(f"Current Date and Time: {current_date}")
 print("-----------------------------------------------------------")
 print("Developed by: Ilyas Farhat")
@@ -26,13 +29,8 @@ print("-----------------------------------------------------------")
 # ==========================
 #  Library Verification
 # ==========================
-
-# Essential Imports to install missing libraries
-import subprocess
-import sys
-import pkg_resources
-
-# List of required libraries - to install any missing libraries for all methods and all submethods
+# List of required libraries - to install any missing libraries for all 
+# methods and all sub-methods
 RequiredLibraries = [
     "psse3601",
     "psspy",
@@ -61,40 +59,53 @@ RequiredLibraries = [
     # "BSPSSEPyApp",
 ]
 
-
 print("Verifying that needed libraries are installed.")
 
 # Attempt to import each library and install if missing
 for lib in RequiredLibraries:
     lib_name, _, lib_version = lib.partition("==")
     try:
-        globals()[lib_name] = __import__(lib_name)  # Try to import the library
+        # Try to import the library
+        globals()[lib_name] = __import__(lib_name)
         if lib_version:
-            installed_version = pkg_resources.get_distribution(lib_name).version
+            installed_version = (
+                pkg_resources.get_distribution(lib_name).version
+            )
             if installed_version != lib_version:
-                raise ImportError(f"{lib_name} version {lib_version} is required, but version {installed_version} is installed.")
-        print(f"{lib_name} {installed_version} ✔") if lib_version else print(f"{lib_name} ✔")
-            
-    except ImportError:
+                raise ImportError(
+                    f"{lib_name} version {lib_version} is required, "
+                    f"but version {installed_version} is installed."
+                ) from None  # or from e if catching an error
+
+        print(f"{lib_name}{f' {installed_version}' if lib_version else ''} ✔")
+
+    except ImportError as ie:
         print(f"{lib} is missing or has the wrong version. Installing it...")
         try:
-            subprocess.check_call([sys.executable, "-m", "pip", "install", lib])  # Install the missing or correct version of the library
-            globals()[lib_name] = __import__(lib_name)  # Try importing again after installation
-            installed_version = pkg_resources.get_distribution(lib_name).version
+            # Install the missing or correct version of the library
+            subprocess.check_call(
+                [sys.executable, "-m", "pip", "install", lib]
+                )
+            # Try importing again after installation
+            globals()[lib_name] = __import__(lib_name)
+            installed_version = (
+                pkg_resources.get_distribution(lib_name).version
+            )
             if lib_version and installed_version != lib_version:
-                raise ImportError(f"{lib_name} version {lib_version} is required, but version {installed_version} is installed.")
+                raise ImportError(
+                    f"{lib_name} version {lib_version} is required, "
+                    f"but version {installed_version} is installed."
+                ) from ie
             print(f"{lib} installed successfully ✔")
         except Exception as e:
             print(f"Failed to install {lib}. Error: {e}")
             print("Don't run Cell 1. Missing library cannot be installed.")
-            raise SystemExit(f"Aborting execution due to missing library: {lib}")  # Stop execution
-        
+            # Stop execution
+            raise SystemExit(
+                f"Aborting execution due to missing library: {lib}"
+            ) from e
 
 print("Loading BSPSSEPyApp GUI. Please Wait...")
-
-
-
-
 
 # Importing standard Python modules
 from functools import partial  # Allows partial function application (not used yet)
@@ -160,7 +171,7 @@ class BSPSSEPyApp(App[None]):  # Inheriting from the Textual App class
 
         # Setting the title and subtitle of the application
         self.title = "BSPSSEPy Application"
-        self.sub_title = f"Version {VersionNumber} - Build {BuildNumber}"
+        self.sub_title = f"Version {VER_NUM} - Build {BUILD_NUM}"
 
         # Creating a header with the current time format
         yield Header(show_clock=True, icon="⚡️📊", time_format=datetime.now().strftime("%I:%M %p %b %d, %Y"))
