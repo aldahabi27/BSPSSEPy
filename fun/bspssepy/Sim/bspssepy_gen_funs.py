@@ -394,7 +394,7 @@ async def ExtendBSPSSEPyGenDataFrame(
         POPF = config.get("POPF", POPF)
         QOPF = config.get("QOPF", QOPF)
         UseGenRampRate = config.get("UseGenRampRate", False)
-        LoadEnabledResponse = config.get("load Enabled Response", False)
+        LoadEnabledResponse = config.get("Load Enabled Response", False)
         LERPF = config.get("LERPF", -1)
 
 

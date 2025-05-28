@@ -115,7 +115,7 @@ GeneratorsConfig = [
         "POPF": 45.8217,  # POPF - Governor Reference (Controls P Gen) - Regular Units - MW
         "QOPF": -42.6377,  # QOPF - Voltage Reference (Controls Q Gen) - Regular Units - MVAR
         "UseGenRampRate": False,  # If True, the generator will use the ramp rate specified in the config file. If False, the generator will use the ramp rate specified in the dynamic model (if any).
-        "load Enabled Response": False,  # If true, the generator will supply power based on the anticipated load-enabled when the action is executed. The generator will use LER Participation Factor to supply the portion associated to it.
+        "Load Enabled Response": False,  # If true, the generator will supply power based on the anticipated load-enabled when the action is executed. The generator will use LER Participation Factor to supply the portion associated to it.
         "LERPF": -1,   # if -1 --> use AGC Participation Factor, otherwise, 0 <= LERPF <= 1 (note, the sum of all LERPF for all generators should be = 1)
     },
     {
@@ -135,7 +135,7 @@ GeneratorsConfig = [
         "POPF": 0,  # 100,  # POPF - Governor Reference (Controls P Gen) - Regular Units - MW
         "QOPF": -39.7548,  # QOPF - Voltage Reference (Controls Q Gen) - Regular Units - MVAR
         "UseGenRampRate": False,  # If True, the generator will use the ramp rate specified in the config file. If False, the generator will use the ramp rate specified in the dynamic model (if any).
-        "load Enabled Response": False,  # If true, the generator will supply power based on the anticipated load-enabled when the action is executed. The generator will use LER Participation Factor to supply the portion associated to it.
+        "Load Enabled Response": False,  # If true, the generator will supply power based on the anticipated load-enabled when the action is executed. The generator will use LER Participation Factor to supply the portion associated to it.
         "LERPF": -1,   # if -1 --> use AGC Participation Factor, otherwise, 0 <= LERPF <= 1 (note, the sum of all LERPF for all generators should be = 1)
     },
     {
@@ -155,7 +155,7 @@ GeneratorsConfig = [
         "POPF": 0,  # 100,  # POPF - Governor Reference (Controls P Gen) - Regular Units - MW
         "QOPF": -45.8050,  # QOPF - Voltage Reference (Controls Q Gen) - Regular Units - MVAR
         "UseGenRampRate": False,  # If True, the generator will use the ramp rate specified in the config file. If False, the generator will use the ramp rate specified in the dynamic model (if any).
-        "load Enabled Response": False,  # If true, the generator will supply power based on the anticipated load-enabled when the action is executed. The generator will use LER Participation Factor to supply the portion associated to it.
+        "Load Enabled Response": False,  # If true, the generator will supply power based on the anticipated load-enabled when the action is executed. The generator will use LER Participation Factor to supply the portion associated to it.
         "LERPF": -1,   # if -1 --> use AGC Participation Factor, otherwise, 0 <= LERPF <= 1 (note, the sum of all LERPF for all generators should be = 1)
     }
     # Add more generators as needed
