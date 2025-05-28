@@ -58,7 +58,7 @@ from textual.widgets import (  # Importing various UI widgets
 # from textual.widgets.text_area import Selection
 
 # Importing custom helper functions
-from fun.bspssepy.app.bspssepy_app_helper_funs import add_sav_files_to_tree
+from fun.bspssepy.app.app_helper_funs import add_sav_files_to_tree
 
 
 class BSPSSEPyApp(App[None]):  # Inheriting from the Textual App class
@@ -74,7 +74,7 @@ class BSPSSEPyApp(App[None]):  # Inheriting from the Textual App class
         """ Initialize the application. """
         super().__init__()
         self.app_name = "BSPSSEPy"
-        # self.BSPSSEPyApplication = "Main"
+        # self.bspssepy_application = "Main"
         self.bspssepy_application = "Main"
         self.async_print_delay = 0.02
         self.dummy_run = False
@@ -299,7 +299,7 @@ class BSPSSEPyApp(App[None]):  # Inheriting from the Textual App class
             VerticalScroll(self.load_table),
             id="load_table_container"
         )
-        self.load_table_container_grid.border_title = "Load Table"
+        self.load_table_container_grid.border_title = "load Table"
 
         self.bus_table_container_grid = Grid(
             VerticalScroll(self.bus_table),
@@ -412,9 +412,9 @@ class BSPSSEPyApp(App[None]):  # Inheriting from the Textual App class
 
         elif event.button.id == "run_button":
             # pylint: disable=import-outside-toplevel
-            from fun.bspssepy.app.bspssepy_app_run import RunSimulation
+            from fun.bspssepy.app.bspssepy_app_run import run_simulation
             # Schedule the async function properly
-            self.bspssepy_worker = self.run_worker(RunSimulation(self))
+            self.bspssepy_worker = self.run_worker(run_simulation(self))
 
     def on_tree_node_selected(
         self: BSPSSEPyApp,
@@ -450,7 +450,7 @@ class BSPSSEPyApp(App[None]):  # Inheriting from the Textual App class
 
                 # Update GUI Tables
                 # pylint: disable=import-outside-toplevel
-                from fun.bspssepy.app.bspssepy_app_helper_funs import (
+                from fun.bspssepy.app.app_helper_funs import (
                     update_bspssepy_app_gui
                 )
                 self.bspssepy_worker = self.run_worker(

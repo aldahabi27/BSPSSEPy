@@ -1,4 +1,4 @@
-# Config.py
+# config.py
 #
 #
 # Use this template to set the configuration for your PSSE case. The specs below are arbitrary.
@@ -88,11 +88,11 @@ BSPSSEPyProgressPrintTime = 1 #minutes
 # - Generator Name: The unique name of the generator
 # - Bus Name: Name of the associated bus
 # - Status: Initial status of the generator ("OFF", "Cranking", etc.)
-# - Load Name: Name of the corresponding cranking load (if any)
+# - load Name: Name of the corresponding cranking load (if any)
 # - Cranking Time: Duration of the cranking phase
 # - Ramp Rate: Ramp-up rate
 # - Generator Type: "NBS" (Non-Black-Start) or "BS" (Black-Start)
-# - Cranking Load Array: Power array [PL, QL, IP, IQ, YP, YQ, Power Factor] - Reminder: All powers are in MW, MVAR
+# - Cranking load Array: Power array [PL, QL, IP, IQ, YP, YQ, Power Factor] - Reminder: All powers are in MW, MVAR
 #
 # For BS generators, only Generator Name, Bus Name, Status, and Generator Type are required. The rest are ignored.
 # For NBS generators, all fields are required to model all phases correctly!
@@ -102,13 +102,13 @@ GeneratorsConfig = [
         "Generator Name": "GEN1",
         "Bus Name": "Bus1",
         "Status": 3,    # If the generator is BS, then this will be overwritten and set to 3 (# 0: OFF, 1: Cranking, 2: Ramp-up, 3: Ready/active)
-        "Load Name": "CLGEN1",
+        "load Name": "CLGEN1",
         "Cranking Time": 10.0,
         "Ramp Rate": 5.0,
         "Generator Type": "BS",         # BS or NBS
-        "Cranking Load Array": [1, 1, 0, 0, 0, 0],
+        "Cranking load Array": [1, 1, 0, 0, 0, 0],
         "AGC Participation Factor": 1,
-        "Load Damping Constant": 0,  # D
+        "load Damping Constant": 0,  # D
         "Effective Speed Droop": 0.05,  # R
         "Bias Scaling": 1,  # Bias Scaling (Effective Bias = Bias * Bias Scaling)
         "Gref": 0.0,  # Gref - Governer Reference (Controls P Gen) - Regular Units - MW

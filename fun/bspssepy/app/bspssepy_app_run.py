@@ -1,10 +1,19 @@
-from Functions.BSPSSEPy.App.BSPSSEPyAppHelperFunctions import *
-import asyncio
-import random  # ✅ Used to generate random values for table updates
+"""Run button execution sequence for BSPSSEPyApp."""
+from __future__ import annotations
+# import asyncio
+# pyright: reportMissingImports=false
+import psspy  # noqa: F401 pylint: disable=import-error 
+from textual.app import App
+from fun.bspssepy.app.app_helper_funs import (
+    ProgressBarUpdate,
+    BSPSSEPyAppResetTables,
+)
+from fun.bspssepy.app.bspssepy_print import (
+    append_to_details_text_area,
+    bspssepy_print as bp
+)
 
-import psspy
-
-async def RunSimulation(app, DummyRun: bool | None = False):
+async def run_simulation(app: App, dummy_run: bool | None = False):
     """
     Runs the simulation while dynamically updating tables and progress bar.
 
@@ -16,28 +25,29 @@ async def RunSimulation(app, DummyRun: bool | None = False):
     - Updates table values dynamically at each time step.
     - Shows the progress of the simulation.
     """
-    DebugPrint = app.DebugCheckBox.value
+    debug_print = app.debug_checkbox.value
 
-
-    if DummyRun:
-        # Ensure no previous PSSE Setup is in memory - critical to empty channels and any other selected case-specific info not to be carried over unintentionally!
+    if dummy_run:
+        # Ensure no previous PSSE Setup is in memory - critical to empty
+        # channels and any other selected case-specific info not to be
+        # carried over unintentionally!
         psspy.pssehalt_2()
 
-        app.DummyRun = True
-        app.CaseTree.disabled = True
-        app.StopButton.disabled = False
+        app.dummy_run = True
+        app.case_tree.disabled = True
+        app.stop_button.disabled = False
 
         # Importing main Class BSPSSEPy
-        from Functions.BSPSSEPy.BSPSSEPy import BSPSSEPy
+        from fun.bspssepy.bspssepy_core import BSPSSEPy
         
         # Call the main constructor and load the configurations for PSSE Simulation
-        app.myBSPSSEPy = BSPSSEPy()
+        app.bspssepy = BSPSSEPy()
             
-        await app.myBSPSSEPy.BSPSSEPyInit(ConfigPath=app.ConfigPath, app=app)
+        await app.bspssepy.BSPSSEPyInit(ConfigPath=app.config_path, app=app)
 
-        app.DummyRun = False
-        app.CaseTree.disabled = False
-        app.StopButton.disabled = True
+        app.dummy_run = False
+        app.case_tree.disabled = False
+        app.stop_button.disabled = True
 
 
     else:
@@ -46,136 +56,136 @@ async def RunSimulation(app, DummyRun: bool | None = False):
             # Ensure no previous PSSE Setup is in memory - critical to empty channels and any other selected case-specific info not to be carried over unintentionally!
             psspy.pssehalt_2()
 
-            del app.myBSPSSEPy
-            app.StopButton.disabled = False
-            app.RunButton.disabled = True
+            del app.bspssepy
+            app.stop_button.disabled = False
+            app.run_button.disabled = True
 
-            AppendToDetailsTextArea(app.DetailsTextArea, f"Run Started")
-            AppendToDetailsTextArea(app.DetailsTextArea, f"Config: {app.ConfigPath}")
+            append_to_details_text_area(app.details_text_area, f"Run Started")
+            append_to_details_text_area(app.details_text_area, f"config: {app.config_path}")
 
             # Importing main Class BSPSSEPy
-            from Functions.BSPSSEPy.BSPSSEPy import BSPSSEPy
+            from fun.bspssepy.bspssepy_core import BSPSSEPy
             
             # Call the main constructor and load the configurations for PSSE Simulation
-            app.myBSPSSEPy = BSPSSEPy()
+            app.bspssepy = BSPSSEPy()
             
-            await app.myBSPSSEPy.BSPSSEPyInit(ConfigPath=app.ConfigPath, app=app)
+            await app.bspssepy.BSPSSEPyInit(ConfigPath=app.config_path, app=app)
             await BSPSSEPyAppResetTables(app)
             
-            if app.DebugCheckBox.value:
-                bsprint("[DEBUG] BSPSSEPy initialized successfully.",app=app)
-                await asyncio.sleep(app.bsprintasynciotime if app else 0)
+            if app.debug_checkbox.value:
+                bp("[DEBUG] BSPSSEPy initialized successfully.",app=app)
+                await asyncio.sleep(app.async_print_delay if app else 0)
 
-            await app.myBSPSSEPy.Sim.SetBlackStart(app=app)
-            await app.myBSPSSEPy.Sim.Run(app=app)
-
-            
+            await app.bspssepy.sim.SetBlackStart(app=app)
+            await app.bspssepy.sim.Run(app=app)
 
             
-            app.myBSPSSEPy.Plot(DebugPrint=app.DebugCheckBox.value,app=app)
+
+            
+            app.bspssepy.Plot(debug_print=app.debug_checkbox.value,app=app)
 
 
-            if app.DebugCheckBox.value:
-                bsprint("Debug Information:",app=app)
-                await asyncio.sleep(app.bsprintasynciotime if app else 0)
-                bsprint(f"  Case Name: {app.myBSPSSEPy.Config.CaseName}",app=app)
-                await asyncio.sleep(app.bsprintasynciotime if app else 0)
-                bsprint(f"  Version: {app.myBSPSSEPy.Config.Ver}",app=app)
-                await asyncio.sleep(app.bsprintasynciotime if app else 0)
-                bsprint(f"  Number of Buses: {app.myBSPSSEPy.Config.NumberOfBuses}",app=app)
-                await asyncio.sleep(app.bsprintasynciotime if app else 0)
-                bsprint(f"  Buses to Monitor (Frequency): {app.myBSPSSEPy.Config.BusesToMonitor_Frequency}",app=app)
-                await asyncio.sleep(app.bsprintasynciotime if app else 0)
-                bsprint(f"  Buses to Monitor (Voltage): {app.myBSPSSEPy.Config.BusesToMonitor_Voltage}",app=app)
-                await asyncio.sleep(app.bsprintasynciotime if app else 0)
-                bsprint(f"  Frequency Flag: {app.myBSPSSEPy.Config.FrequencyFlag}",app=app)
-                await asyncio.sleep(app.bsprintasynciotime if app else 0)
-                bsprint(f"  PSSE Max Iteration (Newton-Raphson): {app.myBSPSSEPy.Config.PSSEMaxIterationNewtonRaphson}",app=app)
-                await asyncio.sleep(app.bsprintasynciotime if app else 0)
-                bsprint(f"  Control Sequence: {app.myBSPSSEPy.Config.BSPSSEPySequence}",app=app)
-                await asyncio.sleep(app.bsprintasynciotime if app else 0)
-                bsprint(f"  Case Initialization Flag: {app.myBSPSSEPy.PSSE.CaseInitializationFlag} (0 indicates no errors)",app=app)
-                await asyncio.sleep(app.bsprintasynciotime if app else 0)
+            if app.debug_checkbox.value:
+                bp("Debug Information:",app=app)
+                await asyncio.sleep(app.async_print_delay if app else 0)
+                bp(f"  Case Name: {app.bspssepy.config.CaseName}",app=app)
+                await asyncio.sleep(app.async_print_delay if app else 0)
+                bp(f"  Version: {app.bspssepy.config.Ver}",app=app)
+                await asyncio.sleep(app.async_print_delay if app else 0)
+                bp(f"  Number of Buses: {app.bspssepy.config.NumberOfBuses}",app=app)
+                await asyncio.sleep(app.async_print_delay if app else 0)
+                bp(f"  Buses to Monitor (Frequency): {app.bspssepy.config.BusesToMonitor_Frequency}",app=app)
+                await asyncio.sleep(app.async_print_delay if app else 0)
+                bp(f"  Buses to Monitor (Voltage): {app.bspssepy.config.BusesToMonitor_Voltage}",app=app)
+                await asyncio.sleep(app.async_print_delay if app else 0)
+                bp(f"  Frequency Flag: {app.bspssepy.config.FrequencyFlag}",app=app)
+                await asyncio.sleep(app.async_print_delay if app else 0)
+                bp(f"  PSSE Max Iteration (Newton-Raphson): {app.bspssepy.config.PSSEMaxIterationNewtonRaphson}",app=app)
+                await asyncio.sleep(app.async_print_delay if app else 0)
+                bp(f"  Control Sequence: {app.bspssepy.config.bspssepy_sequence}",app=app)
+                await asyncio.sleep(app.async_print_delay if app else 0)
+                bp(f"  Case Initialization Flag: {app.bspssepy.PSSE.CaseInitializationFlag} (0 indicates no errors)",app=app)
+                await asyncio.sleep(app.async_print_delay if app else 0)
 
             
             
             # TotalSimulationTime = 1  # Example total simulation time (120 seconds)
             
-            # AppendToDetailsTextArea(app.DetailsTextArea, "Run Button Pressed")
+            # append_to_details_text_area(app.details_text_area, "Run Button Pressed")
 
             # # Disable tree and reset progress bar
-            # app.CaseTree.disabled = True
-            # app.TopBarProgressBar.value = 0
+            # app.case_tree.disabled = True
+            # app.top_bar_progress_bar.value = 0
 
             # # ==========================
             # # Initialize Tables with Dummy Data
             # # ==========================
 
             # # ✅ Progress Table: 25 columns, 5 rows
-            # app.ProgressTable.clear(columns = True)
+            # app.progress_table.clear(columns = True)
             # ColumnNames = [f"Col {i}" for i in range(1, 26)]
-            # app.ProgressTable.add_columns(*ColumnNames)
+            # app.progress_table.add_columns(*ColumnNames)
             # for _ in range(5):
-            #     app.ProgressTable.add_row(*[str(random.randint(0, 100)) for _ in range(25)])
+            #     app.progress_table.add_row(*[str(random.randint(0, 100)) for _ in range(25)])
             
-            # ProgressTableRowDic = app.ProgressTable.rows
-            # ProgressTableColumnDic = app.ProgressTable.columns
-            # # AppendToDetailsTextArea(app.DetailsTextArea, ProgressTableRowDic)
-            # # AppendToDetailsTextArea(app.DetailsTextArea, ProgressTableColumnDic)
+            # ProgressTableRowDic = app.progress_table.rows
+            # ProgressTableColumnDic = app.progress_table.columns
+            # # append_to_details_text_area(app.details_text_area, ProgressTableRowDic)
+            # # append_to_details_text_area(app.details_text_area, ProgressTableColumnDic)
 
             # # ✅ AGC Table: 3 columns, 8 rows
-            # app.AGCTable.clear(columns = True)
-            # app.AGCTable.add_columns("AGC Name", "Setpoint", "Output")
+            # app.agc_table.clear(columns = True)
+            # app.agc_table.add_columns("AGC Name", "Setpoint", "Output")
             # for i in range(8):
-            #     app.AGCTable.add_row(f"AGC {i+1}", str(random.randint(50, 150)), str(random.randint(20, 120)))
+            #     app.agc_table.add_row(f"AGC {i+1}", str(random.randint(50, 150)), str(random.randint(20, 120)))
 
-            # AGCTableRowDic = app.AGCTable.rows
-            # AGCTableColumnDic = app.AGCTable.columns
-            # # AppendToDetailsTextArea(app.DetailsTextArea, AGCTableRowDic)
-            # # AppendToDetailsTextArea(app.DetailsTextArea, AGCTableColumnDic)
+            # AGCTableRowDic = app.agc_table.rows
+            # AGCTableColumnDic = app.agc_table.columns
+            # # append_to_details_text_area(app.details_text_area, AGCTableRowDic)
+            # # append_to_details_text_area(app.details_text_area, AGCTableColumnDic)
 
 
             # # ✅ Generator Table: 4 columns, 6 rows
-            # app.GeneratorTable.clear(columns = True)
-            # app.GeneratorTable.add_columns("Gen ID", "Power (MW)", "Voltage (V)", "Status")
+            # app.gen_table.clear(columns = True)
+            # app.gen_table.add_columns("Gen ID", "Power (MW)", "Voltage (V)", "Status")
             # for i in range(6):
-            #     app.GeneratorTable.add_row(f"Gen {i+1}", str(random.randint(100, 300)), str(random.uniform(0.9, 1.1)), random.choice(["ON", "OFF"]))
-            # GeneratorTableRowDic = app.GeneratorTable.rows
-            # GeneratorTableColumnDic = app.GeneratorTable.columns
+            #     app.gen_table.add_row(f"Gen {i+1}", str(random.randint(100, 300)), str(random.uniform(0.9, 1.1)), random.choice(["ON", "OFF"]))
+            # GeneratorTableRowDic = app.gen_table.rows
+            # GeneratorTableColumnDic = app.gen_table.columns
 
 
-            # # ✅ Load Table: 3 columns, 10 rows
-            # app.LoadTable.clear(columns = True)
-            # app.LoadTable.add_columns("Load ID", "P (MW)", "Q (MVar)")
+            # # ✅ load Table: 3 columns, 10 rows
+            # app.load_table.clear(columns = True)
+            # app.load_table.add_columns("load ID", "P (MW)", "Q (MVar)")
             # for i in range(10):
-            #     app.LoadTable.add_row(f"Load {i+1}", str(random.randint(50, 200)), str(random.randint(10, 100)))
-            # LoadTableRowDic = app.LoadTable.rows
-            # LoadTableColumnDic = app.LoadTable.columns
+            #     app.load_table.add_row(f"load {i+1}", str(random.randint(50, 200)), str(random.randint(10, 100)))
+            # LoadTableRowDic = app.load_table.rows
+            # LoadTableColumnDic = app.load_table.columns
 
 
             # # ✅ Bus Table: 5 columns, 15 rows
-            # app.BusTable.clear(columns = True)
-            # app.BusTable.add_columns("Bus ID", "Voltage (kV)", "Angle (deg)", "Load (MW)", "Status")
+            # app.bus_table.clear(columns = True)
+            # app.bus_table.add_columns("Bus ID", "Voltage (kV)", "Angle (deg)", "load (MW)", "Status")
             # for i in range(15):
-            #     app.BusTable.add_row(f"Bus {i+1}", str(random.uniform(10, 50)), str(random.uniform(-30, 30)), str(random.randint(100, 400)), random.choice(["Active", "Inactive"]))
-            # BusTableRowDic = app.BusTable.rows
-            # BusTableColumnDic = app.BusTable.columns
+            #     app.bus_table.add_row(f"Bus {i+1}", str(random.uniform(10, 50)), str(random.uniform(-30, 30)), str(random.randint(100, 400)), random.choice(["Active", "Inactive"]))
+            # BusTableRowDic = app.bus_table.rows
+            # BusTableColumnDic = app.bus_table.columns
 
             # # ✅ Branch Table: 4 columns, 7 rows
-            # app.BranchTable.clear(columns = True)
-            # app.BranchTable.add_columns("Branch ID", "From Bus", "To Bus", "Status")
+            # app.brn_table.clear(columns = True)
+            # app.brn_table.add_columns("Branch ID", "From Bus", "To Bus", "Status")
             # for i in range(7):
-            #     app.BranchTable.add_row(f"Br {i+1}", f"Bus {random.randint(1, 15)}", f"Bus {random.randint(1, 15)}", random.choice(["Closed", "Open"]))
-            # BranchTableRowDic = app.BranchTable.rows
-            # BranchTableColumnDic = app.BranchTable.columns
+            #     app.brn_table.add_row(f"Br {i+1}", f"Bus {random.randint(1, 15)}", f"Bus {random.randint(1, 15)}", random.choice(["Closed", "Open"]))
+            # BranchTableRowDic = app.brn_table.rows
+            # BranchTableColumnDic = app.brn_table.columns
 
             # # ✅ Transformer Table: 3 columns, 4 rows
-            # app.TransformerTable.clear(columns = True)
-            # app.TransformerTable.add_columns("Transformer ID", "Primary Bus", "Secondary Bus", "Status")
+            # app.trn_table.clear(columns = True)
+            # app.trn_table.add_columns("Transformer ID", "Primary Bus", "Secondary Bus", "Status")
             # for i in range(4):
-            #     app.TransformerTable.add_row(f"TX {i+1}", f"Bus {random.randint(1, 15)}", f"Bus {random.randint(1, 15)}", random.choice(["Closed", "Open"]))
-            # TransformerTableRowDic = app.TransformerTable.rows
-            # TransformerTableColumnDic = app.TransformerTable.columns
+            #     app.trn_table.add_row(f"TX {i+1}", f"Bus {random.randint(1, 15)}", f"Bus {random.randint(1, 15)}", random.choice(["Closed", "Open"]))
+            # TransformerTableRowDic = app.trn_table.rows
+            # TransformerTableColumnDic = app.trn_table.columns
 
             # # Small delay to simulate real-time updates
             # await asyncio.sleep(0.1)
@@ -184,9 +194,9 @@ async def RunSimulation(app, DummyRun: bool | None = False):
             # # Run Simulation (Update Tables Dynamically)
             # # ==========================
             # for CurrentTime in range(0, TotalSimulationTime + 1, 1):  # Simulating time steps
-            #     ProgressBarUpdate(app.TopBarProgressBar, CurrentTime, TotalSimulationTime, App=app, label=app.TopBarProgressBarLabel)
+            #     ProgressBarUpdate(app.top_bar_progress_bar, CurrentTime, TotalSimulationTime, App=app, label=app.top_bar_progress_bar_label)
             #     # await asyncio.sleep(0.1)
-            #     # app.ProgressTable.update_cell_at((2, 2), str(random.randint(0, 100)))
+            #     # app.progress_table.update_cell_at((2, 2), str(random.randint(0, 100)))
 
 
             #     # ✅ Dynamically update random table values at each time step
@@ -197,53 +207,53 @@ async def RunSimulation(app, DummyRun: bool | None = False):
             #     for column_key in ProgressTableColumnDic.keys():
             #         for row_key in ProgressTableRowDic.keys():
             #     #     column_key = ProgressTableColumnKeys(col)  # Column keys are "Col 1", "Col 2", ..., "Col 25"
-            #             app.ProgressTable.update_cell(row_key=row_key, column_key=column_key, value=str(random.randint(0, 100)))
+            #             app.progress_table.update_cell(row_key=row_key, column_key=column_key, value=str(random.randint(0, 100)))
 
             #     # ✅ Update AGC Table (Setpoints change)
             #     for row_key in AGCTableRowDic.keys():
-            #         app.AGCTable.update_cell(row_key=row_key, column_key=list(AGCTableColumnDic.keys())[1], value=str(random.randint(50, 150)))  # Setpoint
-            #         app.AGCTable.update_cell(row_key=row_key, column_key=list(AGCTableColumnDic.keys())[2], value=str(random.randint(20, 120)))  # Output
+            #         app.agc_table.update_cell(row_key=row_key, column_key=list(AGCTableColumnDic.keys())[1], value=str(random.randint(50, 150)))  # Setpoint
+            #         app.agc_table.update_cell(row_key=row_key, column_key=list(AGCTableColumnDic.keys())[2], value=str(random.randint(20, 120)))  # Output
 
             #     # ✅ Update Generator Table (Power changes)
             #     for row_key in GeneratorTableRowDic.keys():
-            #         app.GeneratorTable.update_cell(row_key=row_key, column_key=list(GeneratorTableColumnDic.keys())[1], value=str(random.randint(100, 300)))  # Power
-            #         app.GeneratorTable.update_cell(row_key=row_key, column_key=list(GeneratorTableColumnDic.keys())[2], value=str(round(random.uniform(0.9, 1.1), 2)))  # Voltage
+            #         app.gen_table.update_cell(row_key=row_key, column_key=list(GeneratorTableColumnDic.keys())[1], value=str(random.randint(100, 300)))  # Power
+            #         app.gen_table.update_cell(row_key=row_key, column_key=list(GeneratorTableColumnDic.keys())[2], value=str(round(random.uniform(0.9, 1.1), 2)))  # Voltage
 
-            #     # ✅ Update Load Table (Power varies)
+            #     # ✅ Update load Table (Power varies)
             #     for row_key in LoadTableRowDic.keys():
-            #         app.LoadTable.update_cell(row_key=row_key, column_key=list(LoadTableColumnDic.keys())[1], value=str(random.randint(50, 200)))  # P
-            #         app.LoadTable.update_cell(row_key=row_key, column_key=list(LoadTableColumnDic.keys())[2], value=str(random.randint(10, 100)))  # Q
+            #         app.load_table.update_cell(row_key=row_key, column_key=list(LoadTableColumnDic.keys())[1], value=str(random.randint(50, 200)))  # P
+            #         app.load_table.update_cell(row_key=row_key, column_key=list(LoadTableColumnDic.keys())[2], value=str(random.randint(10, 100)))  # Q
 
             #     # ✅ Update Bus Table (Voltage fluctuates)
             #     for row_key in BusTableRowDic.keys():
-            #         app.BusTable.update_cell(row_key=row_key, column_key=list(BusTableColumnDic.keys())[1], value=str(round(random.uniform(10, 50), 2)))  # Voltage
-            #         app.BusTable.update_cell(row_key=row_key, column_key=list(BusTableColumnDic.keys())[2], value=str(round(random.uniform(-30, 30), 2)))  # Angle
-            #         app.BusTable.update_cell(row_key=row_key, column_key=list(BusTableColumnDic.keys())[3], value=str(random.randint(100, 400)))  # Load
+            #         app.bus_table.update_cell(row_key=row_key, column_key=list(BusTableColumnDic.keys())[1], value=str(round(random.uniform(10, 50), 2)))  # Voltage
+            #         app.bus_table.update_cell(row_key=row_key, column_key=list(BusTableColumnDic.keys())[2], value=str(round(random.uniform(-30, 30), 2)))  # Angle
+            #         app.bus_table.update_cell(row_key=row_key, column_key=list(BusTableColumnDic.keys())[3], value=str(random.randint(100, 400)))  # load
 
 
             #     # ✅ Update Branch Table (Status change)
             #     for row_key in BranchTableRowDic.keys():
-            #         app.BranchTable.update_cell(row_key=row_key, column_key=list(BranchTableColumnDic.keys())[3], value=random.choice(["Closed", "Open"]))  # Status
+            #         app.brn_table.update_cell(row_key=row_key, column_key=list(BranchTableColumnDic.keys())[3], value=random.choice(["Closed", "Open"]))  # Status
                     
 
             #     # ✅ Update Transformer Table (Status change)
             #     for row_key in TransformerTableRowDic.keys():
-            #         app.TransformerTable.update_cell(row_key=row_key, column_key=list(TransformerTableColumnDic.keys())[3], value=str(random.choice(["Closed", "Open"])))  # Voltage
+            #         app.trn_table.update_cell(row_key=row_key, column_key=list(TransformerTableColumnDic.keys())[3], value=str(random.choice(["Closed", "Open"])))  # Voltage
                     
 
                 # Small delay to simulate real-time updates
                 # await asyncio.sleep(0.0001)
 
-                # AppendToDetailsTextArea(app.DetailsTextArea, app.ProgressTable._label_row_key)
-                # AppendToDetailsTextArea(app.DetailsTextArea, app.ProgressTable._label_column_key.__str__)
+                # append_to_details_text_area(app.details_text_area, app.progress_table._label_row_key)
+                # append_to_details_text_area(app.details_text_area, app.progress_table._label_column_key.__str__)
 
             # ==========================
             # Simulation Completed
             # ==========================
-            app.CaseTree.disabled = False
-            AppendToDetailsTextArea(app.DetailsTextArea, "Run Completed")
-            app.StopButton.disabled = True
-            app.RunButton.disabled = False
+            app.case_tree.disabled = False
+            append_to_details_text_area(app.details_text_area, "Run Completed")
+            app.stop_button.disabled = True
+            app.run_button.disabled = False
                     
 
         except Exception as error:
@@ -252,8 +262,8 @@ async def RunSimulation(app, DummyRun: bool | None = False):
             import asyncio
 
         
-            app.CaseTree.disabled = False
-            app.StopButton.disabled = True
+            app.case_tree.disabled = False
+            app.stop_button.disabled = True
 
             # Capture the full exception traceback
             full_traceback = traceback.format_exc()
@@ -261,14 +271,14 @@ async def RunSimulation(app, DummyRun: bool | None = False):
             # Print to console for debugging (optional)
             print(full_traceback)
 
-            # Send the full error log to the GUI DetailsTextArea
-            bsprint(f"❌ Fatal Error Occurred:\n{full_traceback}", app=app)
+            # Send the full error log to the GUI details_text_area
+            bp(f"❌ Fatal Error Occurred:\n{full_traceback}", app=app)
 
             # Ensure UI has time to update
-            await asyncio.sleep(app.bsprintasynciotime if app else 0)
+            await asyncio.sleep(app.async_print_delay if app else 0)
 
-            # app.CaseTree.disabled = False
-            # app.StopButton.disabled = True
+            # app.case_tree.disabled = False
+            # app.stop_button.disabled = True
             # import io
             # from contextlib import redirect_stdout
 
@@ -282,10 +292,10 @@ async def RunSimulation(app, DummyRun: bool | None = False):
             # # Get the captured output
             # captured_output = output_capture.getvalue()
             
-            # bsprint(captured_output, app=app)
+            # bp(captured_output, app=app)
             # print(app)
             # print('here')
-            # bsprint("HELLO")
-            # await asyncio.sleep(app.bsprintasynciotime if app else 0)
+            # bp("HELLO")
+            # await asyncio.sleep(app.async_print_delay if app else 0)
             
         

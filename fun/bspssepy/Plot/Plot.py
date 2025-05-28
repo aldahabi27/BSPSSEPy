@@ -3,12 +3,12 @@ import psspy
 import dyntools
 import matplotlib.pyplot as plt
 import plotext as pltt
-from Functions.BSPSSEPy.Config.Config import Config
+from fun.bspssepy.config.config import config
 
 
-def BSPSSEPyPlotFreq(Config:Config, PSSE, DebugPrint=False, BaseFrequency = 1):
+def BSPSSEPyPlotFreq(config:config, PSSE, debug_print=False, BaseFrequency = 1):
     # Use dyntools to read the output file
-    chnf = dyntools.CHNF(str(Config.SimOutputFile))
+    chnf = dyntools.CHNF(str(config.SimOutputFile))
 
     # Extract data
     short_title, chanid, chandata = chnf.get_data()
@@ -62,20 +62,20 @@ def BSPSSEPyPlotFreq(Config:Config, PSSE, DebugPrint=False, BaseFrequency = 1):
 
 
 
-# def BSPSSEPyPlotGen(Config, PSSE, DebugPrint=False):
+# def BSPSSEPyPlotGen(config, PSSE, debug_print=False):
 #     import matplotlib.pyplot as plt
 #     from collections import OrderedDict
 #     import dyntools
 #     import numpy as np
 
 #     # Use dyntools to read the output file
-#     chnf = dyntools.CHNF(str(Config.SimOutputFile))
+#     chnf = dyntools.CHNF(str(config.SimOutputFile))
 
 #     # Extract data
 #     short_title, chanid, chandata = chnf.get_data()
 
 #     # Debugging: Print file details and channels
-#     if DebugPrint:
+#     if debug_print:
 #         print("Short Title:", short_title)
 #         print("Channel IDs:", chanid)
 #         print("Channel Data Keys:", chandata.keys())
@@ -114,7 +114,7 @@ def BSPSSEPyPlotFreq(Config:Config, PSSE, DebugPrint=False, BaseFrequency = 1):
 #             quantities["Frequency"].append(channel)
 
 #     # Debugging: Print identified channels
-#     if DebugPrint:
+#     if debug_print:
 #         for key, channels in quantities.items():
 #             print(f"{key} Channels: {channels}")
 
@@ -144,7 +144,7 @@ def BSPSSEPyPlotFreq(Config:Config, PSSE, DebugPrint=False, BaseFrequency = 1):
 #     plt.show()
 
 
-def BSPSSEPyPlotGen(Config, PSSE, DebugPrint=False, BaseFrequency = 1):
+def BSPSSEPyPlotGen(config, PSSE, debug_print=False, BaseFrequency = 1):
     import matplotlib.pyplot as plt
     from matplotlib.gridspec import GridSpec
     from collections import OrderedDict
@@ -155,16 +155,16 @@ def BSPSSEPyPlotGen(Config, PSSE, DebugPrint=False, BaseFrequency = 1):
     psspy.delete_all_plot_channels()  # Clean up channels (optional)    
 
     # Use dyntools to read the output file
-    chnf = dyntools.CHNF(str(Config.SimOutputFile))
+    chnf = dyntools.CHNF(str(config.SimOutputFile))
 
-    chnf.csvout(outfile=str(Config.SimOutputFile), csvfile=str(Config.SimOutputFile).replace(".out", ".csv"))
+    chnf.csvout(outfile=str(config.SimOutputFile), csvfile=str(config.SimOutputFile).replace(".out", ".csv"))
 
     
     # Extract data
     short_title, chanid, chandata = chnf.get_data()
 
     # Debugging: Print file details and channels
-    if DebugPrint:
+    if debug_print:
         print("Short Title:", short_title)
         print("Channel IDs:", chanid)
         print("Channel Data Keys:", chandata.keys())
@@ -206,7 +206,7 @@ def BSPSSEPyPlotGen(Config, PSSE, DebugPrint=False, BaseFrequency = 1):
             quantities["Voltage Magnitude"].append(channel)
 
     # Debugging: Print identified channels
-    if DebugPrint:
+    if debug_print:
         for key, channels in quantities.items():
             print(f"{key} Channels: {channels}")
 
@@ -297,7 +297,7 @@ def bspssepy_export_to_csv(
     # Define the CSV output file path (same directory, different extension)
     csv_file = output_path.with_suffix(".csv")
 
-    # Load the .out file using dyntools
+    # load the .out file using dyntools
     chnf = dyntools.CHNF(str(output_path))
     short_title, chan_id, chan_data = chnf.get_data()
 

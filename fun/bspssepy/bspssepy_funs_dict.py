@@ -1,8 +1,8 @@
-from .Sim.BSPSSEPyGenFunctions import GenEnable, GenDisable, GenUpdate
-from .Sim.BSPSSEPyBrnFunctions import BrnClose, BrnTrip
-from .Sim.BSPSSEPyLoadFunctions import LoadEnable, LoadDisable
-from .Sim.BSPSSEPyTrnFunctions import TrnClose, TrnTrip
-from .Sim.BSPSSEPyBusFunctions import BusClose, BusTrip
+from .sim.bspssepy_gen_funs import GenEnable, GenDisable, GenUpdate
+from .sim.bspssepy_brn_funs import BrnClose, BrnTrip
+from .sim.bspssepy_load_funs import LoadEnable, LoadDisable
+from .sim.bspssepy_trn_funs import TrnClose, TrnTrip
+from .sim.bspssepy_bus_funs import BusClose, BusTrip
 
 # This maps the actions on elements to their corresponding functions
 ElementTypeFunctionMapping = {

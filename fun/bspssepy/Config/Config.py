@@ -9,13 +9,13 @@
 #   Contact: ilyas.farhat@outlook.com
 # ===========================================================
 """
-    The Config class manages the loading of configuration files and setting up
+    The config class manages the loading of configuration files and setting up
     various simulation parameters for the BSPSSEPy framework.
 
     Attributes:
         CaseName (str): The name of the power system case.
         Ver (int): The version number of the case.
-        DebugPrint (bool): Enables debug messages when True.
+        debug_print (bool): Enables debug messages when True.
         NumberOfBuses (int): The number of buses in the system.
         VoltageFlag (int): Determines voltage monitoring behavior.
         FrequencyFlag (int): Determines frequency monitoring behavior.
@@ -36,28 +36,28 @@ import datetime
 import pandas as pd
 from .LoadConfig import LoadConfig
 from .CSVControlPlanConfig import BSPSSEPyControlSequenceTable
-from Functions.BSPSSEPy.App.BSPSSEPyAppHelperFunctions import bsprint
+from fun.bspssepy.app.app_helper_funs import bp
 
-class Config:
-    def __init__(self, ConfigPath=None, CaseName=None, Ver=None, DebugPrint=None, app=None):
+class config:
+    def __init__(self, ConfigPath=None, CaseName=None, Ver=None, debug_print=None, app=None):
         pass
-    async def ConfigInit(self, ConfigPath=None, CaseName=None, Ver=None, DebugPrint=None, app=None):
+    async def ConfigInit(self, ConfigPath=None, CaseName=None, Ver=None, debug_print=None, app=None):
         """
-        Initializes the Config class with default values or loads from a configuration file.
+        Initializes the config class with default values or loads from a configuration file.
         
         Parameters:
             ConfigPath (str): The path to the configuration file. If None, default values are used.
             CaseName (str): The name of the power system case.
             Ver (int): The version of the case.
-            DebugPrint (bool): Enables debug messages when True.
+            debug_print (bool): Enables debug messages when True.
         """
 
-        if (DebugPrint is None) and app:
-            DebugPrint = app.DebugCheckBox.value
+        if (debug_print is None) and app:
+            debug_print = app.debug_checkbox.value
 
-        if DebugPrint:
-            bsprint("[DEBUG] Entering Config Constructor...", app=app)
-            await asyncio.sleep(app.bsprintasynciotime if app else 0)
+        if debug_print:
+            bp("[DEBUG] Entering config Constructor...", app=app)
+            await asyncio.sleep(app.async_print_delay if app else 0)
 
         # Default value for CaseName
         # The name of the case, which should match the case folder name. 
@@ -134,8 +134,8 @@ class Config:
         # The SNP file is used for storing system snapshot data during simulations.
         self.IgnoreSNPFile = False  # Default is False, meaning the SNP file will be reused if it exists.
 
-        # assign DebugPrint to self.DebugPrint
-        self.DebugPrint = DebugPrint
+        # assign debug_print to self.debug_print
+        self.debug_print = debug_print
 
         # BSPSSEPy Hard Time Limit in minutes (ignored if BSPSSEPyHardTimeLimitFlag is False)
         self.BSPSSEPyHardTimeLimit = 1 #minutes
@@ -194,11 +194,11 @@ class Config:
         #   - Generator Name: The unique name of the generator
         #   - Bus Name: Name of the associated bus
         #   - Status: Initial status of the generator ("OFF", "Cranking", etc.)
-        #   - Load Name: Name of the corresponding cranking load (if any)
+        #   - load Name: Name of the corresponding cranking load (if any)
         #   - Cranking Time: Duration of the cranking phase
         #   - Ramp Rate: Ramp-up rate
         #   - Generator Type: "NBS" (Non-Black-Start) or "BS" (Black-Start)
-        #   - Cranking Load Array: Power array [PL, QL, IP, IQ, YP, YQ, Power Factor]
+        #   - Cranking load Array: Power array [PL, QL, IP, IQ, YP, YQ, Power Factor]
         #
         #   For BS Generators, the status should be "ON", and the rest of the parameters are all ignored.
         self.GeneratorsConfig = []  # Default is an empty list.
@@ -229,10 +229,10 @@ class Config:
         self.delay_agc_after_action = 0 # seconds -- delay AGC after action execution
                                         # if ~= 0, AGC internal states will be reset everytime a new action is executed
 
-        if DebugPrint:
-            bsprint("[DEBUG] Default attributes initialized.", app=app)
-            await asyncio.sleep(app.bsprintasynciotime if app else 0)
-        # await asyncio.sleep(app.bsprintasynciotime if app else 0)
+        if debug_print:
+            bp("[DEBUG] Default attributes initialized.", app=app)
+            await asyncio.sleep(app.async_print_delay if app else 0)
+        # await asyncio.sleep(app.async_print_delay if app else 0)
 
         # Define main project directory
         self.MainFolder = Path(os.getcwd())  # Current working directory
@@ -243,47 +243,47 @@ class Config:
                 ConfigPath = self.MainFolder / "Case" / CaseName / f"{CaseName}_Ver{Ver}_Config.py"
             else:
                 ConfigPath = self.MainFolder / "Case" / CaseName / f"{CaseName}_Config.py"
-            if DebugPrint:
-                bsprint(f"[DEBUG] ConfigPath derived from CaseName and Version: {ConfigPath}", app=app)
-                await asyncio.sleep(app.bsprintasynciotime if app else 0)
+            if debug_print:
+                bp(f"[DEBUG] ConfigPath derived from CaseName and Version: {ConfigPath}", app=app)
+                await asyncio.sleep(app.async_print_delay if app else 0)
 
         elif ConfigPath:
             # ConfigPath = Path(ConfigPath)
-            if DebugPrint:
-                bsprint(f"[DEBUG] ConfigPath provided directly: {ConfigPath}", app=app)
-                await asyncio.sleep(app.bsprintasynciotime if app else 0)
+            if debug_print:
+                bp(f"[DEBUG] ConfigPath provided directly: {ConfigPath}", app=app)
+                await asyncio.sleep(app.async_print_delay if app else 0)
 
-        # await asyncio.sleep(app.bsprintasynciotime if app else 0)
+        # await asyncio.sleep(app.async_print_delay if app else 0)
 
         if isinstance(ConfigPath, str):
             ConfigPath = Path(ConfigPath)
         
 
-        bsprint(f'Attempting to load configuration file "{ConfigPath.name}"', app=app)
-        await asyncio.sleep(app.bsprintasynciotime if app else 0)
+        bp(f'Attempting to load configuration file "{ConfigPath.name}"', app=app)
+        await asyncio.sleep(app.async_print_delay if app else 0)
 
         if ConfigPath and ConfigPath.exists():
-            if DebugPrint:
-                bsprint("[DEBUG] Loading configuration from file...", app=app)
-                await asyncio.sleep(app.bsprintasynciotime if app else 0)
-            await LoadConfig(self=self, ConfigPath=ConfigPath, DebugPrint=DebugPrint,app=app)
-            if DebugPrint:
-                bsprint("[DEBUG] Configuration file loaded successfully.", app=app)
-                await asyncio.sleep(app.bsprintasynciotime if app else 0)
+            if debug_print:
+                bp("[DEBUG] Loading configuration from file...", app=app)
+                await asyncio.sleep(app.async_print_delay if app else 0)
+            await LoadConfig(self=self, ConfigPath=ConfigPath, debug_print=debug_print,app=app)
+            if debug_print:
+                bp("[DEBUG] Configuration file loaded successfully.", app=app)
+                await asyncio.sleep(app.async_print_delay if app else 0)
         else:
-            if DebugPrint:
-                bsprint("[DEBUG] ConfigPath not provided or file does not exist. Using default values.", app=app)
-                await asyncio.sleep(app.bsprintasynciotime if app else 0)
+            if debug_print:
+                bp("[DEBUG] ConfigPath not provided or file does not exist. Using default values.", app=app)
+                await asyncio.sleep(app.async_print_delay if app else 0)
 
-        # at this stage, if DebugPrint is None, this indicates that neither ConfigFile or DebugPrint in the main code is set.
-        if DebugPrint is not None:
-            # Default value for DebugPrint
-            self.DebugPrint = DebugPrint  # Default is False, set to True for debugging purposes.
-            # DebugPrint = False
-        elif self.DebugPrint is None:
-            self.DebugPrint = False
+        # at this stage, if debug_print is None, this indicates that neither ConfigFile or debug_print in the main code is set.
+        if debug_print is not None:
+            # Default value for debug_print
+            self.debug_print = debug_print  # Default is False, set to True for debugging purposes.
+            # debug_print = False
+        elif self.debug_print is None:
+            self.debug_print = False
             
-        DebugPrint = self.DebugPrint
+        debug_print = self.debug_print
 
         # Prepare directories for the case
         self.CaseFolder = self.MainFolder / f"Case/{self.CaseName}"
@@ -294,27 +294,27 @@ class Config:
         await self._CreateDirectory(self.CaseFolder, "Case directory", app=app)
         await self._CreateDirectory(self.LogsFolder, "Logs directory", app=app)
         await self._CreateDirectory(self.SimFolder, "Simulations directory", app=app)
-        # await asyncio.sleep(app.bsprintasynciotime if app else 0)
+        # await asyncio.sleep(app.async_print_delay if app else 0)
 
 
-        if DebugPrint:
-            bsprint("[DEBUG] Required directories ensured.", app=app)
-            await asyncio.sleep(app.bsprintasynciotime if app else 0)
+        if debug_print:
+            bp("[DEBUG] Required directories ensured.", app=app)
+            await asyncio.sleep(app.async_print_delay if app else 0)
 
         # Record the current system time
         self.SysTime = datetime.datetime.now()
         self.SysFormattedTime = self.SysTime.strftime("%H%M%S_%d%m%y")  # Format: hhmmss_DDMMYY
 
-        if DebugPrint:
-            bsprint(f"[DEBUG] System time recorded: {self.SysTime}", app=app)
-            await asyncio.sleep(app.bsprintasynciotime if app else 0)
+        if debug_print:
+            bp(f"[DEBUG] System time recorded: {self.SysTime}", app=app)
+            await asyncio.sleep(app.async_print_delay if app else 0)
             
 
         # Define simulation-related file paths based on the case version.
 
         BaseCaseName = f"{self.CaseName}_Ver{self.Ver}" if self.Ver >= 1 else self.CaseName
 
-        self.SAVFile = self.CaseFolder / f"{BaseCaseName}.sav"
+        self.sav_file = self.CaseFolder / f"{BaseCaseName}.sav"
         self.DYRFile = self.CaseFolder / f"{BaseCaseName}.dyr"
         self.CNVFile = self.CaseFolder / f"{BaseCaseName}.cnv"
         self.SNPFile = self.CaseFolder / f"{BaseCaseName}.snp"
@@ -325,21 +325,21 @@ class Config:
         self.AllDevicesList = self.CaseFolder / f"{BaseCaseName}_AllDevices.csv"
 
 
-        if DebugPrint:
-            bsprint("[DEBUG] Simulation-related file paths defined.", app=app)
-            await asyncio.sleep(app.bsprintasynciotime if app else 0)
-            # await asyncio.sleep(app.bsprintasynciotime if app else 0)
+        if debug_print:
+            bp("[DEBUG] Simulation-related file paths defined.", app=app)
+            await asyncio.sleep(app.async_print_delay if app else 0)
+            # await asyncio.sleep(app.async_print_delay if app else 0)
 
 
 
             
             
         # Read the CSV file into a DataFrame
-        self.BSPSSEPySequence = await BSPSSEPyControlSequenceTable(self.CSVControlPlan, DebugPrint=DebugPrint, app=app)
+        self.bspssepy_sequence = await BSPSSEPyControlSequenceTable(self.CSVControlPlan, debug_print=debug_print, app=app)
         
-        self.BSPSSEPySequence.insert(0, "Control Sequence", 0)
-        self.BSPSSEPySequence.insert(0, "Start Time", 0)
-        self.BSPSSEPySequence.insert(0, "End Time", 0)
+        self.bspssepy_sequence.insert(0, "Control Sequence", 0)
+        self.bspssepy_sequence.insert(0, "Start Time", 0)
+        self.bspssepy_sequence.insert(0, "End Time", 0)
 
         
         
@@ -353,17 +353,17 @@ class Config:
             # Dictionary to track the first UID for each "Action Time"
             ActionTimeToUID = {}
 
-            for idx in self.BSPSSEPySequence.index:
-                ActionTime = self.BSPSSEPySequence.at[idx, "Action Time"]
-                UID = self.BSPSSEPySequence.at[idx, "UID"]
+            for idx in self.bspssepy_sequence.index:
+                action_time = self.bspssepy_sequence.at[idx, "Action Time"]
+                UID = self.bspssepy_sequence.at[idx, "UID"]
 
                 # If this Action Time was not seen before, set it as the reference UID
-                if ActionTime not in ActionTimeToUID:
-                    ActionTimeToUID[ActionTime] = UID  # Store this UID as the main reference
-                    self.BSPSSEPySequence.at[idx, "Tied Action"] = -1  # Mark main action
+                if action_time not in ActionTimeToUID:
+                    ActionTimeToUID[action_time] = UID  # Store this UID as the main reference
+                    self.bspssepy_sequence.at[idx, "Tied Action"] = -1  # Mark main action
                 else:
                     # Set "Tied Action" to reference the first action's UID
-                    self.BSPSSEPySequence.at[idx, "Tied Action"] = ActionTimeToUID[ActionTime]
+                    self.bspssepy_sequence.at[idx, "Tied Action"] = ActionTimeToUID[action_time]
 
         with pd.option_context(
             "display.max_rows", None,  # Show all rows
@@ -371,8 +371,8 @@ class Config:
             "display.width", 0,  # Auto-adjust width for full visibility
             "display.colheader_justify", "center",  # Center column headers for readability
         ):
-            bsprint(self.BSPSSEPySequence.to_string(index=False))
-            await asyncio.sleep(app.bsprintasynciotime if app else 0)
+            bp(self.bspssepy_sequence.to_string(index=False))
+            await asyncio.sleep(app.async_print_delay if app else 0)
 
 
         
@@ -381,7 +381,7 @@ class Config:
         
         if not self.ControlSequenceAsIs:
             # Sort by "Action Time" first, then by "Tied Action" to ensure grouped execution
-            self.BSPSSEPySequence: pd.DataFrame = self.BSPSSEPySequence.sort_values(
+            self.bspssepy_sequence: pd.DataFrame = self.bspssepy_sequence.sort_values(
                 by=["Action Time", "Tied Action"], 
                 ascending=[True, True],  # Ensure actions follow the planned sequence
                 na_position="last"  # Put missing Tied Actions at the end
@@ -391,7 +391,7 @@ class Config:
             ReorderedSequence = []
 
             # Convert DataFrame to a list of dictionaries for easier manipulation
-            SequenceList = self.BSPSSEPySequence.to_dict(orient="records")
+            SequenceList = self.bspssepy_sequence.to_dict(orient="records")
 
             # Track actions that have tied actions
             ProcessedUIDs = set()
@@ -419,52 +419,52 @@ class Config:
                     ProcessedUIDs.add(tied_action["UID"])  # Mark as processed
 
             # Convert back to DataFrame
-            self.BSPSSEPySequence = pd.DataFrame(ReorderedSequence)
+            self.bspssepy_sequence = pd.DataFrame(ReorderedSequence)
 
         
-        # bsprint(self.BSPSSEPySequence)
-        # await asyncio.sleep(app.bsprintasynciotime if app else 0)
+        # bp(self.bspssepy_sequence)
+        # await asyncio.sleep(app.async_print_delay if app else 0)
 
 
         # Track the control sequence number
         ControlSequenceIndex = 1  
 
         # Iterate over the DataFrame and assign control sequence numbers
-        for idx in self.BSPSSEPySequence.index:
-            TiedAction = self.BSPSSEPySequence.at[idx, "Tied Action"]
+        for idx in self.bspssepy_sequence.index:
+            TiedAction = self.bspssepy_sequence.at[idx, "Tied Action"]
             
             # If it's a main action (not tied to anything)
             if TiedAction == -1:
-                self.BSPSSEPySequence.at[idx, "Control Sequence"] = ControlSequenceIndex
+                self.bspssepy_sequence.at[idx, "Control Sequence"] = ControlSequenceIndex
                 
                 # If BypassTiedActions is enabled, make tied actions share the same sequence number
                 if self.BypassTiedActions:
-                    TiedActions = self.BSPSSEPySequence[self.BSPSSEPySequence["Tied Action"] == self.BSPSSEPySequence.at[idx, "UID"]]
+                    TiedActions = self.bspssepy_sequence[self.bspssepy_sequence["Tied Action"] == self.bspssepy_sequence.at[idx, "UID"]]
                     for tied_idx in TiedActions.index:
-                        self.BSPSSEPySequence.at[tied_idx, "Control Sequence"] = ControlSequenceIndex
+                        self.bspssepy_sequence.at[tied_idx, "Control Sequence"] = ControlSequenceIndex
 
                 # Increment sequence index for the next main action
                 ControlSequenceIndex += 1
 
             # If BypassTiedActions is False, assign a new control sequence to each tied action
             elif not self.BypassTiedActions:
-                self.BSPSSEPySequence.at[idx, "Control Sequence"] = ControlSequenceIndex
+                self.bspssepy_sequence.at[idx, "Control Sequence"] = ControlSequenceIndex
                 ControlSequenceIndex += 1  # Increment sequence for each action (including tied ones)
 
         # Debug print the final sequence
-        if DebugPrint:
-            bsprint("[DEBUG] Control sequence table updated with correct sequence numbers.", app=app)
-            bsprint(self.BSPSSEPySequence)
-            await asyncio.sleep(app.bsprintasynciotime if app else 0)
+        if debug_print:
+            bp("[DEBUG] Control sequence table updated with correct sequence numbers.", app=app)
+            bp(self.bspssepy_sequence)
+            await asyncio.sleep(app.async_print_delay if app else 0)
             
-        # bsprint(self.BSPSSEPySequence)
-        # await asyncio.sleep(app.bsprintasynciotime if app else 0)
+        # bp(self.bspssepy_sequence)
+        # await asyncio.sleep(app.async_print_delay if app else 0)
 
         
-        if DebugPrint:
-            bsprint("[DEBUG] Control sequence table loaded.", app=app)
-            await asyncio.sleep(app.bsprintasynciotime if app else 0)
-            # await asyncio.sleep(app.bsprintasynciotime if app else 0)
+        if debug_print:
+            bp("[DEBUG] Control sequence table loaded.", app=app)
+            await asyncio.sleep(app.async_print_delay if app else 0)
+            # await asyncio.sleep(app.async_print_delay if app else 0)
 
 
         with pd.option_context(
@@ -473,8 +473,8 @@ class Config:
             "display.width", 0,  # Auto-adjust width for full visibility
             "display.colheader_justify", "center",  # Center column headers for readability
         ):
-            bsprint(self.BSPSSEPySequence.to_string(index=False))
-            await asyncio.sleep(app.bsprintasynciotime if app else 0)
+            bp(self.bspssepy_sequence.to_string(index=False))
+            await asyncio.sleep(app.async_print_delay if app else 0)
 
 
 
@@ -489,12 +489,12 @@ class Config:
         """
         if not directory_path.exists():
             directory_path.mkdir()
-            bsprint(f"Created {description} at: {directory_path}", app=app)
-            await asyncio.sleep(app.bsprintasynciotime if app else 0)
+            bp(f"Created {description} at: {directory_path}", app=app)
+            await asyncio.sleep(app.async_print_delay if app else 0)
 
-            if self.DebugPrint:
-                bsprint(f"[DEBUG] {description} created at: {directory_path}", app=app)
-                await asyncio.sleep(app.bsprintasynciotime if app else 0)
-        elif self.DebugPrint:
-            bsprint(f"[DEBUG] {description} already exists: {directory_path}", app=app)
-            await asyncio.sleep(app.bsprintasynciotime if app else 0)
+            if self.debug_print:
+                bp(f"[DEBUG] {description} created at: {directory_path}", app=app)
+                await asyncio.sleep(app.async_print_delay if app else 0)
+        elif self.debug_print:
+            bp(f"[DEBUG] {description} already exists: {directory_path}", app=app)
+            await asyncio.sleep(app.async_print_delay if app else 0)

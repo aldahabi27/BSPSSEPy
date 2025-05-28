@@ -26,9 +26,9 @@ def generate_buses_data():
 def generate_loads_data():
     """Simulates load updates."""
     return [
-        ["Load 1", f"{random.randint(10, 100)} MW"],
-        ["Load 2", f"{random.randint(10, 100)} MW"],
-        ["Load 3", f"{random.randint(10, 100)} MW"]
+        ["load 1", f"{random.randint(10, 100)} MW"],
+        ["load 2", f"{random.randint(10, 100)} MW"],
+        ["load 3", f"{random.randint(10, 100)} MW"]
     ]
 
 def make_table(title, headers, data):
@@ -136,12 +136,12 @@ except Exception as e:
 
 def BSPSSEPyLiveMonitor(iterations=None):
     """ 
-    Live Monitoring Console for BSPSSEPy: Displays real-time Generator, Bus, and Load status in a table format.
+    Live Monitoring Console for BSPSSEPy: Displays real-time Generator, Bus, and load status in a table format.
     
     This function continuously updates and displays:
     - Generator Frequencies & Status
     - Bus Frequencies
-    - Load Power Consumption
+    - load Power Consumption
     
     Uses `rich` library to present tables **side by side** with live updates.
     
@@ -160,7 +160,7 @@ def BSPSSEPyLiveMonitor(iterations=None):
             # Create three tables
             gen_table = make_table("Generators", ["Generator", "Frequency", "Status"], generate_generators_data())
             bus_table = make_table("Buses", ["Bus", "Frequency"], generate_buses_data())
-            load_table = make_table("Loads", ["Load", "Power"], generate_loads_data())
+            load_table = make_table("Loads", ["load", "Power"], generate_loads_data())
 
             # Combine tables side by side
             live.update(Columns([gen_table, bus_table, load_table]))

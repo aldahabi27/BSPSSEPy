@@ -1,16 +1,16 @@
-# BSPSSEPy Two-Winding Transformer (BSPSSEPyTrn) Functions
+# BSPSSEPy Two-Winding Transformer (bspssepy_trn) Functions
 # This Python module contains all 'Two-Winding Transformer' related functions for the BSPSSEPy framework:
 #
-# 1. GetTrnInfo: Retrieves specific information about Two-Winding Transformers based on user-specified keys, either from PSSE or BSPSSEPyTrn DataFrame.
+# 1. GetTrnInfo: Retrieves specific information about Two-Winding Transformers based on user-specified keys, either from PSSE or bspssepy_trn DataFrame.
 #    - Handles cases for single/multiple keys and specific/all Two-Winding Transformers.
 #
 # 2. GetTrnInfoPSSE: Fetches Two-Winding Transformer-related data directly from PSSE using the PSSE library.
 #
-# 3. TrnTrip: Trips a Two-Winding Transformer based on its ID, name, or bus connections and updates the BSPSSEPyTrn DataFrame.
+# 3. TrnTrip: Trips a Two-Winding Transformer based on its ID, name, or bus connections and updates the bspssepy_trn DataFrame.
 #
-# 4. TrnClose: Closes a Two-Winding Transformer based on its ID, name, or bus connections and updates the BSPSSEPyTrn DataFrame.
+# 4. TrnClose: Closes a Two-Winding Transformer based on its ID, name, or bus connections and updates the bspssepy_trn DataFrame.
 #
-# This module ensures dynamic interaction with PSSE for real-time data, while allowing extended tracking and simulation-specific metadata updates through the BSPSSEPyTrn DataFrame.
+# This module ensures dynamic interaction with PSSE for real-time data, while allowing extended tracking and simulation-specific metadata updates through the bspssepy_trn DataFrame.
 #
 # Key Features:
 # - Integrates real-time data retrieval from PSSE and local metadata updates.
@@ -30,10 +30,10 @@
 import psspy
 import dyntools
 import pandas as pd
-from .BSPSSEPyBusFunctions import *
-from Functions.BSPSSEPy.BSPSSEPyDictionary import *
-# from Functions.BSPSSEPy.BSPSSEPyFunctionsDictionary import *
-from Functions.BSPSSEPy.App.BSPSSEPyAppHelperFunctions import bsprint
+from .bspssepy_bus_funs import *
+from fun.bspssepy.bspssepy_dict import *
+# from fun.bspssepy.bspssepy_funs_dict import *
+from fun.bspssepy.app.app_helper_funs import bp
 import asyncio
 
 
@@ -41,13 +41,13 @@ async def GetTrnInfo(TrnKeys,  # The key(s) for the required information of the 
                   TrnName=None,  # Trn Name (optional)
                   FromBus=None,  # From Bus Number or Name (optional)
                   ToBus=None,  # To Bus Number or Name (optional)
-                  BSPSSEPyTrn=None,  # BSPSSEPyTrn DataFrame containing BSPSSEBy extra information associated with the Trn (optional)
-                  DebugPrint=False,  # Enable detailed debug output
+                  bspssepy_trn=None,  # bspssepy_trn DataFrame containing BSPSSEBy extra information associated with the Trn (optional)
+                  debug_print=False,  # Enable detailed debug output
                   app=None):
     """
     Retrieves information about Two-Winding Transformers based on the specified keys.
 
-    This function fetches the requested data from both PSSE and the BSPSSEPyTrn DataFrame, providing flexibility
+    This function fetches the requested data from both PSSE and the bspssepy_trn DataFrame, providing flexibility
     for dynamic and pre-stored data retrieval. Handles multiple cases based on the input parameters:
 
     Case 1: Single key for a specific Two-Winding Tranformer -> Returns a single value (str, int, float, or list).
@@ -57,16 +57,16 @@ async def GetTrnInfo(TrnKeys,  # The key(s) for the required information of the 
 
     Arguments:
         TrnKeys: str or list of str
-            The key(s) for the required information. Check TrnInfoDic for valid PSSE keys, or BSPSSEPyTrn columns.
+            The key(s) for the required information. Check trn_info_dict for valid PSSE keys, or bspssepy_trn columns.
         TrnName: str
             Trn Name (optional).
         FromBus: str or int
             From Bus Number or Name (optional).
         ToBus: str or int
             To Bus Number or Name (optional).
-        BSPSSEPyTrn: pd.DataFrame
-            The BSPSSEPyTrn DataFrame containing BSPSSEPy Trn data (optional).
-        DebugPrint: bool
+        bspssepy_trn: pd.DataFrame
+            The bspssepy_trn DataFrame containing BSPSSEPy Trn data (optional).
+        debug_print: bool
             Enable detailed debug output (default = False).
 
     Returns:
@@ -79,13 +79,13 @@ async def GetTrnInfo(TrnKeys,  # The key(s) for the required information of the 
 
     Notes:
         - Input strings (e.g., TrnKeys, TrnName, FromBus, ToBus) are normalized by stripping extra spaces.
-        - The function combines PSSE and BSPSSEPyTrn data if both are available for comprehensive results.
+        - The function combines PSSE and bspssepy_trn data if both are available for comprehensive results.
         - Filtering logic is applied based on TrnName, FromBus, and ToBus.
     """
 
-    if DebugPrint:
-        bsprint(f"[DEBUG] Retrieving Two-Winding Transformer info for TrnKeys: {TrnKeys}, TrnName: {TrnName}, FromBus: {FromBus}, ToBus: {ToBus}",app=app)
-        await asyncio.sleep(app.bsprintasynciotime if app else 0)
+    if debug_print:
+        bp(f"[DEBUG] Retrieving Two-Winding Transformer info for TrnKeys: {TrnKeys}, TrnName: {TrnName}, FromBus: {FromBus}, ToBus: {ToBus}",app=app)
+        await asyncio.sleep(app.async_print_delay if app else 0)
 
     # Ensure TrnKeys is a list
     if isinstance(TrnKeys, str):
@@ -109,9 +109,9 @@ async def GetTrnInfo(TrnKeys,  # The key(s) for the required information of the 
         ToBusKey = "TONUMBER"
 
 
-    # Separate PSSE and BSPSSEPyTrn keys
-    ValidPSSEKeys = TrnInfoDic.keys()
-    ValidBSPSSEPyKeys = [] if BSPSSEPyTrn is None else BSPSSEPyTrn.columns
+    # Separate PSSE and bspssepy_trn keys
+    ValidPSSEKeys = trn_info_dict.keys()
+    ValidBSPSSEPyKeys = [] if bspssepy_trn is None else bspssepy_trn.columns
 
 
     # Add PSSE Keys needed for basic branch operations
@@ -121,37 +121,37 @@ async def GetTrnInfo(TrnKeys,  # The key(s) for the required information of the 
         if key in ValidPSSEKeys and key not in _TrnKeysPSSE:
             _TrnKeysPSSE.append(key)
 
-    if DebugPrint:
-        bsprint(f"[DEBUG] Fetching PSSE data for keys: {_TrnKeysPSSE}",app=app)
-        await asyncio.sleep(app.bsprintasynciotime if app else 0)
+    if debug_print:
+        bp(f"[DEBUG] Fetching PSSE data for keys: {_TrnKeysPSSE}",app=app)
+        await asyncio.sleep(app.async_print_delay if app else 0)
 
 
-    # Ensure no duplicate columns are fetched from PSSE if BSPSSEPyBrn is provided
-    if BSPSSEPyTrn is not None and not BSPSSEPyTrn.empty:
+    # Ensure no duplicate columns are fetched from PSSE if bspssepy_brn is provided
+    if bspssepy_trn is not None and not bspssepy_trn.empty:
         # Remove overlapping keys from the PSSE fetch list
         ValidBSPSSEPyKeys = [key for key in ValidBSPSSEPyKeys if key not in _TrnKeysPSSE]
 
-    if DebugPrint:
-        bsprint(f"[DEBUG] Adjusted BSPSSEPy keys to fetch: {ValidBSPSSEPyKeys}",app=app)
-        await asyncio.sleep(app.bsprintasynciotime if app else 0)
+    if debug_print:
+        bp(f"[DEBUG] Adjusted BSPSSEPy keys to fetch: {ValidBSPSSEPyKeys}",app=app)
+        await asyncio.sleep(app.async_print_delay if app else 0)
 
 
     # Fetch PSSE data for the required keys
     PSSEData = {}
     for PSSEKey in _TrnKeysPSSE:
-        PSSEData[PSSEKey] = await GetTrnInfoPSSE(PSSEKey, DebugPrint=DebugPrint,app=app)
+        PSSEData[PSSEKey] = await GetTrnInfoPSSE(PSSEKey, debug_print=debug_print,app=app)
 
-    # Combine PSSEData and BSPSSEPyTrn (if provided) into a single DataFrame
-    if BSPSSEPyTrn is not None and not BSPSSEPyTrn.empty:
-        ValidBSPSSEPyTrn = BSPSSEPyTrn[ValidBSPSSEPyKeys]
+    # Combine PSSEData and bspssepy_trn (if provided) into a single DataFrame
+    if bspssepy_trn is not None and not bspssepy_trn.empty:
+        ValidBSPSSEPyTrn = bspssepy_trn[ValidBSPSSEPyKeys]
         PSSEDataDF = pd.DataFrame(PSSEData)
         CombinedData = pd.concat([PSSEDataDF, ValidBSPSSEPyTrn], axis=1)
     else:
         CombinedData = pd.DataFrame(PSSEData)
 
-    if DebugPrint:
-        bsprint(f"[DEBUG] Combined Data:\n{CombinedData}",app=app)
-        await asyncio.sleep(app.bsprintasynciotime if app else 0)
+    if debug_print:
+        bp(f"[DEBUG] Combined Data:\n{CombinedData}",app=app)
+        await asyncio.sleep(app.async_print_delay if app else 0)
     
 
     # Filter CombinedData based on TrnName, FromBus, and ToBus
@@ -172,9 +172,9 @@ async def GetTrnInfo(TrnKeys,  # The key(s) for the required information of the 
             (CombinedData[ToBusKey] == ToBus)
         ]
 
-    if DebugPrint:
-        bsprint(f"[DEBUG] Filtered Data:\n{CombinedData}",app=app)
-        await asyncio.sleep(app.bsprintasynciotime if app else 0)
+    if debug_print:
+        bp(f"[DEBUG] Filtered Data:\n{CombinedData}",app=app)
+        await asyncio.sleep(app.async_print_delay if app else 0)
 
     # Handle cases based on the number of BrnKeys
     if len(TrnKeys) == 1:
@@ -185,9 +185,9 @@ async def GetTrnInfo(TrnKeys,  # The key(s) for the required information of the 
 
 
 
-async def GetTrnInfoPSSE(atrnString,  # Requested Info string - Check available strings in TrnInfoDic
+async def GetTrnInfoPSSE(atrnString,  # Requested Info string - Check available strings in trn_info_dict
                   TrnEntry=1,  # 1 entry for each Trn, 2 --> two-way entry (each Trn in both directions)
-                  DebugPrint=False,  # Print debug information
+                  debug_print=False,  # Print debug information
                   app=None,
                   ):
     """
@@ -196,7 +196,7 @@ async def GetTrnInfoPSSE(atrnString,  # Requested Info string - Check available 
 
     Arguments:
         atrnString: str
-            Requested Info string - Check available strings in TrnInfoDic.
+            Requested Info string - Check available strings in trn_info_dict.
         TrnEntry: int
             1 entry for each Trn, 2 --> two-way entry (each Trn in both directions).
         TrnName: str
@@ -205,7 +205,7 @@ async def GetTrnInfoPSSE(atrnString,  # Requested Info string - Check available 
             From Bus Number or Name (optional).
         ToBus: str or int
             To Bus Number or Name (optional).
-        DebugPrint: bool
+        debug_print: bool
             Print debug information (default = False).
 
     Returns:
@@ -218,16 +218,16 @@ async def GetTrnInfoPSSE(atrnString,  # Requested Info string - Check available 
           connect the two buses, use the Trn name.
     """
 
-    if DebugPrint:
-        bsprint(f"[DEBUG] Requested Trn information for atrnString: '{atrnString}'",app=app)
-        await asyncio.sleep(app.bsprintasynciotime if app else 0)
-        bsprint(f"[DEBUG] TrnEntry: {TrnEntry}",app=app)
-        await asyncio.sleep(app.bsprintasynciotime if app else 0)
+    if debug_print:
+        bp(f"[DEBUG] Requested Trn information for atrnString: '{atrnString}'",app=app)
+        await asyncio.sleep(app.async_print_delay if app else 0)
+        bp(f"[DEBUG] TrnEntry: {TrnEntry}",app=app)
+        await asyncio.sleep(app.async_print_delay if app else 0)
 
-    # Check if atrnString exists in TrnInfoDic
-    if atrnString not in TrnInfoDic:
-        bsprint(f"[ERROR] Invalid atrnString '{atrnString}'. Check TrnInfoDic for valid options.",app=app)
-        await asyncio.sleep(app.bsprintasynciotime if app else 0)
+    # Check if atrnString exists in trn_info_dict
+    if atrnString not in trn_info_dict:
+        bp(f"[ERROR] Invalid atrnString '{atrnString}'. Check trn_info_dict for valid options.",app=app)
+        await asyncio.sleep(app.async_print_delay if app else 0)
         return None
 
     # Determine subsystem and entry flag
@@ -245,19 +245,19 @@ async def GetTrnInfoPSSE(atrnString,  # Requested Info string - Check available 
     # Filter Two-Winding Transformers based on provided parameters
     # if TrnName:
     #     parameters['trnname'] = TrnName
-    #     if DebugPrint:
-    #         bsprint(f"[DEBUG] Filtering Two-Winding Transformers by TrnName: {TrnName}",app=app)
+    #     if debug_print:
+    #         bp(f"[DEBUG] Filtering Two-Winding Transformers by TrnName: {TrnName}",app=app)
     # elif FromBus and ToBus:
     #     parameters['frombus'] = FromBus
     #     parameters['tobus'] = ToBus
-    #     if DebugPrint:
-    #         bsprint(f"[DEBUG] Filtering Two-Winding Transformers by FromBus: {FromBus} and ToBus: {ToBus}", app=app)
+    #     if debug_print:
+    #         bp(f"[DEBUG] Filtering Two-Winding Transformers by FromBus: {FromBus} and ToBus: {ToBus}", app=app)
 
     # Fetch the data type for the requested string
     ierr, dataType = psspy.atrntypes([atrnString])
     if ierr != 0:
-        bsprint(f"[ERROR] Failed to fetch data type for atrnString '{atrnString}'. PSSE error code: {ierr}",app=app)
-        await asyncio.sleep(app.bsprintasynciotime if app else 0)
+        bp(f"[ERROR] Failed to fetch data type for atrnString '{atrnString}'. PSSE error code: {ierr}",app=app)
+        await asyncio.sleep(app.async_print_delay if app else 0)
         return None
 
     # Retrieve data based on the type
@@ -271,8 +271,8 @@ async def GetTrnInfoPSSE(atrnString,  # Requested Info string - Check available 
         elif dataType[0] == 'X':  # Complex data
             ierr, data = psspy.atrncplx(**parameters)
         else:
-            bsprint(f"[ERROR] Unsupported data type '{dataType[0]}' for atrnString '{atrnString}'.",app=app)
-            await asyncio.sleep(app.bsprintasynciotime if app else 0)
+            bp(f"[ERROR] Unsupported data type '{dataType[0]}' for atrnString '{atrnString}'.",app=app)
+            await asyncio.sleep(app.async_print_delay if app else 0)
             return None
         
         # Check if data is a list containing a single nested list
@@ -287,32 +287,32 @@ async def GetTrnInfoPSSE(atrnString,  # Requested Info string - Check available 
                 data = [item.strip() for item in data]
 
         if ierr != 0:
-            bsprint(f"[ERROR] Failed to retrieve data for atrnString '{atrnString}'. PSSE error code: {ierr}",app=app)
-            await asyncio.sleep(app.bsprintasynciotime if app else 0)
+            bp(f"[ERROR] Failed to retrieve data for atrnString '{atrnString}'. PSSE error code: {ierr}",app=app)
+            await asyncio.sleep(app.async_print_delay if app else 0)
             return None
 
-        if DebugPrint:
-            bsprint(f"[DEBUG] Successfully retrieved data for '{atrnString}': {data}",app=app)
-            await asyncio.sleep(app.bsprintasynciotime if app else 0)
+        if debug_print:
+            bp(f"[DEBUG] Successfully retrieved data for '{atrnString}': {data}",app=app)
+            await asyncio.sleep(app.async_print_delay if app else 0)
         return data
 
     except Exception as e:
-        bsprint(f"[ERROR] Exception occurred while retrieving TW-trn data: {e}",app=app)
-        await asyncio.sleep(app.bsprintasynciotime if app else 0)
+        bp(f"[ERROR] Exception occurred while retrieving TW-trn data: {e}",app=app)
+        await asyncio.sleep(app.async_print_delay if app else 0)
         return None
 
     
 
 
 
-async def TrnTrip(t, BSPSSEPyTrn=None, TrnID=None, TrnName=None, TrnFromBus=None, TrnToBus=None, DebugPrint=False, app=None):
+async def TrnTrip(t, bspssepy_trn=None, TrnID=None, TrnName=None, TrnFromBus=None, TrnToBus=None, debug_print=False, app=None):
     """
     Trips a Trn based on its ID, name, or bus connection and updates extended info columns.
 
     Arguments:
         t: float
             Current simulation time.
-        BSPSSEPyTrn: pd.DataFrame
+        bspssepy_trn: pd.DataFrame
             The pandas DataFrame containing BSPSSEPy Trn data.
         TrnID: str or int
             The unique ID of the Trn (optional).
@@ -322,7 +322,7 @@ async def TrnTrip(t, BSPSSEPyTrn=None, TrnID=None, TrnName=None, TrnFromBus=None
             The "from" bus number or name (optional).
         TrnToBus: int or str
             The "to" bus number or name (optional).
-        DebugPrint: bool
+        debug_print: bool
             Enable detailed debug output (default = False).
 
     Returns:
@@ -330,14 +330,14 @@ async def TrnTrip(t, BSPSSEPyTrn=None, TrnID=None, TrnName=None, TrnFromBus=None
             ierr: The status of the action applied (ierr = 0 --> success!).
     """
     # Initial debug message
-    if DebugPrint:
-        bsprint(f"[DEBUG] TrnTrip called with inputs:\n"
+    if debug_print:
+        bp(f"[DEBUG] TrnTrip called with inputs:\n"
               f"  TrnID: {TrnID}\n"
               f"  TrnName: {TrnName}\n"
               f"  FromBus: {TrnFromBus}\n"
               f"  ToBus: {TrnToBus}\n"
               f"  Simulation Time: {t}s\n",app=app)
-        await asyncio.sleep(app.bsprintasynciotime if app else 0)
+        await asyncio.sleep(app.async_print_delay if app else 0)
 
     # Resolve TrnName if only bus info is provided
     if not TrnName and (TrnFromBus and TrnToBus):
@@ -345,28 +345,28 @@ async def TrnTrip(t, BSPSSEPyTrn=None, TrnID=None, TrnName=None, TrnFromBus=None
             TrnKeys=["XFRNAME"],
             FromBus=TrnFromBus,
             ToBus=TrnToBus,
-            BSPSSEPyTrn=BSPSSEPyTrn,
-            DebugPrint=DebugPrint,
+            bspssepy_trn=bspssepy_trn,
+            debug_print=debug_print,
             app=app
         )
         if not TrnName:
-            bsprint(f"[ERROR] Could not identify Trn between buses {TrnFromBus} and {TrnToBus}.",app=app)
-            await asyncio.sleep(app.bsprintasynciotime if app else 0)
+            bp(f"[ERROR] Could not identify Trn between buses {TrnFromBus} and {TrnToBus}.",app=app)
+            await asyncio.sleep(app.async_print_delay if app else 0)
             return None
 
     # Fetch Trn details
     TrnRow = await GetTrnInfo(
         TrnKeys=["FROMNUMBER", "TONUMBER", "ID", "STATUS", "XFRNAME"],
         TrnName=TrnName,
-        BSPSSEPyTrn=BSPSSEPyTrn,
-        DebugPrint=DebugPrint,
+        bspssepy_trn=bspssepy_trn,
+        debug_print=debug_print,
         app=app
     )
 
     if TrnRow is None or len(TrnRow) == 0:
-        bsprint(f"[ERROR] Trn not found for ID={TrnID}, Name={TrnName}, "
+        bp(f"[ERROR] Trn not found for ID={TrnID}, Name={TrnName}, "
               f"FromBus={TrnFromBus}, ToBus={TrnToBus}.",app=app)
-        await asyncio.sleep(app.bsprintasynciotime if app else 0)
+        await asyncio.sleep(app.async_print_delay if app else 0)
         return None
 
     # Extract Trn information
@@ -377,72 +377,72 @@ async def TrnTrip(t, BSPSSEPyTrn=None, TrnID=None, TrnName=None, TrnFromBus=None
     TrnStatus = TrnRow["STATUS"].iloc[0]
 
     # Debug message with resolved values
-    if DebugPrint:
-        bsprint(f"[DEBUG] Resolved Trn details:\n"
+    if debug_print:
+        bp(f"[DEBUG] Resolved Trn details:\n"
               f"  TrnID: {TrnID}\n"
               f"  TrnName: {TrnName}\n"
               f"  FromBus: {TrnFromBus}\n"
               f"  ToBus: {TrnToBus}\n"
               f"  Status: {'Closed' if TrnStatus == 1 else 'Tripped'}\n",app=app)
-        await asyncio.sleep(app.bsprintasynciotime if app else 0)
+        await asyncio.sleep(app.async_print_delay if app else 0)
 
     # Check if the Trn is already tripped
     if TrnStatus != 1:
-        bsprint(f"[INFO] Trn '{TrnName}' is already tripped.",app=app)
-        await asyncio.sleep(app.bsprintasynciotime if app else 0)
+        bp(f"[INFO] Trn '{TrnName}' is already tripped.",app=app)
+        await asyncio.sleep(app.async_print_delay if app else 0)
         return 0
 
     # Attempt to trip the Trn
     try:
-        if DebugPrint:
-            bsprint(f"[DEBUG] Attempting to trip Two-Winding Transformer '{TrnName}' between buses {TrnFromBus} and {TrnToBus}.",app=app)
-            await asyncio.sleep(app.bsprintasynciotime if app else 0)
+        if debug_print:
+            bp(f"[DEBUG] Attempting to trip Two-Winding Transformer '{TrnName}' between buses {TrnFromBus} and {TrnToBus}.",app=app)
+            await asyncio.sleep(app.async_print_delay if app else 0)
 
         ierr = psspy.dist_branch_trip(TrnFromBus, TrnToBus, TrnID)
 
         if ierr != 0:
-            bsprint(f"[ERROR] Failed to trip Trn '{TrnName}'. PSSE error code: {ierr}",app=app)
-            await asyncio.sleep(app.bsprintasynciotime if app else 0)
+            bp(f"[ERROR] Failed to trip Trn '{TrnName}'. PSSE error code: {ierr}",app=app)
+            await asyncio.sleep(app.async_print_delay if app else 0)
             return ierr
 
-        # Ensure proper matching for FromBus and ToBus in BSPSSEPyTrn
-        FromBusCondition = BSPSSEPyTrn["FROMNUMBER"].apply(str) == str(TrnFromBus)
-        ToBusCondition = BSPSSEPyTrn["TONUMBER"].apply(str) == str(TrnToBus)
-        IDCondition = BSPSSEPyTrn["ID"] == TrnID
+        # Ensure proper matching for FromBus and ToBus in bspssepy_trn
+        FromBusCondition = bspssepy_trn["FROMNUMBER"].apply(str) == str(TrnFromBus)
+        ToBusCondition = bspssepy_trn["TONUMBER"].apply(str) == str(TrnToBus)
+        IDCondition = bspssepy_trn["ID"] == TrnID
 
-        NewStatus = await GetTrnInfo("STATUS", TrnName=TrnName, DebugPrint=DebugPrint, app=app)
+        NewStatus = await GetTrnInfo("STATUS", TrnName=TrnName, debug_print=debug_print, app=app)
 
-        if not(BSPSSEPyTrn is None or BSPSSEPyTrn.empty):
-            # Update the BSPSSEPyTrn DataFrame
-            BSPSSEPyTrn.loc[
+        if not(bspssepy_trn is None or bspssepy_trn.empty):
+            # Update the bspssepy_trn DataFrame
+            bspssepy_trn.loc[
                 FromBusCondition & ToBusCondition & IDCondition,
                 ["BSPSSEPyStatus", "BSPSSEPyLastAction", "BSPSSEPyLastActionTime", "BSPSSEPySimulationNotes", "STATUS"]
             ] = ["Tripped", "Trip", t, "TW-Trn successfully tripped.", NewStatus]
 
-        if DebugPrint:
-            bsprint(f"[SUCCESS] Successfully tripped Two-Winding Transformer '{TrnName}'. Updated BSPSSEPyTrn DataFrame.",app=app)
-            await asyncio.sleep(app.bsprintasynciotime if app else 0)
+        if debug_print:
+            bp(f"[SUCCESS] Successfully tripped Two-Winding Transformer '{TrnName}'. Updated bspssepy_trn DataFrame.",app=app)
+            await asyncio.sleep(app.async_print_delay if app else 0)
 
         return ierr
 
     except KeyError as e:
-        bsprint(f"[ERROR] Missing key during TrnTrip operation: {e}",app=app)
-        await asyncio.sleep(app.bsprintasynciotime if app else 0)
+        bp(f"[ERROR] Missing key during TrnTrip operation: {e}",app=app)
+        await asyncio.sleep(app.async_print_delay if app else 0)
         return None
     except Exception as e:
-        bsprint(f"[ERROR] Unexpected error during TrnTrip: {e}",app=app)
-        await asyncio.sleep(app.bsprintasynciotime if app else 0)
+        bp(f"[ERROR] Unexpected error during TrnTrip: {e}",app=app)
+        await asyncio.sleep(app.async_print_delay if app else 0)
         return None
 
 
-async def TrnClose(t, BSPSSEPyTrn=None, BSPSSEPyBus=None, TrnID=None, TrnName=None, TrnFromBus=None, TrnToBus=None, CalledByGen = False, DebugPrint=False, app=None):
+async def TrnClose(t, bspssepy_trn=None, bspssepy_bus=None, TrnID=None, TrnName=None, TrnFromBus=None, TrnToBus=None, CalledByGen = False, debug_print=False, app=None):
     """
     Closes a Trn based on its ID, name, or bus connection and updates extended info columns.
 
     Arguments:
         t: float
             Current simulation time.
-        BSPSSEPyTrn: pd.DataFrame
+        bspssepy_trn: pd.DataFrame
             The pandas DataFrame containing BSPSSEPy Trn data.
         TrnID: str or int
             The unique ID of the Trn (optional).
@@ -452,21 +452,21 @@ async def TrnClose(t, BSPSSEPyTrn=None, BSPSSEPyBus=None, TrnID=None, TrnName=No
             The "from" bus number or name (optional).
         TrnToBus: int or str
             The "to" bus number or name (optional).
-        DebugPrint: bool
+        debug_print: bool
             Enable detailed debug output (default = False).
 
     Returns:
         int:
             ierr: The status of the action applied (ierr = 0 --> success!).
     """
-    if DebugPrint:
-        bsprint(f"[DEBUG] TrnClose called with inputs:\n"
+    if debug_print:
+        bp(f"[DEBUG] TrnClose called with inputs:\n"
               f"  TrnID: {TrnID}\n"
               f"  TrnName: {TrnName}\n"
               f"  FromBus: {TrnFromBus}\n"
               f"  ToBus: {TrnToBus}\n"
               f"  Simulation Time: {t}s\n",app=app)
-        await asyncio.sleep(app.bsprintasynciotime if app else 0)
+        await asyncio.sleep(app.async_print_delay if app else 0)
 
     # Resolve TrnName if only bus info is provided
     if not TrnName and (TrnFromBus and TrnToBus):
@@ -474,27 +474,27 @@ async def TrnClose(t, BSPSSEPyTrn=None, BSPSSEPyBus=None, TrnID=None, TrnName=No
             TrnKeys=["XFRNAME"],
             FromBus=TrnFromBus,
             ToBus=TrnToBus,
-            BSPSSEPyTrn=BSPSSEPyTrn,
-            DebugPrint=DebugPrint,
+            bspssepy_trn=bspssepy_trn,
+            debug_print=debug_print,
             app=app
         )
         if not TrnName:
-            bsprint(f"[ERROR] Could not identify Trn between buses {TrnFromBus} and {TrnToBus}.",app=app)
-            await asyncio.sleep(app.bsprintasynciotime if app else 0)
+            bp(f"[ERROR] Could not identify Trn between buses {TrnFromBus} and {TrnToBus}.",app=app)
+            await asyncio.sleep(app.async_print_delay if app else 0)
             return None
 
     # Fetch Trn details
     TrnRow = await GetTrnInfo(
         TrnKeys=["FROMNUMBER", "TONUMBER", "ID", "STATUS", "XFRNAME", "GenControlled"],
         TrnName=TrnName,
-        BSPSSEPyTrn=BSPSSEPyTrn,
-        DebugPrint=DebugPrint,
+        bspssepy_trn=bspssepy_trn,
+        debug_print=debug_print,
         app=app
     )
 
     if TrnRow is None or len(TrnRow) == 0:
-        bsprint(f"[ERROR] Trn not found for ID={TrnID}, Name={TrnName}, FromBus={TrnFromBus}, ToBus={TrnToBus}.",app=app)
-        await asyncio.sleep(app.bsprintasynciotime if app else 0)
+        bp(f"[ERROR] Trn not found for ID={TrnID}, Name={TrnName}, FromBus={TrnFromBus}, ToBus={TrnToBus}.",app=app)
+        await asyncio.sleep(app.async_print_delay if app else 0)
         return None
 
     # Extract Trn information
@@ -505,86 +505,86 @@ async def TrnClose(t, BSPSSEPyTrn=None, BSPSSEPyBus=None, TrnID=None, TrnName=No
     TrnStatus = TrnRow["STATUS"].iloc[0]
     TrnGenControlled = TrnRow["GenControlled"].values[0]
 
-    if DebugPrint:
-        bsprint(f"[DEBUG] Resolved Trn details:\n"
+    if debug_print:
+        bp(f"[DEBUG] Resolved Trn details:\n"
               f"  TrnID: {TrnID}\n"
               f"  TrnName: {TrnName}\n"
               f"  FromBus: {TrnFromBus}\n"
               f"  ToBus: {TrnToBus}\n"
               f"  Status: {'Closed' if TrnStatus == 1 else 'Tripped'}\n"
               f"  GenControlled: {TrnGenControlled}",app=app)
-        await asyncio.sleep(app.bsprintasynciotime if app else 0)
+        await asyncio.sleep(app.async_print_delay if app else 0)
 
     # Check if the Trn is already closed
     if TrnStatus == 1:
-        bsprint(f"[INFO] Trn '{TrnName}' is already closed.",app=app)
-        await asyncio.sleep(app.bsprintasynciotime if app else 0)
+        bp(f"[INFO] Trn '{TrnName}' is already closed.",app=app)
+        await asyncio.sleep(app.async_print_delay if app else 0)
         return 0
 
     # Ensure both buses are operational
     if (CalledByGen & TrnGenControlled) or not TrnGenControlled:
         try:
             
-            FromBusType = await GetBusInfo(BusKeys="TYPE", BusNumber=TrnFromBus, DebugPrint=DebugPrint, app=app)
-            ToBusType = await GetBusInfo(BusKeys="TYPE", BusNumber=TrnToBus, DebugPrint=DebugPrint, app=app)
+            FromBusType = await get_bus_info(BusKeys="TYPE", bus_num=TrnFromBus, debug_print=debug_print, app=app)
+            ToBusType = await get_bus_info(BusKeys="TYPE", bus_num=TrnToBus, debug_print=debug_print, app=app)
 
             if FromBusType == 4:  # Tripped
-                if DebugPrint:
-                    bsprint(f"[DEBUG] FromBus {TrnFromBus} is tripped. Attempting to close it.",app=app)
-                    await asyncio.sleep(app.bsprintasynciotime if app else 0)
-                ierr = await BusClose(t, BSPSSEPyBus=BSPSSEPyBus, BusNumber=TrnFromBus, DebugPrint=DebugPrint,app=app)
+                if debug_print:
+                    bp(f"[DEBUG] FromBus {TrnFromBus} is tripped. Attempting to close it.",app=app)
+                    await asyncio.sleep(app.async_print_delay if app else 0)
+                ierr = await BusClose(t, bspssepy_bus=bspssepy_bus, bus_num=TrnFromBus, debug_print=debug_print,app=app)
                 if ierr != 0:
-                    bsprint(f"[ERROR] Failed to close FromBus {TrnFromBus}. Aborting Trn close.",app=app)
-                    await asyncio.sleep(app.bsprintasynciotime if app else 0)
+                    bp(f"[ERROR] Failed to close FromBus {TrnFromBus}. Aborting Trn close.",app=app)
+                    await asyncio.sleep(app.async_print_delay if app else 0)
                     return ierr
 
             if ToBusType == 4:  # Tripped
-                if DebugPrint:
-                    bsprint(f"[DEBUG] ToBus {TrnToBus} is tripped. Attempting to close it.",app=app)
-                    await asyncio.sleep(app.bsprintasynciotime if app else 0)
-                ierr = await BusClose(t, BSPSSEPyBus=BSPSSEPyBus, BusNumber=TrnToBus, DebugPrint=DebugPrint,app=app)
+                if debug_print:
+                    bp(f"[DEBUG] ToBus {TrnToBus} is tripped. Attempting to close it.",app=app)
+                    await asyncio.sleep(app.async_print_delay if app else 0)
+                ierr = await BusClose(t, bspssepy_bus=bspssepy_bus, bus_num=TrnToBus, debug_print=debug_print,app=app)
                 if ierr != 0:
-                    bsprint(f"[ERROR] Failed to close ToBus {TrnToBus}. Aborting Trn close.",app=app)
-                    await asyncio.sleep(app.bsprintasynciotime if app else 0)
+                    bp(f"[ERROR] Failed to close ToBus {TrnToBus}. Aborting Trn close.",app=app)
+                    await asyncio.sleep(app.async_print_delay if app else 0)
                     return ierr
 
-            if DebugPrint:
-                bsprint(f"[DEBUG] Attempting to close Two-Winding Transformer '{TrnName}' between buses {TrnFromBus} and {TrnToBus}.",app=app)
-                await asyncio.sleep(app.bsprintasynciotime if app else 0)
+            if debug_print:
+                bp(f"[DEBUG] Attempting to close Two-Winding Transformer '{TrnName}' between buses {TrnFromBus} and {TrnToBus}.",app=app)
+                await asyncio.sleep(app.async_print_delay if app else 0)
 
             # Attempt to close the Trn
             ierr = psspy.dist_branch_close(TrnFromBus, TrnToBus, TrnID)
             if ierr != 0:
-                bsprint(f"[ERROR] Failed to close Trn '{TrnName}'. PSSE error code: {ierr}",app=app)
-                await asyncio.sleep(app.bsprintasynciotime if app else 0)
+                bp(f"[ERROR] Failed to close Trn '{TrnName}'. PSSE error code: {ierr}",app=app)
+                await asyncio.sleep(app.async_print_delay if app else 0)
                 return ierr
 
-            # Update the BSPSSEPyTrn DataFrame
-            FromBusCondition = BSPSSEPyTrn["FROMNUMBER"].apply(str) == str(TrnFromBus)
-            ToBusCondition = BSPSSEPyTrn["TONUMBER"].apply(str) == str(TrnToBus)
-            IDCondition = BSPSSEPyTrn["ID"] == TrnID
+            # Update the bspssepy_trn DataFrame
+            FromBusCondition = bspssepy_trn["FROMNUMBER"].apply(str) == str(TrnFromBus)
+            ToBusCondition = bspssepy_trn["TONUMBER"].apply(str) == str(TrnToBus)
+            IDCondition = bspssepy_trn["ID"] == TrnID
 
             
-            NewStatus = await GetTrnInfo("STATUS", TrnName=TrnName, DebugPrint=DebugPrint, app=app)
+            NewStatus = await GetTrnInfo("STATUS", TrnName=TrnName, debug_print=debug_print, app=app)
             
-            if not(BSPSSEPyTrn is None or BSPSSEPyTrn.empty):
-                BSPSSEPyTrn.loc[
+            if not(bspssepy_trn is None or bspssepy_trn.empty):
+                bspssepy_trn.loc[
                     FromBusCondition & ToBusCondition & IDCondition,
                     ["BSPSSEPyStatus", "BSPSSEPyLastAction", "BSPSSEPyLastActionTime", "BSPSSEPySimulationNotes", "STATUS"]
                 ] = ["Closed", "Close", t, "Trn successfully closed.", NewStatus]
 
-            if DebugPrint:
-                bsprint(f"[SUCCESS] Successfully closed Trn '{TrnName}'. Updated BSPSSEPyTrn DataFrame.",app=app)
-                await asyncio.sleep(app.bsprintasynciotime if app else 0)
+            if debug_print:
+                bp(f"[SUCCESS] Successfully closed Trn '{TrnName}'. Updated bspssepy_trn DataFrame.",app=app)
+                await asyncio.sleep(app.async_print_delay if app else 0)
 
             return ierr
 
         except Exception as e:
-            bsprint(f"[ERROR] Unexpected error during TrnClose: {e}",app=app)
-            await asyncio.sleep(app.bsprintasynciotime if app else 0)
+            bp(f"[ERROR] Unexpected error during TrnClose: {e}",app=app)
+            await asyncio.sleep(app.async_print_delay if app else 0)
             return None
     
     else:
-        bsprint(f"[ERROR] This transformer is tied to a generator. Don't attempt to close it manually. It can be controlled through GenEnable function to model generator phases.",app=app)
-        await asyncio.sleep(app.bsprintasynciotime if app else 0)
+        bp(f"[ERROR] This transformer is tied to a generator. Don't attempt to close it manually. It can be controlled through GenEnable function to model generator phases.",app=app)
+        await asyncio.sleep(app.async_print_delay if app else 0)
         return -999
