@@ -1,0 +1,38 @@
+Plan of different stuff to try
+
+
+
+IEEE9_Ver4
+1Hz bound - Original setup with "frequency regulation settling above nominal and then slowly converges to nominal value
+
+
+IEEE9_Ver5
+I modified all gen_intertia values to be in the right base.
+Same exact setup as in Ver4, except H values for all generators.
+
+IEEE9_Ver6
+I modified all internal Gen model parameters to match the info in the table Harry shared on Slack. This is mainly to see if any internal info about the generator is causing any impact on the observed behavior.
+
+
+IEEE9_Ver7
+Here we go back to IEEE9_Ver4 settings, and we "omit" the exciter
+This did not work --> got error! but by looking at the fist 20 mins before the error, it did not solve/improve/help with the problem!
+
+
+IEEE9_Ver8
+So now, we will go back to ver4 and turn off AGC.
+
+
+IEEE9_Ver10
+This is based on Ver 4, but we set back all cranking times to original values. Ver10 is for the case of no freq limit.
+
+IEEE9_Ver11
+This is the same setup as in IEEE9_Ver10 except that the plan used is the one for 1.5 Hz limit
+
+IEEE9_Ver12
+This is the same setup as in IEEE9_Ver10 except that the plan used is the one for 1 Hz limit
+
+
+IEEE9_Ver13
+This is built on top of IEEE9_Ver12
+In this case, we added one BESS at Bus #.

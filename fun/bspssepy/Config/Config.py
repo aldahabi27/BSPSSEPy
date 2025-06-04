@@ -202,6 +202,8 @@ class config:
         #
         #   For BS Generators, the status should be "ON", and the rest of the parameters are all ignored.
         self.GeneratorsConfig = []  # Default is an empty list.
+        
+        self.ibrs_config = []  # Default is an empty list.
 
         self.EnforceActionLock = True  # Flag to enforce checking action lock logic
         
@@ -257,7 +259,6 @@ class config:
 
         if isinstance(ConfigPath, str):
             ConfigPath = Path(ConfigPath)
-        
 
         bp(f'Attempting to load configuration file "{ConfigPath.name}"', app=app)
         await asyncio.sleep(app.async_print_delay if app else 0)
