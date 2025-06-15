@@ -3,27 +3,33 @@
 from __future__ import annotations
 
 import os
+
 # from pathlib import Path
 from rich.text import Text
 from textual.app import App
+
 # from textual import events
 # from textual.widgets import Tree, DataTable
 from textual.widgets import DataTable
 import pandas as pd
 import asyncio  # Used for async operations
+
 # import time
 import psse3601  # noqa: F401
+
 # pyright: reportMissingImports=false
 import psspy  # noqa: F401 pylint: disable=import-error
 from fun.bspssepy.app.bspssepy_print import bspssepy_print as bp
 
 
 async def get_app_dfs(
-    app: App,   # the app handle
-    initialize: bool | None = False,  # If initialize is true, this will return
-                                      # the DFs as if the simulation is just
-                                      # starting (not sure if needed,
-                                      # but will see)
+    app: App,  # the app handle
+    initialize: (
+        bool | None
+    ) = False,  # If initialize is true, this will return
+    # the DFs as if the simulation is just
+    # starting (not sure if needed,
+    # but will see)
 ):
     """
     This function will return all dataframes needed for the GUI Tables.
@@ -48,9 +54,8 @@ async def get_app_dfs(
     # Debugging information
     if debug_print:
         bp(
-            "[DEBUG] Running get_app_dfs"
-            f"with initialize = {initialize}",
-            app=app
+            "[DEBUG] Running get_app_dfs" f"with initialize = {initialize}",
+            app=app,
         )
 
     if debug_print:
@@ -61,8 +66,7 @@ async def get_app_dfs(
     if hasattr(app, "bspssepy") and app.bspssepy is not None:
         if (
             str(app.bspssepy.config.sav_file).lower().strip()
-            ==
-            app.sav_file_path.lower().strip()
+            == app.sav_file_path.lower().strip()
         ):
             same_sav_file = True
 
@@ -70,11 +74,13 @@ async def get_app_dfs(
     if not same_sav_file:
         bp(
             "[INFO] New SAV File selected. Attempting to run a quick analysis"
-            " to update the Tables - please wait..", app=app
+            " to update the Tables - please wait..",
+            app=app,
         )
 
         # pylint: disable=import-outside-toplevel
         from fun.bspssepy.app.bspssepy_app_run import run_simulation
+
         await run_simulation(app=app, dummy_run=True)
         await asyncio.sleep(app.async_print_delay if app else 0)
 
@@ -86,6 +92,7 @@ async def get_app_dfs(
     bspssepy_trn = app.bspssepy.sim.bspssepy_trn
     bspssepy_gen = app.bspssepy.sim.bspssepy_gen
     bspssepy_agc = app.bspssepy.sim.bspssepy_agc
+    bspssepy_ibr = app.bspssepy.sim.bspssepy_ibr
 
     if debug_print:
         bp("Shortcut to simulation dataframes acquired", app=app)
@@ -131,37 +138,39 @@ async def get_app_dfs(
         return f"{round(action_time, round_digit)} min ({sec_formatted}s)"
 
     # Define the progress_df DataFrame with mapped columns
-    progress_df = pd.DataFrame({
-        # Initially all actions are not started
-        "Progress": bspssepy_sequence["Action Status"].apply(status_to_emoji),
-        # All set to zero for now
-        "Control Sequence": bspssepy_sequence["Control Sequence"],
-        # Mapped from bspssepy_sequence
-        "Device Type": bspssepy_sequence["Device Type"],
-        # Mapped from bspssepy_sequence
-        "ID Type": bspssepy_sequence["Identification Type"],
-        # Mapped from bspssepy_sequence
-        "ID Value": bspssepy_sequence["Identification Value"],
-        # Mapped from bspssepy_sequence
-        "Action Type": bspssepy_sequence["Action Type"],
-        # Mapped from bspssepy_sequence
-        "Action Time": bspssepy_sequence["Action Time"].apply(
-            action_time_min_sec
-        ),
-        "Start Time": bspssepy_sequence["Start Time"].apply(
-            lambda x: action_time_min_sec(x, in_sec=True)
-        ),
-        "End Time": bspssepy_sequence["End Time"].apply(
-            lambda x: action_time_min_sec(x, in_sec=True)
-        ),
-        # Mapped from bspssepy_sequence
-        "Action Status": bspssepy_sequence["Action Status"],
-    })
+    progress_df = pd.DataFrame(
+        {
+            # Initially all actions are not started
+            "Progress": bspssepy_sequence["Action Status"].apply(
+                status_to_emoji
+            ),
+            # All set to zero for now
+            "Control Sequence": bspssepy_sequence["Control Sequence"],
+            # Mapped from bspssepy_sequence
+            "Device Type": bspssepy_sequence["Device Type"],
+            # Mapped from bspssepy_sequence
+            "ID Type": bspssepy_sequence["Identification Type"],
+            # Mapped from bspssepy_sequence
+            "ID Value": bspssepy_sequence["Identification Value"],
+            # Mapped from bspssepy_sequence
+            "Action Type": bspssepy_sequence["Action Type"],
+            # Mapped from bspssepy_sequence
+            "Action Time": bspssepy_sequence["Action Time"].apply(
+                action_time_min_sec
+            ),
+            "Start Time": bspssepy_sequence["Start Time"].apply(
+                lambda x: action_time_min_sec(x, in_sec=True)
+            ),
+            "End Time": bspssepy_sequence["End Time"].apply(
+                lambda x: action_time_min_sec(x, in_sec=True)
+            ),
+            # Mapped from bspssepy_sequence
+            "Action Status": bspssepy_sequence["Action Status"],
+        }
+    )
 
     agc_df = bspssepy_agc
-    agc_df["ΔPᴳ"] = agc_df["ΔPᴳ"].apply(
-        lambda x: round(x, round_digit)
-    )
+    agc_df["ΔPᴳ"] = agc_df["ΔPᴳ"].apply(lambda x: round(x, round_digit))
     agc_df["Δf (Hz)"] = agc_df["Δf (Hz)"].apply(
         lambda x: round(x, round_digit)
     )
@@ -184,69 +193,85 @@ async def get_app_dfs(
         bus_num = gen_row["NUMBER"]
 
         # Get the base MVA value
-        ierr, gen_mva_base = psspy.macdat(bus_num, gen_id, 'MBASE')
+        ierr, gen_mva_base = psspy.macdat(bus_num, gen_id, "MBASE")
 
         if ierr == 0:
             if debug_print:
-                bp(f"[DEBUG] Retrieved MVA Base for Generator at Bus {bus_num}"
-                   f", ID {gen_id}: {gen_mva_base} MVA", app=app)
+                bp(
+                    f"[DEBUG] Retrieved MVA Base for Generator at Bus {bus_num}"
+                    f", ID {gen_id}: {gen_mva_base} MVA",
+                    app=app,
+                )
                 await asyncio.sleep(app.async_print_delay if app else 0)
         else:
-            bp(f"[ERROR] Could not retrieve MVA Base for Generator at Bus"
-               f"{bus_num}, ID {gen_id}. Error code: {ierr}", app=app)
+            bp(
+                f"[ERROR] Could not retrieve MVA Base for Generator at Bus"
+                f"{bus_num}, ID {gen_id}. Error code: {ierr}",
+                app=app,
+            )
             await asyncio.sleep(app.async_print_delay if app else 0)
 
         mva_base_list.append(gen_mva_base)
 
     # System_MVA_BASE = psspy.get_sbase()
     # Convert PU to MW/MVar for each generator
-    pelec_mw = [round(pe * mb, round_digit) for pe, mb in zip(
-        pelec_values, [100]*len(pelec_values)
-    )]
+    pelec_mw = [
+        round(pe * mb, round_digit)
+        for pe, mb in zip(pelec_values, [100] * len(pelec_values))
+    ]
     pelec_pu = [round(pe, round_digit) for pe in pelec_values]
 
-    pmech_mw = [round(pm * mb, round_digit) for pm, mb in zip(
-        pmech_values, mva_base_list
-    )]
+    pmech_mw = [
+        round(pm * mb, round_digit)
+        for pm, mb in zip(pmech_values, mva_base_list)
+    ]
     pmech_pu = [round(pm, round_digit) for pm in pmech_values]
 
-    qelec_mvar = [round(qe * mb, round_digit) for qe, mb in zip(
-        qelec_values, [100]*len(pelec_values)
-    )]
+    qelec_mvar = [
+        round(qe * mb, round_digit)
+        for qe, mb in zip(qelec_values, [100] * len(pelec_values))
+    ]
     qelec_pu = [round(qe, round_digit) for qe in qelec_values]
 
     # Handle GREF scaling (assuming it follows the same rule as power)
-    gref_mw = [round(gr * mb, round_digit) for gr, mb in zip(
-        gref_values, mva_base_list
-    )]
+    gref_mw = [
+        round(gr * mb, round_digit)
+        for gr, mb in zip(gref_values, mva_base_list)
+    ]
     gref_pu = [round(gr, round_digit) for gr in gref_values]
 
     # Voltage remains in PU
     vref_pu = [round(vr, round_digit) for vr in vref_values]
 
     # Create the DataFrame with formatted values
-    GenDF = pd.DataFrame({
-        "Gen Name": bspssepy_gen["MCNAME"],
-        "Bus #" : bspssepy_gen["NUMBER"],
-        "Bus Name": bspssepy_gen["NAME"],
-        "Δf": bspssepy_agc["Δf (Hz)"],  # Assuming already in correct format
-        "Pᴱ MW (p.u.)": [f"{mw} MW ({pu} p.u.)" for mw, pu in zip(
-            pelec_mw, pelec_pu
-        )],
-        "Pᴹ MW (p.u.)": [f"{mw} MW ({pu} p.u.)" for mw, pu in zip(
-            pmech_mw, pmech_pu
-        )],
-        "Qᴱ MVar (p.u.)": [f"{mvar} MVar ({pu} p.u.)" for mvar, pu in zip(
-            qelec_mvar, qelec_pu
-        )],
-        "Gᴿᴱꟳ MW (p.u.)": [f"{mw} MW ({pu} p.u.)" for mw, pu in zip(
-            gref_mw, gref_pu
-        )],
-        "Vᴿᴱꟳ (p.u.)": vref_pu,  # Voltage remains in PU
-    })
+    GenDF = pd.DataFrame(
+        {
+            "Gen Name": bspssepy_gen["MCNAME"],
+            "Bus #": bspssepy_gen["NUMBER"],
+            "Bus Name": bspssepy_gen["NAME"],
+            "Δf": bspssepy_agc[
+                "Δf (Hz)"
+            ],  # Assuming already in correct format
+            "Pᴱ MW (p.u.)": [
+                f"{mw} MW ({pu} p.u.)" for mw, pu in zip(pelec_mw, pelec_pu)
+            ],
+            "Pᴹ MW (p.u.)": [
+                f"{mw} MW ({pu} p.u.)" for mw, pu in zip(pmech_mw, pmech_pu)
+            ],
+            "Qᴱ MVar (p.u.)": [
+                f"{mvar} MVar ({pu} p.u.)"
+                for mvar, pu in zip(qelec_mvar, qelec_pu)
+            ],
+            "Gᴿᴱꟳ MW (p.u.)": [
+                f"{mw} MW ({pu} p.u.)" for mw, pu in zip(gref_mw, gref_pu)
+            ],
+            "Vᴿᴱꟳ (p.u.)": vref_pu,  # Voltage remains in PU
+        }
+    )
 
     # pylint: disable=import-outside-toplevel
     from fun.bspssepy.sim.bspssepy_load_funs import get_load_info
+
     load_df_temp = await get_load_info(
         [
             "LOADNAME",
@@ -256,63 +281,81 @@ async def get_app_dfs(
             "ILACT",
             "YLACT",
             "LDGNACT",
-            "STATUS"
+            "STATUS",
         ],
         debug_print=debug_print,
-        app=app
+        app=app,
     )
 
     # Create the DataFrame
     round_digit = 3
-    load_df = pd.DataFrame({
-        "load Name": load_df_temp["LOADNAME"],
-        "Bus #": load_df_temp["NUMBER"],
-        "Bus Name": load_df_temp["NAME"],
-        "Power Array [PL, QL, IP, IQ, YP, YQ, PG, QG]": load_df_temp.apply(
-            lambda row: [
-                round(row["MVAACT"].real, round_digit),
-                round(row["MVAACT"].imag, round_digit),
-                round(row["ILACT"].real, round_digit),
-                round(row["ILACT"].imag, round_digit),
-                round(row["YLACT"].real, round_digit),
-                round(row["YLACT"].imag, round_digit),
-                round(row["LDGNACT"].real, round_digit),
-                round(row["LDGNACT"].imag, round_digit)
-            ], axis=1),
-        "Status": load_df_temp["STATUS"]
-    })
+    load_df = pd.DataFrame(
+        {
+            "load Name": load_df_temp["LOADNAME"],
+            "Bus #": load_df_temp["NUMBER"],
+            "Bus Name": load_df_temp["NAME"],
+            "Power Array [PL, QL, IP, IQ, YP, YQ, PG, QG]": load_df_temp.apply(
+                lambda row: [
+                    round(row["MVAACT"].real, round_digit),
+                    round(row["MVAACT"].imag, round_digit),
+                    round(row["ILACT"].real, round_digit),
+                    round(row["ILACT"].imag, round_digit),
+                    round(row["YLACT"].real, round_digit),
+                    round(row["YLACT"].imag, round_digit),
+                    round(row["LDGNACT"].real, round_digit),
+                    round(row["LDGNACT"].imag, round_digit),
+                ],
+                axis=1,
+            ),
+            "Status": load_df_temp["STATUS"],
+        }
+    )
 
     from fun.bspssepy.sim.bspssepy_bus_funs import get_bus_info
-    BusDFtemp = await get_bus_info(["NUMBER", "NAME", "TYPE"], debug_print=debug_print, app=app)
-    BusStatus = await get_bus_info(["BSPSSEPyStatus"], bspssepy_bus=bspssepy_bus, debug_print=debug_print, app=app)
 
-    BusDF = pd.DataFrame({
-        "Bus #": BusDFtemp["NUMBER"],
-        "Bus Name": BusDFtemp["NAME"],
-        "Type": BusDFtemp["TYPE"],
-        "Status": BusStatus,
-    })
-    
-    BrnDF = pd.DataFrame({
-        "Branch Name": bspssepy_brn["BRANCHNAME"],
-        "From Bus #": bspssepy_brn["FROMNUMBER"],
-        "To Bus #": bspssepy_brn["TONUMBER"],
-        "From Bus Name": bspssepy_brn["FROMNAME"],
-        "To Bus Name": bspssepy_brn["TONAME"],
-        "Status": bspssepy_brn["STATUS"],  
-    })
+    BusDFtemp = await get_bus_info(
+        ["NUMBER", "NAME", "TYPE"], debug_print=debug_print, app=app
+    )
+    BusStatus = await get_bus_info(
+        ["BSPSSEPyStatus"],
+        bspssepy_bus=bspssepy_bus,
+        debug_print=debug_print,
+        app=app,
+    )
 
+    BusDF = pd.DataFrame(
+        {
+            "Bus #": BusDFtemp["NUMBER"],
+            "Bus Name": BusDFtemp["NAME"],
+            "Type": BusDFtemp["TYPE"],
+            "Status": BusStatus,
+        }
+    )
 
-    TrnDF = pd.DataFrame({
-        "Trans. Name": bspssepy_trn["XFRNAME"],
-        "From Bus #": bspssepy_trn["FROMNUMBER"],
-        "To Bus #": bspssepy_trn["TONUMBER"],
-        "From Bus Name": bspssepy_trn["FROMNAME"],
-        "To Bus Name": bspssepy_trn["TONAME"],
-        "Status": bspssepy_trn["STATUS"],
-    })
+    BrnDF = pd.DataFrame(
+        {
+            "Branch Name": bspssepy_brn["BRANCHNAME"],
+            "From Bus #": bspssepy_brn["FROMNUMBER"],
+            "To Bus #": bspssepy_brn["TONUMBER"],
+            "From Bus Name": bspssepy_brn["FROMNAME"],
+            "To Bus Name": bspssepy_brn["TONAME"],
+            "Status": bspssepy_brn["STATUS"],
+        }
+    )
 
-    
+    TrnDF = pd.DataFrame(
+        {
+            "Trans. Name": bspssepy_trn["XFRNAME"],
+            "From Bus #": bspssepy_trn["FROMNUMBER"],
+            "To Bus #": bspssepy_trn["TONUMBER"],
+            "From Bus Name": bspssepy_trn["FROMNAME"],
+            "To Bus Name": bspssepy_trn["TONAME"],
+            "Status": bspssepy_trn["STATUS"],
+        }
+    )
+
+    ibr_df = bspssepy_ibr
+
     DataFrames = {
         "Progress": progress_df,
         "AGC": agc_df,
@@ -321,12 +364,14 @@ async def get_app_dfs(
         "Bus": BusDF,
         "Branch": BrnDF,
         "Transformer": TrnDF,
+        "IBR": ibr_df,
     }
 
     return DataFrames
 
+
 async def update_bspssepy_app_gui(app: App, ResetTables: bool | None = False):
-    
+
     if ResetTables:
         app.progress_table.clear(columns=True)
         app.agc_table.clear(columns=True)
@@ -335,6 +380,7 @@ async def update_bspssepy_app_gui(app: App, ResetTables: bool | None = False):
         app.bus_table.clear(columns=True)
         app.brn_table.clear(columns=True)
         app.trn_table.clear(columns=True)
+        app.ibr_table.clear(columns=True)
 
         app.progress_table.loading = True
         app.agc_table.loading = True
@@ -343,10 +389,8 @@ async def update_bspssepy_app_gui(app: App, ResetTables: bool | None = False):
         app.bus_table.loading = True
         app.brn_table.loading = True
         app.trn_table.loading = True
+        app.ibr_table.loading = True
         await asyncio.sleep(0)
-
-
-    
 
     DataFrames = await get_app_dfs(app=app)
 
@@ -356,7 +400,6 @@ async def update_bspssepy_app_gui(app: App, ResetTables: bool | None = False):
     # await asyncio.sleep(0)
 
     # bp("[INFO] GUI Tables updated with new simulation data.", app=app)
-
 
     # # Loop through all tables and reset them dynamically
     # for TableName, TableInfo in Tables.items():
@@ -369,16 +412,15 @@ async def update_bspssepy_app_gui(app: App, ResetTables: bool | None = False):
     #         appTable=TableInfo["AppTable"],
     #         UseconfigOnly=False
     #     )
-        # await asyncio.sleep(app.async_print_delay if app else 0)
+    # await asyncio.sleep(app.async_print_delay if app else 0)
 
     # Final Debugging Information
     # bp("[INFO] All tables have been reset successfully.", app=app)
     # await asyncio.sleep(app.async_print_delay if app else 0)
 
-
     if app.debug_checkbox.value:
         bp("[DEBUG] BSPSSEPyApp tables initialized.", app=app)
-        # await asyncio.sleep(app.async_print_delay if app else 0)    
+        # await asyncio.sleep(app.async_print_delay if app else 0)
     app.progress_table.loading = False
     app.agc_table.loading = False
     app.gen_table.loading = False
@@ -386,14 +428,10 @@ async def update_bspssepy_app_gui(app: App, ResetTables: bool | None = False):
     app.bus_table.loading = False
     app.brn_table.loading = False
     app.trn_table.loading = False
+    app.ibr_table.loading = False
     await asyncio.sleep(0)
 
-
     app.run_button.disabled = False
-
-
-
-
 
 
 # def bp(Message, app=None, type = None):
@@ -411,7 +449,7 @@ async def update_bspssepy_app_gui(app: App, ResetTables: bool | None = False):
 #     """
 #     if app:
 #         # debug_print = app.debug_checkbox.value
-        
+
 #         # if check if Message is a string
 #         app.call_later(append_to_details_text_area, app.details_text_area, Message)
 #     else:
@@ -423,8 +461,8 @@ async def update_bspssepy_app_gui(app: App, ResetTables: bool | None = False):
 #         UseconfigOnly: bool | None = False,
 # ) -> None:
 #     """ This function will initialize BSPSSEPyApp Tables. This function is called when all info needed is "collected"/"built" (after simInit is run).
-    
-#     Future plan: 
+
+#     Future plan:
 #         Add a functionality to update the tables (or some of them) when SAV file is selected before the Run starts.
 #     """
 
@@ -457,6 +495,7 @@ def GetDataFramesFromGUITables(app: App) -> dict:
         "Bus": app.bus_table,
         "Branch": app.brn_table,
         "Transformer": app.trn_table,
+        "IBR": app.ibr_table,
     }
 
     GUIDataFrames = {}
@@ -468,14 +507,18 @@ def GetDataFramesFromGUITables(app: App) -> dict:
             # ✅ Extract row data using `get_row(row_key)`
             RowData = []
             for row_key in Table.rows.keys():  # Iterate over row keys
-                row_cells = Table.get_row(row_key)  # Fetch the row's cell data
+                row_cells = Table.get_row(
+                    row_key
+                )  # Fetch the row's cell data
                 RowData.append([cell for cell in row_cells])  # Extract text
-            
+
             # ✅ Handle case where table is empty
             if (not ColumnNames or not RowData) and debug_print:
                 bp(f"[DEBUG] Table '{TableName}' is empty.", app=app)
-            
-            GUIDataFrames[TableName] = pd.DataFrame(RowData, columns=ColumnNames) 
+
+            GUIDataFrames[TableName] = pd.DataFrame(
+                RowData, columns=ColumnNames
+            )
     return GUIDataFrames
 
 
@@ -488,14 +531,16 @@ def CompareDataFrames(df1: pd.DataFrame, df2: pd.DataFrame) -> dict:
         df2 (pd.DataFrame): The second DataFrame (new data from simulation).
 
     Returns:
-        dict: 
+        dict:
             - "changes": List of tuples (row_index, column_name, old_value, new_value) for modified cells.
             - "reset_required": Boolean indicating if table dimensions or column names don't match.
     """
     changes = []
 
     # ✅ Check if dimensions OR column names are different
-    reset_required = (df1.shape != df2.shape) or (list(df1.columns) != list(df2.columns))
+    reset_required = (df1.shape != df2.shape) or (
+        list(df1.columns) != list(df2.columns)
+    )
 
     if reset_required:
         return {"changes": [], "reset_required": True}
@@ -503,12 +548,12 @@ def CompareDataFrames(df1: pd.DataFrame, df2: pd.DataFrame) -> dict:
     # ✅ Compare only if column names and shape match
     for row in range(len(df1)):
         for col in df1.columns:
-            if str(df1.at[row, col]) != str(df2.at[row, col]):  # Convert to string for comparison
+            if str(df1.at[row, col]) != str(
+                df2.at[row, col]
+            ):  # Convert to string for comparison
                 changes.append((row, col, df1.at[row, col], df2.at[row, col]))
 
     return {"changes": changes, "reset_required": False}
-
-
 
 
 def UpdateGUITables(app: App, DataFrames: dict):
@@ -520,7 +565,7 @@ def UpdateGUITables(app: App, DataFrames: dict):
         app (App): The Textual app instance.
         DataFrames (dict): The new DataFrames from get_app_dfs.
     """
-    
+
     debug_print = app.debug_checkbox.value
 
     CurrentGUIData = GetDataFramesFromGUITables(app)
@@ -533,21 +578,23 @@ def UpdateGUITables(app: App, DataFrames: dict):
         "Bus": app.bus_table,
         "Branch": app.brn_table,
         "Transformer": app.trn_table,
+        "IBR": app.ibr_table,
     }
 
     for TableName, NewDF in DataFrames.items():
         if TableName in CurrentGUIData:
-                
+
             CurrentDF = CurrentGUIData[TableName]
             ComparisonResult = CompareDataFrames(CurrentDF, NewDF)
 
             Table: DataTable = Tables[TableName]
-            
+
             # Get row and column mappings from keys
             RowKeys = list(Table.rows.keys())  # Extract row keys
-            ColKeys = {col.label.plain: col.key for col in Table.columns.values()}  # Map column names to keys
+            ColKeys = {
+                col.label.plain: col.key for col in Table.columns.values()
+            }  # Map column names to keys
 
-            
             # if TableName == "Transformer":
             #     bp("Transformer Table Update Details:\n"
             #             f"CurrentDF: {CurrentDF}\n"
@@ -556,14 +603,14 @@ def UpdateGUITables(app: App, DataFrames: dict):
             #             f"RowKeys: {RowKeys}\n"
             #             f"ColKeys: {ColKeys}\n"
             #             )
-            
-            
-            
-            
+
             if ComparisonResult["reset_required"]:
                 # Reset table if needed
                 if debug_print:
-                    bp(f"[INFO] Resetting table {TableName} due to column or shape mismatch.", app=app)
+                    bp(
+                        f"[INFO] Resetting table {TableName} due to column or shape mismatch.",
+                        app=app,
+                    )
                 Table.clear(columns=True)
 
                 # Add new columns
@@ -571,27 +618,38 @@ def UpdateGUITables(app: App, DataFrames: dict):
                     Table.add_column(col, width=None)
                 # Add new rows
                 for _, row in NewDF.iterrows():
-                    Table.add_row(*[Text(str(cell), justify="center") for cell in row])
+                    Table.add_row(
+                        *[Text(str(cell), justify="center") for cell in row]
+                    )
 
             else:
-                
-                
+
                 # Apply only changed values with correct row and column keys
-                for row_idx, col_name, old_value, new_value in ComparisonResult["changes"]:
+                for (
+                    row_idx,
+                    col_name,
+                    old_value,
+                    new_value,
+                ) in ComparisonResult["changes"]:
                     if row_idx < len(RowKeys) and col_name in ColKeys:
                         row_key = RowKeys[row_idx]  # Get actual RowKey
                         col_key = ColKeys[col_name]  # Get actual ColumnKey
 
                         # Measure the new content width
                         NewText = Text(str(new_value), justify="center")
-                        NewContentWidth = len(str(new_value))  # Estimate content width
+                        NewContentWidth = len(
+                            str(new_value)
+                        )  # Estimate content width
                         CurrentColumn = Table.columns[col_key]
 
                         # Check if new content exceeds column width
                         if NewContentWidth > CurrentColumn.width:
                             # Rebuild the entire table with adjusted column widths
                             if debug_print:
-                                bp(f"[INFO] Column '{col_name}' is too small. Resizing...", app=app)
+                                bp(
+                                    f"[INFO] Column '{col_name}' is too small. Resizing...",
+                                    app=app,
+                                )
 
                             # Clear & re-add table with resized columns
                             Columns = list(NewDF.columns)
@@ -600,17 +658,28 @@ def UpdateGUITables(app: App, DataFrames: dict):
                             # Rebuild columns with increased width
                             for col in Columns:
                                 # Find max width between content and column name
-                                MaxContentWidth = max(len(str(val)) for val in NewDF[col])  # Find max content width
-                                ColumnNameWidth = len(str(col))  # Get column name width
-                                FinalWidth = max(MaxContentWidth, ColumnNameWidth) + 0  # Ensure padding
+                                MaxContentWidth = max(
+                                    len(str(val)) for val in NewDF[col]
+                                )  # Find max content width
+                                ColumnNameWidth = len(
+                                    str(col)
+                                )  # Get column name width
+                                FinalWidth = (
+                                    max(MaxContentWidth, ColumnNameWidth) + 0
+                                )  # Ensure padding
 
-                                Table.add_column(col, width=FinalWidth)  # Add column with adjusted width
-
+                                Table.add_column(
+                                    col, width=FinalWidth
+                                )  # Add column with adjusted width
 
                             # Re-add rows with updated content
                             for _, row in NewDF.iterrows():
-                                Table.add_row(*[Text(str(cell), justify="center") for cell in row])
-
+                                Table.add_row(
+                                    *[
+                                        Text(str(cell), justify="center")
+                                        for cell in row
+                                    ]
+                                )
 
                             # app.call_later(lambda: Table.refresh())
                             # app.call_later(lambda: Table.post_message(events.Idle()))  # Force recalculation
@@ -619,7 +688,10 @@ def UpdateGUITables(app: App, DataFrames: dict):
 
                         # If content fits, just update normally
                         if debug_print:
-                            bp(f"Updating: row_key={row_key}, col_key={col_key}, old={old_value}, new={new_value}", app=app)
+                            bp(
+                                f"Updating: row_key={row_key}, col_key={col_key}, old={old_value}, new={new_value}",
+                                app=app,
+                            )
 
                         # CurrentScrollX = Table.scroll_x
                         # CurrentScrollY = Table.scroll_y
@@ -629,7 +701,7 @@ def UpdateGUITables(app: App, DataFrames: dict):
                         # put in call later
                         # Table.scroll_x = CurrentScrollX
                         # Table.scroll_y = CurrentScrollY
-                        
+
                         CurrentScrollX = Table.scroll_x
                         CurrentScrollY = Table.scroll_y
 
@@ -637,37 +709,35 @@ def UpdateGUITables(app: App, DataFrames: dict):
                         Table.update_cell(row_key, col_key, NewText)
 
                         # bp(f"moving cursor to row: {row_idx} on Table: {TableName}")
-                        
+
                         # Use call_later to move the cursor after the update
                         app.call_later(lambda: Table.move_cursor(row=row_idx))
 
                         # Restore scroll position after the cursor move
-                        app.call_later(lambda: setattr(Table, 'scroll_x', CurrentScrollX))
-                        app.call_later(lambda: setattr(Table, 'scroll_y', CurrentScrollY))
-                        
-                        
+                        app.call_later(
+                            lambda: setattr(Table, "scroll_x", CurrentScrollX)
+                        )
+                        app.call_later(
+                            lambda: setattr(Table, "scroll_y", CurrentScrollY)
+                        )
 
             # Force table refresh
             # app.call_later(lambda: Table.refresh())
 
-                
-
     # Refresh UI
     # asyncio.sleep(0)
     # app.refresh()
-    
-
 
 
 async def BSPSSEPyAppResetTables(
-        app: App,  # The Textual app instance needed for UI updates
-        UseconfigOnly: bool = False  # Flag to determine if only configuration-based columns should be used
+    app: App,  # The Textual app instance needed for UI updates
+    UseconfigOnly: bool = False,  # Flag to determine if only configuration-based columns should be used
 ) -> None:
     """
     Initializes and resets all BSPSSEPyApp tables.
 
     This function is called when all required simulation data is collected (e.g., after `simInit` is run).
-    If the simulation has not started yet (`app.bspssepy` is not generated), it initializes the tables 
+    If the simulation has not started yet (`app.bspssepy` is not generated), it initializes the tables
     with empty DataFrames.
 
     Future plan:
@@ -689,11 +759,9 @@ async def BSPSSEPyAppResetTables(
 
     from fun.bspssepy.sim.bspssepy_channels import FetchChannelValue
 
-
     if app is None:
         # bp("[ERROR] App instance is missing.", app=app)
         return
-    
 
     round_digit = 3
 
@@ -706,7 +774,7 @@ async def BSPSSEPyAppResetTables(
     bspssepy_trn = app.bspssepy.sim.bspssepy_trn
     bspssepy_gen = app.bspssepy.sim.bspssepy_gen
     bspssepy_agc_df = app.bspssepy.sim.bspssepy_agc
-
+    bspssepy_ibr = app.bspssepy.sim.bspssepy_ibr
 
     # Debugging information
     if app.debug_checkbox.value:
@@ -717,28 +785,49 @@ async def BSPSSEPyAppResetTables(
 
     # If the simulation has not started, use empty DataFrames
     if not simulationStarted:
-        bp("[INFO] No active simulation detected. Initializing tables with empty DataFrames.", app=app)
+        bp(
+            "[INFO] No active simulation detected. Initializing tables with empty DataFrames.",
+            app=app,
+        )
 
     # Retrieve or initialize DataFrames
     if simulationStarted:
-        
         # Define the progress_df DataFrame with mapped columns
-        progress_df = pd.DataFrame({
-            "Progress": [" 🔴"] * len(bspssepy_sequence),  # Initially all actions are not started
-            "Control Sequence": [0] * len(bspssepy_sequence),  # All set to zero for now
-            "Device Type": bspssepy_sequence["Device Type"],  # Mapped from bspssepy_sequence
-            "ID Type": bspssepy_sequence["Identification Type"],  # Mapped from bspssepy_sequence
-            "ID Value": bspssepy_sequence["Identification Value"],  # Mapped from bspssepy_sequence
-            "Action Type": bspssepy_sequence["Action Type"],  # Mapped from bspssepy_sequence
-            "Action Time": bspssepy_sequence["Action Time"],  # Mapped from bspssepy_sequence
-            "Action Status": bspssepy_sequence["Action Status"],  # Mapped from bspssepy_sequence
-        })
+        progress_df = pd.DataFrame(
+            {
+                "Progress": [" 🔴"]
+                * len(
+                    bspssepy_sequence
+                ),  # Initially all actions are not started
+                "Control Sequence": [0]
+                * len(bspssepy_sequence),  # All set to zero for now
+                "Device Type": bspssepy_sequence[
+                    "Device Type"
+                ],  # Mapped from bspssepy_sequence
+                "ID Type": bspssepy_sequence[
+                    "Identification Type"
+                ],  # Mapped from bspssepy_sequence
+                "ID Value": bspssepy_sequence[
+                    "Identification Value"
+                ],  # Mapped from bspssepy_sequence
+                "Action Type": bspssepy_sequence[
+                    "Action Type"
+                ],  # Mapped from bspssepy_sequence
+                "Action Time": bspssepy_sequence[
+                    "Action Time"
+                ],  # Mapped from bspssepy_sequence
+                "Action Status": bspssepy_sequence[
+                    "Action Status"
+                ],  # Mapped from bspssepy_sequence
+            }
+        )
 
         agc_df = bspssepy_agc_df
 
         # # Fetch all required channel values asynchronously
-        pelec_values, pmech_values, qelec_values, gref_values, vref_values = await fetch_gen_ch_val(bspssepy_gen, debug_print, app)
-
+        pelec_values, pmech_values, qelec_values, gref_values, vref_values = (
+            await fetch_gen_ch_val(bspssepy_gen, debug_print, app)
+        )
 
         # ✅ Apply rounding to all numeric lists
         pelec_values = [round(val, round_digit) for val in pelec_values]
@@ -747,69 +836,104 @@ async def BSPSSEPyAppResetTables(
         gref_values = [round(val, round_digit) for val in gref_values]
         vref_values = [round(val, round_digit) for val in vref_values]
 
-        GenDF = pd.DataFrame({
-            "Gen Name": bspssepy_gen["MCNAME"],
-            "Bus #" : bspssepy_gen["NUMBER"],
-            "Bus Name": bspssepy_gen["NAME"],
-            "Δf": bspssepy_agc_df["Δf (Hz)"],
-            "Pᴱ": pelec_values,
-            "Pᴹ": pmech_values,
-            "Qᴱ": qelec_values,
-            "Gᴿᴱꟳ": gref_values,
-            "Vᴿᴱꟳ": vref_values,
-        })
-        
+        GenDF = pd.DataFrame(
+            {
+                "Gen Name": bspssepy_gen["MCNAME"],
+                "Bus #": bspssepy_gen["NUMBER"],
+                "Bus Name": bspssepy_gen["NAME"],
+                "Δf": bspssepy_agc_df["Δf (Hz)"],
+                "Pᴱ": pelec_values,
+                "Pᴹ": pmech_values,
+                "Qᴱ": qelec_values,
+                "Gᴿᴱꟳ": gref_values,
+                "Vᴿᴱꟳ": vref_values,
+            }
+        )
+
         from fun.bspssepy.sim.bspssepy_load_funs import get_load_info
-        load_df_temp = await get_load_info(["LOADNAME", "NUMBER", "NAME", "MVAACT", "ILACT", "YLACT", "LDGNACT", "STATUS"], debug_print=debug_print, app=app)
+
+        load_df_temp = await get_load_info(
+            [
+                "LOADNAME",
+                "NUMBER",
+                "NAME",
+                "MVAACT",
+                "ILACT",
+                "YLACT",
+                "LDGNACT",
+                "STATUS",
+            ],
+            debug_print=debug_print,
+            app=app,
+        )
         # bp(load_df_temp, app=app)
         # Create the DataFrame
-        load_df = pd.DataFrame({
-            "load Name": load_df_temp["LOADNAME"],
-            "Bus #": load_df_temp["NUMBER"],
-            "Bus Name": load_df_temp["NAME"],
-            "Power Array [PL, QL, IP, IQ, YP, YQ, PG, QG]": load_df_temp.apply(lambda row: [
-                round(row["MVAACT"].real, round_digit), round(row["MVAACT"].imag, round_digit),
-                round(row["ILACT"].real, round_digit), round(row["ILACT"].imag, round_digit),
-                round(row["YLACT"].real, round_digit), round(row["YLACT"].imag, round_digit),
-                round(row["LDGNACT"].real, round_digit), round(row["LDGNACT"].imag, round_digit)
-            ], axis=1),
-            "Status": load_df_temp["STATUS"]
-        })
+        load_df = pd.DataFrame(
+            {
+                "load Name": load_df_temp["LOADNAME"],
+                "Bus #": load_df_temp["NUMBER"],
+                "Bus Name": load_df_temp["NAME"],
+                "Power Array [PL, QL, IP, IQ, YP, YQ, PG, QG]": load_df_temp.apply(
+                    lambda row: [
+                        round(row["MVAACT"].real, round_digit),
+                        round(row["MVAACT"].imag, round_digit),
+                        round(row["ILACT"].real, round_digit),
+                        round(row["ILACT"].imag, round_digit),
+                        round(row["YLACT"].real, round_digit),
+                        round(row["YLACT"].imag, round_digit),
+                        round(row["LDGNACT"].real, round_digit),
+                        round(row["LDGNACT"].imag, round_digit),
+                    ],
+                    axis=1,
+                ),
+                "Status": load_df_temp["STATUS"],
+            }
+        )
 
-
-
-        
         from fun.bspssepy.sim.bspssepy_bus_funs import get_bus_info
-        BusDFtemp = await get_bus_info(["NUMBER", "NAME", "TYPE"], debug_print=debug_print, app=app)
-        BusStatus = await get_bus_info(["BSPSSEPyStatus"], bspssepy_bus=bspssepy_bus, debug_print=debug_print, app=app)
 
-        BusDF = pd.DataFrame({
-            "Bus #": BusDFtemp["NUMBER"],
-            "Bus Name": BusDFtemp["NAME"],
-            "Type": BusDFtemp["TYPE"],
-            "Status": BusStatus,
-        })
-        
-        BrnDF = pd.DataFrame({
-            "Branch Name": bspssepy_brn["BRANCHNAME"],
-            "From Bus #": bspssepy_brn["FROMNUMBER"],
-            "To Bus #": bspssepy_brn["TONUMBER"],
-            "From Bus Name": bspssepy_brn["FROMNAME"],
-            "To Bus Name": bspssepy_brn["TONAME"],
-            "Status": bspssepy_brn["STATUS"],  
-        })
+        BusDFtemp = await get_bus_info(
+            ["NUMBER", "NAME", "TYPE"], debug_print=debug_print, app=app
+        )
+        BusStatus = await get_bus_info(
+            ["BSPSSEPyStatus"],
+            bspssepy_bus=bspssepy_bus,
+            debug_print=debug_print,
+            app=app,
+        )
 
+        BusDF = pd.DataFrame(
+            {
+                "Bus #": BusDFtemp["NUMBER"],
+                "Bus Name": BusDFtemp["NAME"],
+                "Type": BusDFtemp["TYPE"],
+                "Status": BusStatus,
+            }
+        )
 
-        TrnDF = pd.DataFrame({
-            "Trans. Name": bspssepy_trn["XFRNAME"],
-            "From Bus #": bspssepy_trn["FROMNUMBER"],
-            "To Bus #": bspssepy_trn["TONUMBER"],
-            "From Bus Name": bspssepy_trn["FROMNAME"],
-            "To Bus Name": bspssepy_trn["TONAME"],
-            "Status": bspssepy_trn["STATUS"],  
-        })
+        BrnDF = pd.DataFrame(
+            {
+                "Branch Name": bspssepy_brn["BRANCHNAME"],
+                "From Bus #": bspssepy_brn["FROMNUMBER"],
+                "To Bus #": bspssepy_brn["TONUMBER"],
+                "From Bus Name": bspssepy_brn["FROMNAME"],
+                "To Bus Name": bspssepy_brn["TONAME"],
+                "Status": bspssepy_brn["STATUS"],
+            }
+        )
 
+        TrnDF = pd.DataFrame(
+            {
+                "Trans. Name": bspssepy_trn["XFRNAME"],
+                "From Bus #": bspssepy_trn["FROMNUMBER"],
+                "To Bus #": bspssepy_trn["TONUMBER"],
+                "From Bus Name": bspssepy_trn["FROMNAME"],
+                "To Bus Name": bspssepy_trn["TONAME"],
+                "Status": bspssepy_trn["STATUS"],
+            }
+        )
 
+        ibr_df = bspssepy_ibr
 
         # TrnDF = pd.DataFrame()
     else:
@@ -820,9 +944,8 @@ async def BSPSSEPyAppResetTables(
         BusDF = pd.DataFrame()
         BrnDF = pd.DataFrame()
         TrnDF = pd.DataFrame()
+        ibr_df = pd.DataFrame()
 
-
-    
     DataFrames = {
         "Progress": progress_df,
         "AGC": agc_df,
@@ -831,12 +954,22 @@ async def BSPSSEPyAppResetTables(
         "Bus": BusDF,
         "Branch": BrnDF,
         "Transformer": TrnDF,
+        "IBR": ibr_df,
     }
 
     # Dictionary to map table names, column structures, and app table objects
     Tables = {
         "Progress": {
-            "columns": ["Progress", "Control Sequence", "Device Type", "ID Type", "ID Value", "Action Type", "Action Time", "Action Status"],
+            "columns": [
+                "Progress",
+                "Control Sequence",
+                "Device Type",
+                "ID Type",
+                "ID Value",
+                "Action Type",
+                "Action Time",
+                "Action Status",
+            ],
             "AppTable": app.progress_table,
         },
         "AGC": {
@@ -844,11 +977,27 @@ async def BSPSSEPyAppResetTables(
             "AppTable": app.agc_table,
         },
         "Generator": {
-            "columns": ["Gen Name", "Bus #", "Bus Name", "Δf", "Pᴱ", "Pᴹ", "Qᴱ", "Gᴿᴱꟳ", "Vᴿᴱꟳ"],
+            "columns": [
+                "Gen Name",
+                "Bus #",
+                "Bus Name",
+                "Δf",
+                "Pᴱ",
+                "Pᴹ",
+                "Qᴱ",
+                "Gᴿᴱꟳ",
+                "Vᴿᴱꟳ",
+            ],
             "AppTable": app.gen_table,
         },
         "load": {
-            "columns": ["load Name", "Bus #", "Bus Name", "Power Array [PL, QL, IP, IQ, YP, YQ, PG, QG]", "Status"],
+            "columns": [
+                "load Name",
+                "Bus #",
+                "Bus Name",
+                "Power Array [PL, QL, IP, IQ, YP, YQ, PG, QG]",
+                "Status",
+            ],
             "AppTable": app.load_table,
         },
         "Bus": {
@@ -856,13 +1005,48 @@ async def BSPSSEPyAppResetTables(
             "AppTable": app.bus_table,
         },
         "Branch": {
-            "columns": ["Branch Name", "From Bus #", "To Bus #", "From Bus Name", "To Bus Name", "Status"],
+            "columns": [
+                "Branch Name",
+                "From Bus #",
+                "To Bus #",
+                "From Bus Name",
+                "To Bus Name",
+                "Status",
+            ],
             "AppTable": app.brn_table,
         },
         "Transformer": {
-            "columns": ["Trans. Name", "From Bus #", "To Bus #", "From Bus Name", "To Bus Name", "Status"],
+            "columns": [
+                "Trans. Name",
+                "From Bus #",
+                "To Bus #",
+                "From Bus Name",
+                "To Bus Name",
+                "Status",
+            ],
             "AppTable": app.trn_table,
-        }
+        },
+        "IBR": {
+            "columns": [
+                "ID",
+                "MCNAME",
+                "NAME",
+                "NUMBER",
+                "STATUS",
+                "PGEN",
+                "QGEN",
+                "WMOD",
+                "ibr_type",
+                "gfm_flag",
+                "init_cap",
+                "BSPSSEPyStatus",
+                "BSPSSEPyStatus_0",
+                "BSPSSEPyLastAction",
+                "BSPSSEPyLastActionTime",
+                "BSPSSEPySimulationNotes",
+            ],
+            "AppTable": app.ibr_table,
+        },
     }
 
     # Loop through all tables and reset them dynamically
@@ -874,7 +1058,7 @@ async def BSPSSEPyAppResetTables(
             TableCol=TableInfo["columns"],
             app=app,
             appTable=TableInfo["AppTable"],
-            UseconfigOnly=UseconfigOnly
+            UseconfigOnly=UseconfigOnly,
         )
         # await asyncio.sleep(app.async_print_delay if app else 0)
 
@@ -882,20 +1066,21 @@ async def BSPSSEPyAppResetTables(
     bp("[INFO] All tables have been reset successfully.", app=app)
     # await asyncio.sleep(app.async_print_delay if app else 0)
 
-
     if app.debug_checkbox.value:
         bp("[DEBUG] BSPSSEPyApp tables initialized.", app=app)
         # await asyncio.sleep(app.async_print_delay if app else 0)
 
 
-
-
 def BSPSSEPyAppResetTable(
-        BSPSSEPyDataFrame: pd.DataFrame,  # DataFrame containing the source data for the table
-        TableCol: list[str],           # List of column names to be displayed in the table (can include computed columns)
-        app: App,                # The Textual app instance (needed for UI updates)
-        appTable: DataTable,           # The specific table widget in the GUI to be updated (e.g., app.MyTable)
-        UseconfigOnly: bool | None = False, # Flag to determine if only configuration-based columns should be used
+    BSPSSEPyDataFrame: pd.DataFrame,  # DataFrame containing the source data for the table
+    TableCol: list[
+        str
+    ],  # List of column names to be displayed in the table (can include computed columns)
+    app: App,  # The Textual app instance (needed for UI updates)
+    appTable: DataTable,  # The specific table widget in the GUI to be updated (e.g., app.MyTable)
+    UseconfigOnly: (
+        bool | None
+    ) = False,  # Flag to determine if only configuration-based columns should be used
 ) -> None:
     """
     Resets and updates a Textual DataTable using the provided DataFrame.
@@ -931,14 +1116,22 @@ def BSPSSEPyAppResetTable(
 
     # Debugging information
     if app.debug_checkbox.value:
-        bp(f"[DEBUG] Resetting table {appTable.id} with columns: {TableCol}", app=app)
+        bp(
+            f"[DEBUG] Resetting table {appTable.id} with columns: {TableCol}",
+            app=app,
+        )
 
     # Add columns to the table
     for Column in TableCol:
-        appTable.add_column(Column)  # No need to set justify here, we do it per cell
+        appTable.add_column(
+            Column
+        )  # No need to set justify here, we do it per cell
     # Debugging information
     if app.debug_checkbox.value:
-        bp(f"[DEBUG] Added columns: {TableCol} (content will be centered)", app=app)
+        bp(
+            f"[DEBUG] Added columns: {TableCol} (content will be centered)",
+            app=app,
+        )
 
     # Populate the table with rows from the DataFrame
     for _, Row in BSPSSEPyDataFrame.iterrows():
@@ -948,7 +1141,9 @@ def BSPSSEPyAppResetTable(
             if Column in BSPSSEPyDataFrame.columns:
                 cell_value = Row[Column]  # Get the original value
             else:
-                cell_value = ""  # Default empty value for unknown computed columns
+                cell_value = (
+                    ""  # Default empty value for unknown computed columns
+                )
 
             # Convert value to `Text` object with center alignment
             RowData.append(Text(str(cell_value), justify="center"))
@@ -965,20 +1160,13 @@ def BSPSSEPyAppResetTable(
     if app.debug_checkbox.value:
         bp("[DEBUG] Table update completed.", app=app)
 
-    
 
-
-def BSPSSEPyAppUpdateTables(
-        *args,
-        app = None
-        ) -> None:
-    """ This function will update the BSPSSEPyApp Tables using the available data-frames and by calling PSSE functions to collect new measurements (mainly from channels)"""
-
+def BSPSSEPyAppUpdateTables(*args, app=None) -> None:
+    """This function will update the BSPSSEPyApp Tables using the available data-frames and by calling PSSE functions to collect new measurements (mainly from channels)"""
 
 
 # async def GetLoadInfoPSSE(LoadNames: list(str), debug_print, app):
 # "Write a function that calls bspssepy_load"
-
 
 
 async def fetch_gen_ch_val(bspssepy_gen, debug_print, app):
@@ -996,27 +1184,50 @@ async def fetch_gen_ch_val(bspssepy_gen, debug_print, app):
 
     async def fetch_row_channels(row):
         from fun.bspssepy.sim.bspssepy_channels import FetchChannelValue
+
         """
         Fetches channel values for a single generator row asynchronously.
         """
         return (
-            await FetchChannelValue(int(row["PELECChannel"]), debug_print=debug_print, app=app),
-            await FetchChannelValue(int(row["PMECHChannel"]), debug_print=debug_print, app=app),
-            await FetchChannelValue(int(row["QELECChannel"]), debug_print=debug_print, app=app),
-            await FetchChannelValue(int(row["GREFChannel"]), debug_print=debug_print, app=app),
-            await FetchChannelValue(int(row["VREFChannel"]), debug_print=debug_print, app=app)
+            await FetchChannelValue(
+                int(row["PELECChannel"]), debug_print=debug_print, app=app
+            ),
+            await FetchChannelValue(
+                int(row["PMECHChannel"]), debug_print=debug_print, app=app
+            ),
+            await FetchChannelValue(
+                int(row["QELECChannel"]), debug_print=debug_print, app=app
+            ),
+            await FetchChannelValue(
+                int(row["GREFChannel"]), debug_print=debug_print, app=app
+            ),
+            await FetchChannelValue(
+                int(row["VREFChannel"]), debug_print=debug_print, app=app
+            ),
         )
 
     # Use `asyncio.gather()` to fetch all generator data in parallel
-    results = await asyncio.gather(*(fetch_row_channels(row) for _, row in bspssepy_gen.iterrows()))
+    results = await asyncio.gather(
+        *(fetch_row_channels(row) for _, row in bspssepy_gen.iterrows())
+    )
 
     # Unpack results into separate lists
-    pelec_values, pmech_values, qelec_values, gref_values, vref_values = zip(*results)
+    pelec_values, pmech_values, qelec_values, gref_values, vref_values = zip(
+        *results
+    )
 
-    return list(pelec_values), list(pmech_values), list(qelec_values), list(gref_values), list(vref_values)
+    return (
+        list(pelec_values),
+        list(pmech_values),
+        list(qelec_values),
+        list(gref_values),
+        list(vref_values),
+    )
 
 
-def ProgressBarUpdate(ProgressBar, CurrentTime, TotalTime, App=None, label=None):
+def ProgressBarUpdate(
+    ProgressBar, CurrentTime, TotalTime, App=None, label=None
+):
     """
     Updates the progress bar based on the current simulation time.
 
@@ -1027,16 +1238,20 @@ def ProgressBarUpdate(ProgressBar, CurrentTime, TotalTime, App=None, label=None)
         App (BSPSSEPyApp, optional): The main Textual app instance for UI updates.
         label (Label, optional): The label to display the current simulation time.
     """
-    
+
     # Ensure TotalTime is greater than 0 to avoid division errors
     if TotalTime <= 0:
         return
 
     # Calculate progress percentage
-    ProgressPercentage = min((CurrentTime / TotalTime) * 100, 100)  # Cap at 100%
-    
-    ProgressBar.update(total=100, progress=ProgressPercentage)  # Update the progress bar
-    
+    ProgressPercentage = min(
+        (CurrentTime / TotalTime) * 100, 100
+    )  # Cap at 100%
+
+    ProgressBar.update(
+        total=100, progress=ProgressPercentage
+    )  # Update the progress bar
+
     # Format the time display with hours, minutes, and seconds
     hours = CurrentTime // 3600
     minutes = (CurrentTime % 3600) // 60
@@ -1055,14 +1270,16 @@ def ProgressBarUpdate(ProgressBar, CurrentTime, TotalTime, App=None, label=None)
     # # ✅ Schedule UI updates to prevent lagging
     # if App:
     #     App.call_later(append_to_details_text_area, App.details_text_area, f"Progress: {ProgressPercentage}%")
-    
+
     if label:
-        App.call_later(label.update, TimeDisplay)  # ✅ Properly schedules label update
+        App.call_later(
+            label.update, TimeDisplay
+        )  # ✅ Properly schedules label update
 
 
 def add_sav_files_to_tree(ParentNode, FolderPath):
     """
-    Recursively scans the given folder and adds .sav files as leaves 
+    Recursively scans the given folder and adds .sav files as leaves
     and subfolders as expandable nodes in the tree.
 
     Parameters:
@@ -1071,7 +1288,9 @@ def add_sav_files_to_tree(ParentNode, FolderPath):
     """
     try:
         # Get a sorted list of all items (files & directories) in the folder
-        for Entry in sorted(os.scandir(FolderPath), key=lambda E: E.name.lower()):
+        for Entry in sorted(
+            os.scandir(FolderPath), key=lambda E: E.name.lower()
+        ):
             if Entry.is_dir():
                 # If it's a folder, add it as a node and recurse into it
                 FolderNode = ParentNode.add(Entry.name, expand=False)

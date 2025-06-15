@@ -203,7 +203,7 @@ class config:
         #   For BS Generators, the status should be "ON", and the rest of the parameters are all ignored.
         self.GeneratorsConfig = []  # Default is an empty list.
         
-        self.ibrs_config = []  # Default is an empty list.
+        self.ibr_config = []  # Default is an empty list.
 
         self.EnforceActionLock = True  # Flag to enforce checking action lock logic
         
@@ -286,6 +286,7 @@ class config:
             
         debug_print = self.debug_print
 
+        
         # Prepare directories for the case
         self.CaseFolder = self.MainFolder / f"Case/{self.CaseName}"
         self.LogsFolder = self.CaseFolder / "Logs"
@@ -366,14 +367,14 @@ class config:
                     # Set "Tied Action" to reference the first action's UID
                     self.bspssepy_sequence.at[idx, "Tied Action"] = ActionTimeToUID[action_time]
 
-        with pd.option_context(
-            "display.max_rows", None,  # Show all rows
-            "display.max_columns", None,  # Show all columns
-            "display.width", 0,  # Auto-adjust width for full visibility
-            "display.colheader_justify", "center",  # Center column headers for readability
-        ):
-            bp(self.bspssepy_sequence.to_string(index=False))
-            await asyncio.sleep(app.async_print_delay if app else 0)
+        # with pd.option_context(
+        #     "display.max_rows", None,  # Show all rows
+        #     "display.max_columns", None,  # Show all columns
+        #     "display.width", 0,  # Auto-adjust width for full visibility
+        #     "display.colheader_justify", "center",  # Center column headers for readability
+        # ):
+        #     bp(self.bspssepy_sequence.to_string(index=False))
+        #     await asyncio.sleep(app.async_print_delay if app else 0)
 
 
         
@@ -468,14 +469,14 @@ class config:
             # await asyncio.sleep(app.async_print_delay if app else 0)
 
 
-        with pd.option_context(
-            "display.max_rows", None,  # Show all rows
-            "display.max_columns", None,  # Show all columns
-            "display.width", 0,  # Auto-adjust width for full visibility
-            "display.colheader_justify", "center",  # Center column headers for readability
-        ):
-            bp(self.bspssepy_sequence.to_string(index=False))
-            await asyncio.sleep(app.async_print_delay if app else 0)
+        # with pd.option_context(
+        #     "display.max_rows", None,  # Show all rows
+        #     "display.max_columns", None,  # Show all columns
+        #     "display.width", 0,  # Auto-adjust width for full visibility
+        #     "display.colheader_justify", "center",  # Center column headers for readability
+        # ):
+        #     bp(self.bspssepy_sequence.to_string(index=False))
+        #     await asyncio.sleep(app.async_print_delay if app else 0)
 
 
 

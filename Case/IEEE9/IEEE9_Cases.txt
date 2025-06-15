@@ -35,4 +35,14 @@ This is the same setup as in IEEE9_Ver10 except that the plan used is the one fo
 
 IEEE9_Ver13
 This is built on top of IEEE9_Ver12
-In this case, we added one BESS at Bus #.
+In this case, we added one BESS at Bus 5.
+
+
+IEEE9_Ver14
+This is built on top of IEEE9_Ver13.
+In this case, we added a plant controller to the BESS to see if change_pref and change_qvref functions will work.
+
+
+IEEE9_Ver15
+This is built on top of IEEE9_Ver13.
+The BESS bus (Bus 5) code is changed to 2 (PV bus). The scheduled voltage was modified to Vscheduled = 1.015057 pu

@@ -24,7 +24,7 @@
 CaseName = "IEEE9"
 
 # Version number from the .sav file name (e.g., 3Bus_Ver2.sav). Use -1 if no version is specified.
-Ver = 12
+Ver = 13
 
 # Number of buses in the system. If unsure, leave as 0, and the code will derive this automatically from the case data.
 NumberOfBuses = 50
@@ -157,20 +157,26 @@ GeneratorsConfig = [
         "UseGenRampRate": False,  # If True, the generator will use the ramp rate specified in the config file. If False, the generator will use the ramp rate specified in the dynamic model (if any).
         "Load Enabled Response": False,  # If true, the generator will supply power based on the anticipated load-enabled when the action is executed. The generator will use LER Participation Factor to supply the portion associated to it.
         "LERPF": -1,   # if -1 --> use AGC Participation Factor, otherwise, 0 <= LERPF <= 1 (note, the sum of all LERPF for all generators should be = 1)
-    }
+    }    
     # Add more generators as needed
 ]
 
 
 # IBRs Configuration
-ibrs_config = [
+ibr_config = [
     {
         "IBR Name": "BESS5",
         "Bus Name": "Bus5",
         "Status": 0,  # 0: OFF, 1: Online
-        "Ramp Rate": 0,  # Placeholder for ramp rate, if needed - currently being skipped and will try to rely on the dynamic model
-        "GFM Flag": True,  # If True, the IBR will operate in GFM mode (currently all of this is handled in the dynamic model configuration in the dyr file)
-        "Initial Capacity": 0.2, # Initial Capacity for BESS in p.u. of the MBASE
+        "IBR Type": "BESS",  # Type of IBR (e.g., BESS, Wind, Solar)
+        "Ramp Rate": 0,  # Placeholder for ramp rate, if needed - currently
+                         # being skipped and will try to rely on the dynamic
+                         # model
+        "GFM Flag": True,  # If True, the IBR will operate in GFM mode
+                           # (currently all of this is handled in the dynamic
+                           # model configuration in the dyr file)
+        "Initial Capacity": 0.2,  # Initial Capacity for BESS in p.u. of the
+                                  # MBASE
     }
 ]
 

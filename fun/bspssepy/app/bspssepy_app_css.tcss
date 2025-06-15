@@ -218,9 +218,27 @@ If we have wide element, we use HorizontalScroll, here, we use horizontal only*/
     border: round $primary;
 }
 
+/* ==========================
+/* Third Row: IBR Table
+/* ========================== */
+
+#ibr_table_row{
+    layout: horizontal;
+    height: 6;
+    overflow: auto auto;
+    /*# margin-top:1;*/
+}
+
+#ibr_table_container {
+    height: 6;
+    width: 2fr;
+    border: round $primary;
+}
+
+
 
 /* ==========================
-/* Third Row: Load and Bus Tables
+/* Forth Row: Load and Bus Tables
 /* ========================== */
 
 #load_bus_tables_row{
@@ -243,7 +261,7 @@ If we have wide element, we use HorizontalScroll, here, we use horizontal only*/
 }
 
 /* ==========================
-/* Forth Row: Branch and Transformer Tables
+/* Fifth Row: Branch and Transformer Tables
 /* ========================== */
 
 #brn_trn_tables_row{

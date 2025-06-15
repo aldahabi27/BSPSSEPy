@@ -7,6 +7,7 @@ from __future__ import annotations
 # (not used yet)
 # from typing import Any  # Used for type hints
 from datetime import datetime  # Used to format the date/time manually
+
 # import time  # Used for time-related operations
 # import asyncio  # Used for async operations
 
@@ -18,6 +19,7 @@ import os  # Used for file system operations
 # (not yet used)
 # from textual.containers import Container, HorizontalScroll
 from textual.app import App, ComposeResult  # Base classes for a Textual app
+
 # Layout containers
 from textual.containers import Grid, Horizontal, VerticalScroll
 from textual.widgets import (  # Importing various UI widgets
@@ -45,6 +47,7 @@ from textual.widgets import (  # Importing various UI widgets
     Checkbox,
     # Link,
 )
+
 # Specialized input field
 # from textual.widgets._masked_input import MaskedInput
 
@@ -71,7 +74,7 @@ class BSPSSEPyApp(App[None]):  # Inheriting from the Textual App class
     CSS_PATH = "./bspssepy_app_css.tcss"
 
     def __init__(self) -> None:
-        """ Initialize the application. """
+        """Initialize the application."""
         super().__init__()
         self.app_name = "BSPSSEPy"
         # self.bspssepy_application = "Main"
@@ -114,18 +117,28 @@ class BSPSSEPyApp(App[None]):  # Inheriting from the Textual App class
         self.brn_table_col = None
         self.trn_table = None
         self.trn_table_col = None
+        self.ibr_table = None
+        self.ibr_table_col = None
+
         self.case_tree_progress_table_row = None
         self.case_tree_container_grid = None
         self.progress_table_container_grid = None
+
         self.gen_tables_row = None
         self.agc_table_container_grid = None
         self.gen_table_container_grid = None
+
         self.load_bus_tables_row = None
         self.load_table_container_grid = None
         self.bus_table_container_grid = None
+
         self.brn_trn_tables_row = None
         self.brn_table_container_grid = None
         self.trn_table_container_grid = None
+
+        self.ibr_table_row = None
+        self.ibr_table_container_grid = None
+
         self.main_grid = None
         self.details_text_area = None
         self.app_grid = None
@@ -138,7 +151,7 @@ class BSPSSEPyApp(App[None]):  # Inheriting from the Textual App class
         return Header(
             show_clock=True,
             icon="⚡️📊",
-            time_format=datetime.now().strftime("%I:%M %p %b %d, %Y")
+            time_format=datetime.now().strftime("%I:%M %p %b %d, %Y"),
         )
 
     def _build_top_bar(self) -> Horizontal:
@@ -149,7 +162,7 @@ class BSPSSEPyApp(App[None]):  # Inheriting from the Textual App class
             "❌",
             variant="default",
             id="exit_button",
-            tooltip="Exit Application"
+            tooltip="Exit Application",
         )
 
         self.run_button = Button(
@@ -157,7 +170,7 @@ class BSPSSEPyApp(App[None]):  # Inheriting from the Textual App class
             variant="default",
             id="run_button",
             disabled=True,
-            tooltip="Run"
+            tooltip="Run",
         )
 
         self.pause_button = Button(
@@ -165,7 +178,7 @@ class BSPSSEPyApp(App[None]):  # Inheriting from the Textual App class
             variant="default",
             id="pause_button",
             disabled=True,
-            tooltip="Pause (coming soon)"
+            tooltip="Pause (coming soon)",
         )
 
         self.stop_button = Button(
@@ -173,13 +186,13 @@ class BSPSSEPyApp(App[None]):  # Inheriting from the Textual App class
             variant="default",
             id="stop_button",
             disabled=True,
-            tooltip="Stop"
+            tooltip="Stop",
         )
 
         self.debug_checkbox = Checkbox(
             "Debug",
             id="debug_checkbox",
-            tooltip="Display debug print messages during the simulation"
+            tooltip="Display debug print messages during the simulation",
         )
 
         self.top_bar_label = Label(
@@ -189,18 +202,16 @@ class BSPSSEPyApp(App[None]):  # Inheriting from the Textual App class
             "🌍 [green][link='https://github.com/aldahabi27']"
             "GitHub: aldahabi27[/][/green]",
             variant="primary",
-            id="top_bar_label"
+            id="top_bar_label",
         )
 
         # Progress Bar
         self.top_bar_progress_bar = ProgressBar(
-            total=100,
-            id="top_bar_progress_bar"
+            total=100, id="top_bar_progress_bar"
         )
 
         self.top_bar_progress_bar_label = Label(
-            "t = 0s",
-            id="top_bar_progress_bar_label"
+            "t = 0s", id="top_bar_progress_bar_label"
         )
 
         return Horizontal(
@@ -210,18 +221,15 @@ class BSPSSEPyApp(App[None]):  # Inheriting from the Textual App class
                 self.pause_button,
                 self.stop_button,
                 self.debug_checkbox,
-                id="top_bar_button_horizontal"
+                id="top_bar_button_horizontal",
             ),
-            Horizontal(
-                self.top_bar_label,
-                id="top_bar_label_horizontal"
-            ),
+            Horizontal(self.top_bar_label, id="top_bar_label_horizontal"),
             Horizontal(
                 self.top_bar_progress_bar_label,
                 self.top_bar_progress_bar,
-                id="top_bar_progress_bar_horizontal"
+                id="top_bar_progress_bar_horizontal",
             ),
-            id="top_bar"
+            id="top_bar",
         )
 
     def _build_main_grid(self) -> VerticalScroll:
@@ -242,11 +250,7 @@ class BSPSSEPyApp(App[None]):  # Inheriting from the Textual App class
         # All Tables --> DataTables
         def create_table(id_str: str) -> DataTable:
             """Create a DataTable with the given ID."""
-            return DataTable(
-                id=id_str,
-                zebra_stripes=True,
-                cursor_type="row"
-            )
+            return DataTable(id=id_str, zebra_stripes=True, cursor_type="row")
 
         self.progress_table = create_table("progress_table")
         self.progress_table.loading = True
@@ -270,89 +274,95 @@ class BSPSSEPyApp(App[None]):  # Inheriting from the Textual App class
         self.trn_table = create_table("trn_table")
         self.trn_table_col = []
 
+        self.ibr_table = create_table("ibr_table")
+        self.ibr_table_col = []
+
         # === Container Grids ===
         self.case_tree_container_grid = Grid(
-            self.case_tree,
-            id="case_tree_container"
+            self.case_tree, id="case_tree_container"
         )
         self.case_tree_container_grid.border_title = "BSPSSEPy Case Explorer"
 
         self.progress_table_container_grid = Grid(
-            VerticalScroll(self.progress_table),
-            id="progress_table_container"
+            VerticalScroll(self.progress_table), id="progress_table_container"
         )
         self.progress_table_container_grid.border_title = "Progress Table"
 
         self.agc_table_container_grid = Grid(
-            VerticalScroll(self.agc_table),
-            id="agc_table_container"
+            VerticalScroll(self.agc_table), id="agc_table_container"
         )
         self.agc_table_container_grid.border_title = "AGC Table"
 
         self.gen_table_container_grid = Grid(
-            VerticalScroll(self.gen_table),
-            id="gen_table_container"
+            VerticalScroll(self.gen_table), id="gen_table_container"
         )
         self.gen_table_container_grid.border_title = "Generator Table"
 
         self.load_table_container_grid = Grid(
-            VerticalScroll(self.load_table),
-            id="load_table_container"
+            VerticalScroll(self.load_table), id="load_table_container"
         )
         self.load_table_container_grid.border_title = "load Table"
 
         self.bus_table_container_grid = Grid(
-            VerticalScroll(self.bus_table),
-            id="bus_table_container"
+            VerticalScroll(self.bus_table), id="bus_table_container"
         )
         self.bus_table_container_grid.border_title = "Bus Table"
 
         self.brn_table_container_grid = Grid(
-            VerticalScroll(self.brn_table),
-            id="brn_table_container"
+            VerticalScroll(self.brn_table), id="brn_table_container"
         )
         self.brn_table_container_grid.border_title = "Branch Table"
 
         self.trn_table_container_grid = Grid(
-            VerticalScroll(self.trn_table),
-            id="trn_table_container"
+            VerticalScroll(self.trn_table), id="trn_table_container"
         )
         self.trn_table_container_grid.border_title = "Transformer Table"
+
+        self.ibr_table_container_grid = Grid(
+            VerticalScroll(self.ibr_table), id="ibr_table_container"
+        )
+        self.ibr_table_container_grid.border_title = "IBR Table"
 
         # === Horizontal Rows ===
         self.case_tree_progress_table_row = Horizontal(
             self.case_tree_container_grid,
             self.progress_table_container_grid,
-            id="case_tree_progress_table_row"
+            id="case_tree_progress_table_row",
         )
 
         self.gen_tables_row = Horizontal(
             self.agc_table_container_grid,
             self.gen_table_container_grid,
-            id="gen_tables_row"
+            id="gen_tables_row",
         )
 
         self.load_bus_tables_row = Horizontal(
             self.load_table_container_grid,
             self.bus_table_container_grid,
-            id="load_bus_tables_row"
+            id="load_bus_tables_row",
         )
 
         self.brn_trn_tables_row = Horizontal(
             self.brn_table_container_grid,
             self.trn_table_container_grid,
-            id="brn_trn_tables_row"
+            id="brn_trn_tables_row",
+        )
+
+        self.ibr_table_row = Horizontal(
+            self.ibr_table_container_grid,
+            id="ibr_table_row",
         )
 
         # === Main Grid (VerticalScroll) ===
         self.main_grid = VerticalScroll(
             self.case_tree_progress_table_row,
             self.gen_tables_row,
+            self.ibr_table_row,
             self.load_bus_tables_row,
             self.brn_trn_tables_row,
             id="main_grid",
         )
-        
+
         return self.main_grid
 
     def _build_details_text_area(self) -> TextArea:
@@ -364,7 +374,7 @@ class BSPSSEPyApp(App[None]):  # Inheriting from the Textual App class
             read_only=True,
             text="BSPSSEPy Application Messages",
             show_line_numbers=True,
-            max_checkpoints=0
+            max_checkpoints=0,
         )
         self.details_text_area.border_title = "Details"
 
@@ -403,22 +413,20 @@ class BSPSSEPyApp(App[None]):  # Inheriting from the Textual App class
             self.dummy_run = False
 
             # fix the line below for me plz
-            if (
-                self.case_tree.cursor_node
-                and str(self.case_tree.cursor_node.label)
-                    .lower().endswith(".sav")
-            ):
+            if self.case_tree.cursor_node and str(
+                self.case_tree.cursor_node.label
+            ).lower().endswith(".sav"):
                 self.run_button.disabled = False
 
         elif event.button.id == "run_button":
             # pylint: disable=import-outside-toplevel
             from fun.bspssepy.app.bspssepy_app_run import run_simulation
+
             # Schedule the async function properly
             self.bspssepy_worker = self.run_worker(run_simulation(self))
 
     def on_tree_node_selected(
-        self: BSPSSEPyApp,
-        event: Tree.NodeSelected
+        self: BSPSSEPyApp, event: Tree.NodeSelected
     ) -> None:
         """
         Handles the event when a tree node (file or folder) is selected.
@@ -434,9 +442,8 @@ class BSPSSEPyApp(App[None]):  # Inheriting from the Textual App class
                 full_path_parts = []
                 current_node = event.node
 
-                while (
-                    (current_node is not None)
-                    and (str(current_node.label).lower() != "case")
+                while (current_node is not None) and (
+                    str(current_node.label).lower() != "case"
                 ):
                     # Insert at the beginning
                     full_path_parts.insert(0, str(current_node.label))
@@ -445,14 +452,16 @@ class BSPSSEPyApp(App[None]):  # Inheriting from the Textual App class
 
                 # Construct the correct full file path
                 self.sav_file_path = os.path.join(
-                    self.case_folder_path, *full_path_parts)
+                    self.case_folder_path, *full_path_parts
+                )
                 self.config_path = f"{self.sav_file_path[:-4]}_Config.py"
 
                 # Update GUI Tables
                 # pylint: disable=import-outside-toplevel
                 from fun.bspssepy.app.app_helper_funs import (
-                    update_bspssepy_app_gui
+                    update_bspssepy_app_gui,
                 )
+
                 self.bspssepy_worker = self.run_worker(
                     update_bspssepy_app_gui(app=self, ResetTables=True)
                 )
@@ -465,6 +474,8 @@ def launch_app():
     """Public method to launch the app (used in __main__.py)."""
     app = BSPSSEPyApp()
     app.run()
+
+
 # # Running the application
 # app = BSPSSEPyApp()
 
