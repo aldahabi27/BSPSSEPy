@@ -24,7 +24,7 @@
 CaseName = "IEEE9"
 
 # Version number from the .sav file name (e.g., 3Bus_Ver2.sav). Use -1 if no version is specified.
-Ver = 15
+Ver = 16
 
 # Number of buses in the system. If unsure, leave as 0, and the code will derive this automatically from the case data.
 NumberOfBuses = 50
@@ -66,7 +66,7 @@ IgnoreCNVFile = True
 IgnoreSNPFile = True
 
 # BSPSSEPy Hard Time Limit in minutes (ignored if BSPSSEPyHardTimeLimitFlag is False)
-BSPSSEPyHardTimeLimit = 12  # 30 #minutes
+BSPSSEPyHardTimeLimit = 12  # 437/60  # 12  # 30 #minutes
 
 # If true, BSPSSEPy will enforce a hard time limit on the simulation.
 # BSPSSEPyHardTimeLimitFlag = True

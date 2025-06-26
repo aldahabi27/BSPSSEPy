@@ -48,17 +48,29 @@ async def build_bspssepy_ibr(
         ibr_config_df = ibr_config_df.rename(
             columns={
                 "IBR Name": "MCNAME",
+                "Bus Name": "NAME",
+                "Status": "BSPSSEPyStatus_0",
                 "IBR Type": "ibr_type",
                 "GFM Flag": "gfm_flag",
                 "Initial Capacity": "init_cap",
+                "Ramp Rate": "ramp_rate",               
             }
         )
 
         # Merge ibr_config_df with bspssepy_ibr
 
-        # Step 3: Merge on MCNAME (you could also use 'Bus Name' → 'NAME' if needed)
+        # Step 3: Merge on MCNAME
+        # (you could also use 'Bus Name' → 'NAME' if needed)
         bspssepy_ibr = bspssepy_ibr.merge(
-            ibr_config_df[["MCNAME", "ibr_type", "gfm_flag", "init_cap"]],
+            ibr_config_df[
+                [
+                    "MCNAME",
+                    "ibr_type",
+                    "gfm_flag",
+                    "init_cap",
+                    'ramp_rate'
+                    ]
+                ],
             on="MCNAME",
             how="left",
         )
@@ -123,6 +135,26 @@ async def build_bspssepy_ibr(
                     # Increament Channel index
                     sim_config.CurrentChannelIndex += 1
 
+
+            ibr_p_set_point = ibr_row["PGEN"]
+            ibr_q_set_point = ibr_row["QGEN"]
+            ibr_name = ibr_row["MCNAME"]
+
+            ibr_bus_num = ibr_row["NUMBER"]
+            ibr_id = ibr_row["ID"]
+            _i, _r, _c = bspssepy_default_vars_fun()
+
+            # Set the IBR output real power to
+            ierr_pref = psspy.change_pref(ibr_bus_num, ibr_id, ibr_p_set_point)
+            ierr_qref = psspy.change_qvref(ibr_bus_num, ibr_id, ibr_q_set_point)
+
+            if (ierr_pref + ierr_qref) > 0:
+                bp(
+                    f"Error in setting IBR {ibr_name} set-point during "
+                    f"initialization.",
+                    app=app
+                )
+            
         return bspssepy_ibr.copy()
     return pd.DataFrame()
 
@@ -131,6 +163,7 @@ async def ibr_enable(
     bspssepy_ibr: pd.DataFrame,
     t: int,
     action: dict,
+    bspssepy_bus: pd.DataFrame,
     ibr_name: str | None = None,
     ibr_index: int | None = None,
     debug_print: bool | None = False,
@@ -201,7 +234,7 @@ async def ibr_enable(
         [_r] * 17,
         [_c] * 2,
     )
-
+    
     if ierr != 0:
         if debug_print:
             bp(
@@ -254,6 +287,47 @@ async def ibr_enable(
             app=app,
         )
         await asyncio.sleep(app.async_print_delay if app else 0)
+
+    values: dict = config.bspssepy_sequence.at[
+        action["BSPSSEPySequenceRowIndex"], "Values"
+    ]
+    
+    
+    ibr_p_set_point = values["P"] if "P" in values else 0
+    ibr_q_set_point = values["Q"] if "Q" in values else 0
+
+
+    
+    ibr_row_df = bspssepy_ibr[bspssepy_ibr["MCNAME"] == ibr_name]
+    if ibr_row_df.empty:
+        raise ValueError(
+            f"IBR with name '{ibr_name}' not found in bspssepy_ibr DataFrame."
+        )
+
+    ibr_bus_num = ibr_row_df["NUMBER"].values[0]
+    ibr_id = ibr_row_df["ID"].values[0]
+    _i, _r, _c = bspssepy_default_vars_fun()
+
+    ierr, ibr_mva_base = psspy.macdat(ibr_bus_num, ibr_id, "MBASE")
+    # GenTargetPower = BSPSSEPyGenRow["POPF"].values[0]
+    ibr_p_set_point_pu = ibr_p_set_point / ibr_mva_base
+
+    # Set the IBR output real power to
+    ierr = psspy.change_pref(ibr_bus_num, ibr_id, ibr_p_set_point_pu)
+    
+    
+    
+    # Enable ibr_bus
+    from fun.bspssepy.sim.bspssepy_bus_funs import BusClose
+    await BusClose(
+        t=t,
+        bspssepy_bus=bspssepy_bus,
+        bus_num=ibr_bus_num,
+        debug_print=debug_print,
+        app=app,
+    )
+    
+    
     return ierr
 
 
@@ -392,6 +466,7 @@ async def ibr_update(
     config,
     debug_print=False,
     app=None,
+    bspssepy_bus:pd.DataFrame() | None = None,
 ):
     """
     This function will update the output "power" of the IBR device.
@@ -445,7 +520,7 @@ async def ibr_update(
 
     # Set the IBR output real power to
     ierr = psspy.change_pref(ibr_bus_num, ibr_id, ibr_p_set_point_pu)
-
+    
     if ierr != 0:
         bp(
             f"[ERROR] Error occured when setting IBR: {ibr_name} output real "

@@ -76,7 +76,7 @@ async def run_simulation(app: App, dummy_run: bool | None = False):
                 bp("[DEBUG] BSPSSEPy initialized successfully.",app=app)
                 await asyncio.sleep(app.async_print_delay if app else 0)
 
-            await app.bspssepy.sim.SetBlackStart(app=app)
+            # await app.bspssepy.sim.SetBlackStart(app=app)
             await app.bspssepy.sim.Run(app=app)
 
             

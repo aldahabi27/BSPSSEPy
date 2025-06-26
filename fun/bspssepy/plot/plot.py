@@ -179,6 +179,8 @@ def BSPSSEPyPlotGen(config, PSSE, debug_print=False, BaseFrequency = 1):
 
     # Dynamically search for channels corresponding to quantities
     quantities = {
+        # "WPCMND":[],
+        # "WQCMND":[],
         "GREF": [],
         "VREF": [],
         "PELEC": [],
@@ -190,19 +192,21 @@ def BSPSSEPyPlotGen(config, PSSE, debug_print=False, BaseFrequency = 1):
 
     # Search for channels in chanid
     for channel, description in chanid.items():
-        if "gref" in description.lower():
+        desc_lower = description.lower()
+        if any(key in desc_lower for key in ["gref", "wpcmnd"]):
             quantities["GREF"].append(channel)
-        elif "vref" in description.lower():
+        elif any(key in desc_lower for key in ["vref", "wqcmnd"]):
             quantities["VREF"].append(channel)
-        elif "pelec" in description.lower():
+        elif "pelec" in desc_lower:
             quantities["PELEC"].append(channel)
-        elif "qelec" in description.lower():
+        elif "qelec" in desc_lower:
             quantities["QELEC"].append(channel)
-        elif "pmech" in description.lower():
+        elif "pmech" in desc_lower:
             quantities["PMECH"].append(channel)
-        elif "freq" in description.lower():
+        elif "freq" in desc_lower:
             quantities["Frequency"].append(channel)
-        elif "volt" in description.lower():  # Adjust as per actual descriptions
+        elif "volt" in desc_lower:
+            # Adjust as per actual descriptions
             quantities["Voltage Magnitude"].append(channel)
 
     # Debugging: Print identified channels

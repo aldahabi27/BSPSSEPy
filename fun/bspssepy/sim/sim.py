@@ -797,6 +797,13 @@ class sim:
 
         for ibr_row_index, ibr_row_df in self.bspssepy_ibr.iterrows():
             ibr_name = ibr_row_df["MCNAME"]
+            await ibr_disable(
+                bspssepy_ibr=self.bspssepy_ibr,
+                t=0,
+                ibr_name=ibr_name,
+                debug_print=self.debug_print,
+                app=app,
+            )
             # ierr = await ibr_disable(
             #     bspssepy_ibr=self.bspssepy_ibr,
             #     t=0,
@@ -829,7 +836,22 @@ class sim:
         # ==========================
         # No need to manually disable generators, as transformers/branches are already tripped.
         # These transformers/branches will be re-enabled through GenEnable function as needed.
-
+        
+        
+        # Disabling all buses
+        # for i_bus_row, bus_row in self.bspssepy_bus.iterrows():
+        #     bus_num = bus_row["NUMBER"]
+        #     if bus_num in [1,2,3,5]:
+        #         continue
+        #     await BusTrip(
+        #         t=0,
+        #         bspssepy_bus=self.bspssepy_bus,
+        #         bus_num=bus_num,
+        #         debug_print=self.debug_print,
+        #         app=app,
+        #     )
+        
+        
         # ==========================
         #  Reinitialize Simulation
         # ==========================
@@ -890,6 +912,8 @@ class sim:
         # ==========================
         #  Main Simulation Loop
         # ==========================
+        
+        temp_flag = True
         while not self.EndSimulationFlag:
             # Keep track if CurrentSimTime cycle is already accounted for in "self.TimeShift"
             AccountedForDelay = False
@@ -1323,6 +1347,7 @@ class sim:
                         if ElementType in ["IBR", "BESS", "ESS"]:
                             kwargs["action"] = action
                             kwargs["config"] = self.config
+                            kwargs["bspssepy_bus"] = self.bspssepy_bus
 
                         if (action["ActionStatus"] == 0) & (
                             self.DashBoardStyle == 0
@@ -1479,7 +1504,52 @@ class sim:
 
             if self.print_all_t_flag:
                 print(f"t = {NextSimTime}s")
-
+            
+            
+            
+            #####################################################
+            #####################################################
+            #####################################################
+            #####################################################
+            #####################################################
+            
+            # print(self.bspssepy_ibr)
+            # print(CurrentSimTime)
+            # from fun.bspssepy.sim.bspssepy_default_vars import bspssepy_default_vars_fun
+            # _i, _r, _c = bspssepy_default_vars_fun()
+            
+            # if temp_flag:
+            #     ierr_off = psspy.machine_chng_5(
+            #         5,
+            #         '1',
+            #         [0] + [_i] * 6,
+            #         [_r] * 17,
+            #         [_c] * 2,
+            #     )            
+            #     print(ierr_off)
+            # else:
+            #     ierr_on = psspy.machine_chng_5(
+            #         5,
+            #         '1',
+            #         [1] + [_i] * 6,
+            #         [_r] * 17,
+            #         [_c] * 2,
+            #     )            
+            #     print(ierr_on)
+                
+            # ierr_pref = psspy.change_pref(5, '1', 1)
+            # print(ierr_pref)
+            # ierr_qref = psspy.change_qvref(5, '1', 1)
+            # print(ierr_qref)
+            # print('hi')
+            #####################################################
+            #####################################################
+            #####################################################
+            #####################################################
+            #####################################################
+            
+            
+            
             psspy.run(
                 0,  # Network solution convergence monitor option
                 NextSimTime,  # Time to run the simulation to (in seconds)

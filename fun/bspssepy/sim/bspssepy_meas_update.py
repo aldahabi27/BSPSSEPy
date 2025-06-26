@@ -1,6 +1,9 @@
 """_summary_"""
 
 import pandas as pd
+# pyright: reportMissingImports=false
+import psspy  # noqa: F401 pylint: disable=import-error
+from .bspssepy_channels import FetchChannelValue
 
 
 async def bspssepy_meas_update(
@@ -48,56 +51,69 @@ async def bspssepy_meas_update(
     errors = []
 
     # Updating all measurements in bspssepy_ibr dataframe
+    for i_ibr_row, ibr_row in bspssepy_ibr.iterrows():
+        ibr_bus_num = ibr_row["NUMBER"]
+        ibr_id = ibr_row["ID"]
+        ierr, ibr_base = psspy.macdat(ibr_bus_num, ibr_id, "MBASE")
+        p_ch = ibr_row["PELECChannel"]
+        q_ch = ibr_row["QELECChannel"]
+        
+        p_elec = (
+            await FetchChannelValue(
+                p_ch,
+                debug_print=debug_print,
+                app=app,
+            )
+            * ibr_base
+        )
+        
+        q_elec = (
+            await FetchChannelValue(
+                q_ch,
+                debug_print=debug_print,
+                app=app,
+            )
+            * ibr_base
+        )
+        
+        bspssepy_ibr.at[i_ibr_row, "PGEN"] = p_elec
+        bspssepy_ibr.at[i_ibr_row, "QGEN"] = q_elec
+        
+        
+        
+    # Qelec = (
+    #     await FetchChannelValue(
+    #         41,
+    #         debug_print=False,
+    #         app=app,
+    #     )
+    #     * 50
+    # )
+    # WQCMND = (
+    #     await FetchChannelValue(
+    #         39,
+    #         debug_print=False,
+    #         app=app,
+    #     )
+    #     * 50
+    # )
+    # a = await GetGenInfo(
+    #     ["NAME", "NUMBER", "MCNAME", "STATUS", "WMOD", "PGEN", "QGEN"]
+    # )
 
-    Pelec = (
-        await FetchChannelValue(
-            40,
-            debug_print=False,
-            app=app,
-        )
-        * 50
-    )
-    WPCMND = (
-        await FetchChannelValue(
-            38,
-            debug_print=False,
-            app=app,
-        )
-        * 50
-    )
-    Qelec = (
-        await FetchChannelValue(
-            41,
-            debug_print=False,
-            app=app,
-        )
-        * 50
-    )
-    WQCMND = (
-        await FetchChannelValue(
-            39,
-            debug_print=False,
-            app=app,
-        )
-        * 50
-    )
-    a = await GetGenInfo(
-        ["NAME", "NUMBER", "MCNAME", "STATUS", "WMOD", "PGEN", "QGEN"]
-    )
+    # with pd.option_context(
+    #     "display.max_rows",
+    #     None,  # Show all rows
+    #     "display.max_columns",
+    #     None,  # Show all columns
+    #     "display.width",
+    #     0,  # Auto-adjust width for full visibility
+    #     "display.colheader_justify",
+    #     "center",  # Center column headers for readability
+    # ):
+    #     bp(a.to_string(index=False))
+    #     await asyncio.sleep(app.async_print_delay if app else 0)
 
-    with pd.option_context(
-        "display.max_rows",
-        None,  # Show all rows
-        "display.max_columns",
-        None,  # Show all columns
-        "display.width",
-        0,  # Auto-adjust width for full visibility
-        "display.colheader_justify",
-        "center",  # Center column headers for readability
-    ):
-        bp(a.to_string(index=False))
-        await asyncio.sleep(app.async_print_delay if app else 0)
-
-    bp([Pelec, WPCMND, Qelec, WQCMND])
-    await asyncio.sleep(app.async_print_delay if app else 0)
+    # bp([Pelec, WPCMND, Qelec, WQCMND])
+    # await asyncio.sleep(app.async_print_delay if app else 0)
     return meas_updated, errors

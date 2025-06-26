@@ -431,7 +431,13 @@ async def BusClose(t, bspssepy_bus=None, Bus = None, bus_num=None, BusName=None,
             [default_real, default_real, default_real, default_real, default_real, default_real, default_real],
             default_char)
     
-    NewType = await get_bus_info("TYPE", Bus=bus_num, debug_print=debug_print,app=app)
+    NewType = await get_bus_info(
+        "TYPE",
+        Bus=bus_num,
+        bspssepy_bus=bspssepy_bus,
+        debug_print=debug_print,
+        app=app
+    )
 
     if ierr != 0:
         bp(f"[ERROR] Failed to close bus with Number '{bus_num}'. PSSE error code: {ierr}",app=app)
