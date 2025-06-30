@@ -792,25 +792,14 @@ class sim:
                 bp(f"[DEBUG] Successfully disabled load: {LOADNAME}", app=app)
                 await asyncio.sleep(app.async_print_delay if app else 0)
 
-        bp("Disabling all IBRs", app=app)
-        await asyncio.sleep(app.async_print_delay if app else 0)
-
-        for ibr_row_index, ibr_row_df in self.bspssepy_ibr.iterrows():
-            ibr_name = ibr_row_df["MCNAME"]
-            await ibr_disable(
-                bspssepy_ibr=self.bspssepy_ibr,
-                t=0,
-                ibr_name=ibr_name,
-                debug_print=self.debug_print,
-                app=app,
-            )
-            # ierr = await ibr_disable(
-            #     bspssepy_ibr=self.bspssepy_ibr,
-            #     t=0,
-            #     ibr_name=ibr_name,
-            #     debug_print=self.debug_print,
-            #     app=app,
-            # )
+    
+        # ierr = await ibr_disable(
+        #     bspssepy_ibr=self.bspssepy_ibr,
+        #     t=0,
+        #     ibr_name=ibr_name,
+        #     debug_print=self.debug_print,
+        #     app=app,
+        # )
 
         #     ibr_bus_num = ibr_row_df["NUMBER"]
         #     ibr_id = ibr_row_df["ID"]
@@ -859,6 +848,20 @@ class sim:
         await asyncio.sleep(app.async_print_delay if app else 0)
         psspy.strt_2([0, 0], str(self.config.SimOutputFile))
 
+        
+        bp("Disabling all IBRs", app=app)
+        await asyncio.sleep(app.async_print_delay if app else 0)
+
+        for ibr_row_index, ibr_row_df in self.bspssepy_ibr.iterrows():
+            ibr_name = ibr_row_df["MCNAME"]
+            await ibr_disable(
+                bspssepy_ibr=self.bspssepy_ibr,
+                t=0,
+                ibr_name=ibr_name,
+                debug_print=self.debug_print,
+                app=app,
+            )
+        
         bp("[SUCCESS] Black-start scenario configured successfully.", app=app)
         await asyncio.sleep(app.async_print_delay if app else 0)
 

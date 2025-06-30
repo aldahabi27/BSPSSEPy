@@ -1,9 +1,4 @@
-ConfigPath = r"""Y:\Ilyas\Work\Research\Control & Power Systems\JWSP Research\HONI Project\PSSE\BSPSSEPy\case\IEEE9\IEEE9_Ver13_Config.py"""  # None
-ConfigPath = r"""E:\Ilyas\Work\Research\Control & Power Systems\JWSP Research\HONI Project\PSSE\BSPSSEPy\case\IEEE9\IEEE9_Ver15_Config.py"""  # None
-# ConfigPath = r"""E:\Ilyas\Work\Research\Control & Power Systems\JWSP Research\HONI Project\PSSE\BSPSSEPy\case\IEEE9\IEEE9_Ver12_Config.py"""  # None
-
-ConfigPath = r"""Y:\Ilyas\Work\Research\Control & Power Systems\JWSP Research\HONI Project\PSSE\BSPSSEPy\case\IEEE9\IEEE9_Ver15_Config.py"""
-ConfigPath =r"""D:\GitHub\BSPSSEPy\case\IEEE9\IEEE9_Ver16_Config.py"""
+ConfigPath =r"""I:\Work\Research\Control & Power Systems\JWSP Research\HONI Project\PSSE\BSPSSEPy\case\IEEE9\IEEE9_Ver17_Config.py"""
 
 
 # Essential Imports to install missing libraries
@@ -92,7 +87,7 @@ try:
         myBSPSSEPy.config.debug_print
     )  # Set debug print based on configuration
 
-    # asyncio.run(myBSPSSEPy.sim.SetBlackStart())
+    asyncio.run(myBSPSSEPy.sim.SetBlackStart())
     myBSPSSEPy.sim.print_all_t_flag = True
     asyncio.run(myBSPSSEPy.sim.Run())
     asyncio.run(myBSPSSEPy.Plot(debug_print=DebugPrint))
