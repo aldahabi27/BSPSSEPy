@@ -55,7 +55,7 @@ class sim:
     def __init__(self):
         pass
 
-    async def SimInit(
+    async def sim_init(
         self, config=None, PSSE=None, debug_print=None, app=None
     ):
         """
@@ -102,10 +102,10 @@ class sim:
         # ==========================
         #  Get the system Base Frequency
         # ==========================
-        ierr, self.BaseFrequency = psspy.base_frequency()
+        ierr, self.base_freq = psspy.base_frequency()
         if self.debug_print:
             bp(
-                f"[DEBUG] System Base Frequency: {self.BaseFrequency}.",
+                f"[DEBUG] System Base Frequency: {self.base_freq}.",
                 app=app,
             )
             await asyncio.sleep(app.async_print_delay if app else 0)
@@ -792,7 +792,6 @@ class sim:
                 bp(f"[DEBUG] Successfully disabled load: {LOADNAME}", app=app)
                 await asyncio.sleep(app.async_print_delay if app else 0)
 
-    
         # ierr = await ibr_disable(
         #     bspssepy_ibr=self.bspssepy_ibr,
         #     t=0,
@@ -825,8 +824,7 @@ class sim:
         # ==========================
         # No need to manually disable generators, as transformers/branches are already tripped.
         # These transformers/branches will be re-enabled through GenEnable function as needed.
-        
-        
+
         # Disabling all buses
         # for i_bus_row, bus_row in self.bspssepy_bus.iterrows():
         #     bus_num = bus_row["NUMBER"]
@@ -839,8 +837,7 @@ class sim:
         #         debug_print=self.debug_print,
         #         app=app,
         #     )
-        
-        
+
         # ==========================
         #  Reinitialize Simulation
         # ==========================
@@ -848,7 +845,6 @@ class sim:
         await asyncio.sleep(app.async_print_delay if app else 0)
         psspy.strt_2([0, 0], str(self.config.SimOutputFile))
 
-        
         bp("Disabling all IBRs", app=app)
         await asyncio.sleep(app.async_print_delay if app else 0)
 
@@ -861,7 +857,7 @@ class sim:
                 debug_print=self.debug_print,
                 app=app,
             )
-        
+
         bp("[SUCCESS] Black-start scenario configured successfully.", app=app)
         await asyncio.sleep(app.async_print_delay if app else 0)
 
@@ -915,7 +911,7 @@ class sim:
         # ==========================
         #  Main Simulation Loop
         # ==========================
-        
+
         temp_flag = True
         while not self.EndSimulationFlag:
             # Keep track if CurrentSimTime cycle is already accounted for in "self.TimeShift"
@@ -1461,7 +1457,7 @@ class sim:
                     debug_print=self.debug_print,
                     UseOutFile=False,
                     app=app,
-                    BaseFrequency=self.BaseFrequency,
+                    BaseFrequency=self.base_freq,
                     FrequencyRegulated=False,
                     old_freq_dev=old_freq_dev,  # Δf[k-1] (Hz)
                 )
@@ -1507,20 +1503,18 @@ class sim:
 
             if self.print_all_t_flag:
                 print(f"t = {NextSimTime}s")
-            
-            
-            
+
             #####################################################
             #####################################################
             #####################################################
             #####################################################
             #####################################################
-            
+
             # print(self.bspssepy_ibr)
             # print(CurrentSimTime)
             # from fun.bspssepy.sim.bspssepy_default_vars import bspssepy_default_vars_fun
             # _i, _r, _c = bspssepy_default_vars_fun()
-            
+
             # if temp_flag:
             #     ierr_off = psspy.machine_chng_5(
             #         5,
@@ -1528,7 +1522,7 @@ class sim:
             #         [0] + [_i] * 6,
             #         [_r] * 17,
             #         [_c] * 2,
-            #     )            
+            #     )
             #     print(ierr_off)
             # else:
             #     ierr_on = psspy.machine_chng_5(
@@ -1537,9 +1531,9 @@ class sim:
             #         [1] + [_i] * 6,
             #         [_r] * 17,
             #         [_c] * 2,
-            #     )            
+            #     )
             #     print(ierr_on)
-                
+
             # ierr_pref = psspy.change_pref(5, '1', 1)
             # print(ierr_pref)
             # ierr_qref = psspy.change_qvref(5, '1', 1)
@@ -1550,9 +1544,7 @@ class sim:
             #####################################################
             #####################################################
             #####################################################
-            
-            
-            
+
             psspy.run(
                 0,  # Network solution convergence monitor option
                 NextSimTime,  # Time to run the simulation to (in seconds)

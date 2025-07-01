@@ -1,8 +1,10 @@
 """Run button execution sequence for BSPSSEPyApp."""
+
 from __future__ import annotations
+
 # import asyncio
 # pyright: reportMissingImports=false
-import psspy  # noqa: F401 pylint: disable=import-error 
+import psspy  # noqa: F401 pylint: disable=import-error
 from textual.app import App
 from fun.bspssepy.app.app_helper_funs import (
     ProgressBarUpdate,
@@ -10,8 +12,9 @@ from fun.bspssepy.app.app_helper_funs import (
 )
 from fun.bspssepy.app.bspssepy_print import (
     append_to_details_text_area,
-    bspssepy_print as bp
+    bspssepy_print as bp,
 )
+
 
 async def run_simulation(app: App, dummy_run: bool | None = False):
     """
@@ -39,16 +42,15 @@ async def run_simulation(app: App, dummy_run: bool | None = False):
 
         # Importing main Class BSPSSEPy
         from fun.bspssepy.bspssepy_core import BSPSSEPy
-        
+
         # Call the main constructor and load the configurations for PSSE Simulation
         app.bspssepy = BSPSSEPy()
-            
-        await app.bspssepy.BSPSSEPyInit(ConfigPath=app.config_path, app=app)
+
+        await app.bspssepy.bspssepy_init(ConfigPath=app.config_path, app=app)
 
         app.dummy_run = False
         app.case_tree.disabled = False
         app.stop_button.disabled = True
-
 
     else:
 
@@ -61,56 +63,75 @@ async def run_simulation(app: App, dummy_run: bool | None = False):
             app.run_button.disabled = True
 
             append_to_details_text_area(app.details_text_area, f"Run Started")
-            append_to_details_text_area(app.details_text_area, f"config: {app.config_path}")
+            append_to_details_text_area(
+                app.details_text_area, f"config: {app.config_path}"
+            )
 
             # Importing main Class BSPSSEPy
             from fun.bspssepy.bspssepy_core import BSPSSEPy
-            
+
             # Call the main constructor and load the configurations for PSSE Simulation
             app.bspssepy = BSPSSEPy()
-            
-            await app.bspssepy.BSPSSEPyInit(ConfigPath=app.config_path, app=app)
+
+            await app.bspssepy.bspssepy_init(
+                ConfigPath=app.config_path, app=app
+            )
             await BSPSSEPyAppResetTables(app)
-            
+
             if app.debug_checkbox.value:
-                bp("[DEBUG] BSPSSEPy initialized successfully.",app=app)
+                bp("[DEBUG] BSPSSEPy initialized successfully.", app=app)
                 await asyncio.sleep(app.async_print_delay if app else 0)
 
             await app.bspssepy.sim.SetBlackStart(app=app)
             await app.bspssepy.sim.Run(app=app)
 
-            
-
-            
-            app.bspssepy.Plot(debug_print=app.debug_checkbox.value,app=app)
-
+            app.bspssepy.plot(debug_print=app.debug_checkbox.value, app=app)
 
             if app.debug_checkbox.value:
-                bp("Debug Information:",app=app)
+                bp("Debug Information:", app=app)
                 await asyncio.sleep(app.async_print_delay if app else 0)
-                bp(f"  Case Name: {app.bspssepy.config.CaseName}",app=app)
+                bp(f"  Case Name: {app.bspssepy.config.CaseName}", app=app)
                 await asyncio.sleep(app.async_print_delay if app else 0)
-                bp(f"  Version: {app.bspssepy.config.Ver}",app=app)
+                bp(f"  Version: {app.bspssepy.config.Ver}", app=app)
                 await asyncio.sleep(app.async_print_delay if app else 0)
-                bp(f"  Number of Buses: {app.bspssepy.config.NumberOfBuses}",app=app)
+                bp(
+                    f"  Number of Buses: {app.bspssepy.config.NumberOfBuses}",
+                    app=app,
+                )
                 await asyncio.sleep(app.async_print_delay if app else 0)
-                bp(f"  Buses to Monitor (Frequency): {app.bspssepy.config.BusesToMonitor_Frequency}",app=app)
+                bp(
+                    f"  Buses to Monitor (Frequency): {app.bspssepy.config.BusesToMonitor_Frequency}",
+                    app=app,
+                )
                 await asyncio.sleep(app.async_print_delay if app else 0)
-                bp(f"  Buses to Monitor (Voltage): {app.bspssepy.config.BusesToMonitor_Voltage}",app=app)
+                bp(
+                    f"  Buses to Monitor (Voltage): {app.bspssepy.config.BusesToMonitor_Voltage}",
+                    app=app,
+                )
                 await asyncio.sleep(app.async_print_delay if app else 0)
-                bp(f"  Frequency Flag: {app.bspssepy.config.FrequencyFlag}",app=app)
+                bp(
+                    f"  Frequency Flag: {app.bspssepy.config.FrequencyFlag}",
+                    app=app,
+                )
                 await asyncio.sleep(app.async_print_delay if app else 0)
-                bp(f"  PSSE Max Iteration (Newton-Raphson): {app.bspssepy.config.PSSEMaxIterationNewtonRaphson}",app=app)
+                bp(
+                    f"  PSSE Max Iteration (Newton-Raphson): {app.bspssepy.config.PSSEMaxIterationNewtonRaphson}",
+                    app=app,
+                )
                 await asyncio.sleep(app.async_print_delay if app else 0)
-                bp(f"  Control Sequence: {app.bspssepy.config.bspssepy_sequence}",app=app)
+                bp(
+                    f"  Control Sequence: {app.bspssepy.config.bspssepy_sequence}",
+                    app=app,
+                )
                 await asyncio.sleep(app.async_print_delay if app else 0)
-                bp(f"  Case Initialization Flag: {app.bspssepy.PSSE.CaseInitializationFlag} (0 indicates no errors)",app=app)
+                bp(
+                    f"  Case Initialization Flag: {app.bspssepy.psse.CaseInitializationFlag} (0 indicates no errors)",
+                    app=app,
+                )
                 await asyncio.sleep(app.async_print_delay if app else 0)
 
-            
-            
             # TotalSimulationTime = 1  # Example total simulation time (120 seconds)
-            
+
             # append_to_details_text_area(app.details_text_area, "Run Button Pressed")
 
             # # Disable tree and reset progress bar
@@ -127,7 +148,7 @@ async def run_simulation(app: App, dummy_run: bool | None = False):
             # app.progress_table.add_columns(*ColumnNames)
             # for _ in range(5):
             #     app.progress_table.add_row(*[str(random.randint(0, 100)) for _ in range(25)])
-            
+
             # ProgressTableRowDic = app.progress_table.rows
             # ProgressTableColumnDic = app.progress_table.columns
             # # append_to_details_text_area(app.details_text_area, ProgressTableRowDic)
@@ -144,7 +165,6 @@ async def run_simulation(app: App, dummy_run: bool | None = False):
             # # append_to_details_text_area(app.details_text_area, AGCTableRowDic)
             # # append_to_details_text_area(app.details_text_area, AGCTableColumnDic)
 
-
             # # ✅ Generator Table: 4 columns, 6 rows
             # app.gen_table.clear(columns = True)
             # app.gen_table.add_columns("Gen ID", "Power (MW)", "Voltage (V)", "Status")
@@ -153,7 +173,6 @@ async def run_simulation(app: App, dummy_run: bool | None = False):
             # GeneratorTableRowDic = app.gen_table.rows
             # GeneratorTableColumnDic = app.gen_table.columns
 
-
             # # ✅ load Table: 3 columns, 10 rows
             # app.load_table.clear(columns = True)
             # app.load_table.add_columns("load ID", "P (MW)", "Q (MVar)")
@@ -161,7 +180,6 @@ async def run_simulation(app: App, dummy_run: bool | None = False):
             #     app.load_table.add_row(f"load {i+1}", str(random.randint(50, 200)), str(random.randint(10, 100)))
             # LoadTableRowDic = app.load_table.rows
             # LoadTableColumnDic = app.load_table.columns
-
 
             # # ✅ Bus Table: 5 columns, 15 rows
             # app.bus_table.clear(columns = True)
@@ -198,7 +216,6 @@ async def run_simulation(app: App, dummy_run: bool | None = False):
             #     # await asyncio.sleep(0.1)
             #     # app.progress_table.update_cell_at((2, 2), str(random.randint(0, 100)))
 
-
             #     # ✅ Dynamically update random table values at each time step
 
             #     # import random
@@ -230,38 +247,35 @@ async def run_simulation(app: App, dummy_run: bool | None = False):
             #         app.bus_table.update_cell(row_key=row_key, column_key=list(BusTableColumnDic.keys())[2], value=str(round(random.uniform(-30, 30), 2)))  # Angle
             #         app.bus_table.update_cell(row_key=row_key, column_key=list(BusTableColumnDic.keys())[3], value=str(random.randint(100, 400)))  # load
 
-
             #     # ✅ Update Branch Table (Status change)
             #     for row_key in BranchTableRowDic.keys():
             #         app.brn_table.update_cell(row_key=row_key, column_key=list(BranchTableColumnDic.keys())[3], value=random.choice(["Closed", "Open"]))  # Status
-                    
 
             #     # ✅ Update Transformer Table (Status change)
             #     for row_key in TransformerTableRowDic.keys():
             #         app.trn_table.update_cell(row_key=row_key, column_key=list(TransformerTableColumnDic.keys())[3], value=str(random.choice(["Closed", "Open"])))  # Voltage
-                    
 
-                # Small delay to simulate real-time updates
-                # await asyncio.sleep(0.0001)
+            # Small delay to simulate real-time updates
+            # await asyncio.sleep(0.0001)
 
-                # append_to_details_text_area(app.details_text_area, app.progress_table._label_row_key)
-                # append_to_details_text_area(app.details_text_area, app.progress_table._label_column_key.__str__)
+            # append_to_details_text_area(app.details_text_area, app.progress_table._label_row_key)
+            # append_to_details_text_area(app.details_text_area, app.progress_table._label_column_key.__str__)
 
             # ==========================
             # Simulation Completed
             # ==========================
             app.case_tree.disabled = False
-            append_to_details_text_area(app.details_text_area, "Run Completed")
+            append_to_details_text_area(
+                app.details_text_area, "Run Completed"
+            )
             app.stop_button.disabled = True
             app.run_button.disabled = False
-                    
 
         except Exception as error:
 
             import traceback
             import asyncio
 
-        
             app.case_tree.disabled = False
             app.stop_button.disabled = True
 
@@ -291,11 +305,9 @@ async def run_simulation(app: App, dummy_run: bool | None = False):
             #     print(error)
             # # Get the captured output
             # captured_output = output_capture.getvalue()
-            
+
             # bp(captured_output, app=app)
             # print(app)
             # print('here')
             # bp("HELLO")
             # await asyncio.sleep(app.async_print_delay if app else 0)
-            
-        

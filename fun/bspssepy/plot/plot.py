@@ -6,7 +6,7 @@ import plotext as pltt
 from fun.bspssepy.config.config import config
 
 
-def BSPSSEPyPlotFreq(config:config, PSSE, debug_print=False, BaseFrequency = 1):
+def bspssepy_plot_freq(config: config, psse, debug_print=False, base_freq=1):
     # Use dyntools to read the output file
     chnf = dyntools.CHNF(str(config.SimOutputFile))
 
@@ -20,11 +20,12 @@ def BSPSSEPyPlotFreq(config:config, PSSE, debug_print=False, BaseFrequency = 1):
 
     # Check if data is empty
     if not chandata:
-        print("The .out file was read but contains no data. Please verify the output channels in PSSE.")
-
+        print(
+            "The .out file was read but contains no data. Please verify the output channels in PSSE."
+        )
 
     # Extract time and frequency data
-    time = chandata['time']  # Time array
+    time = chandata["time"]  # Time array
     frequency_channels = [ch for ch in chanid if "freq" in chanid[ch].lower()]
 
     # Check available frequency channels
@@ -37,7 +38,7 @@ def BSPSSEPyPlotFreq(config:config, PSSE, debug_print=False, BaseFrequency = 1):
 
         # Heuristic check: If max absolute value is < 1, assume it's in p.u. and scale it
         if max(abs(x) for x in FreqData) < 1:
-            FreqData = [x * BaseFrequency for x in FreqData]
+            FreqData = [x * base_freq for x in FreqData]
 
         plt.plot(time[::step], FreqData[::step], label=chanid[channel])
 
@@ -49,8 +50,6 @@ def BSPSSEPyPlotFreq(config:config, PSSE, debug_print=False, BaseFrequency = 1):
     plt.grid(True)
     plt.show()
 
-
-
     # Assuming 'time' and 'chandata' are available
     for channel in frequency_channels:
         pltt.plot(time[::step], chandata[channel][::step])
@@ -59,7 +58,6 @@ def BSPSSEPyPlotFreq(config:config, PSSE, debug_print=False, BaseFrequency = 1):
     pltt.xlabel("Time (s)")
     pltt.ylabel("Frequency (Hz)")
     pltt.show()
-
 
 
 # def BSPSSEPyPlotGen(config, PSSE, debug_print=False):
@@ -144,7 +142,7 @@ def BSPSSEPyPlotFreq(config:config, PSSE, debug_print=False, BaseFrequency = 1):
 #     plt.show()
 
 
-def BSPSSEPyPlotGen(config, PSSE, debug_print=False, BaseFrequency = 1):
+def bspssepy_plot_gen(config, psse, debug_print=False, base_freq=1):
     import matplotlib.pyplot as plt
     from matplotlib.gridspec import GridSpec
     from collections import OrderedDict
@@ -152,14 +150,16 @@ def BSPSSEPyPlotGen(config, PSSE, debug_print=False, BaseFrequency = 1):
     import numpy as np
 
     # Finish the simulation
-    psspy.delete_all_plot_channels()  # Clean up channels (optional)    
+    psspy.delete_all_plot_channels()  # Clean up channels (optional)
 
     # Use dyntools to read the output file
     chnf = dyntools.CHNF(str(config.SimOutputFile))
 
-    chnf.csvout(outfile=str(config.SimOutputFile), csvfile=str(config.SimOutputFile).replace(".out", ".csv"))
+    chnf.csvout(
+        outfile=str(config.SimOutputFile),
+        csvfile=str(config.SimOutputFile).replace(".out", ".csv"),
+    )
 
-    
     # Extract data
     short_title, chanid, chandata = chnf.get_data()
 
@@ -171,11 +171,13 @@ def BSPSSEPyPlotGen(config, PSSE, debug_print=False, BaseFrequency = 1):
 
     # Check if data is empty
     if not chandata:
-        print("The .out file was read but contains no data. Please verify the output channels in PSSE.")
+        print(
+            "The .out file was read but contains no data. Please verify the output channels in PSSE."
+        )
         return
 
     # Time array
-    time = np.array(chandata['time']) / 60  # Convert time to minutes
+    time = np.array(chandata["time"]) / 60  # Convert time to minutes
 
     # Dynamically search for channels corresponding to quantities
     quantities = {
@@ -187,7 +189,7 @@ def BSPSSEPyPlotGen(config, PSSE, debug_print=False, BaseFrequency = 1):
         "QELEC": [],
         "PMECH": [],
         "Frequency": [],
-        "Voltage Magnitude": []
+        "Voltage Magnitude": [],
     }
 
     # Search for channels in chanid
@@ -219,11 +221,15 @@ def BSPSSEPyPlotGen(config, PSSE, debug_print=False, BaseFrequency = 1):
     fig.suptitle("Generator Quantities and Voltage Magnitudes", fontsize=16)
 
     # Use GridSpec to define layout
-    gs = GridSpec(3, 3, figure=fig, height_ratios=[1, 1, 0.5])  # Allocate less height for the bottom plot
+    gs = GridSpec(
+        3, 3, figure=fig, height_ratios=[1, 1, 0.5]
+    )  # Allocate less height for the bottom plot
 
     # Iterate over quantities and plot on the corresponding subplot
     axes = []
-    for idx, (quantity, channels) in enumerate(list(quantities.items())[:-1]):  # Exclude "Voltage Magnitude"
+    for idx, (quantity, channels) in enumerate(
+        list(quantities.items())[:-1]
+    ):  # Exclude "Voltage Magnitude"
         row, col = divmod(idx, 3)
         ax = fig.add_subplot(gs[row, col])  # Use GridSpec for positioning
         axes.append(ax)
@@ -231,12 +237,14 @@ def BSPSSEPyPlotGen(config, PSSE, debug_print=False, BaseFrequency = 1):
         # Plot each generator's data for the current quantity
         for ch in channels:
             if ch in chandata:
-                data = np.array(chandata[ch])  # Convert to numpy array for efficiency
-                
+                data = np.array(
+                    chandata[ch]
+                )  # Convert to numpy array for efficiency
+
                 # Apply BaseFrequency scaling to frequency channels only
                 if quantity == "Frequency":
                     if np.max(np.abs(data)) < 1:  # If data is in pu, scale it
-                        data *= BaseFrequency
+                        data *= base_freq
 
                 ax.plot(time, data, label=chanid[ch])
 
@@ -251,7 +259,9 @@ def BSPSSEPyPlotGen(config, PSSE, debug_print=False, BaseFrequency = 1):
     voltage_ax = fig.add_subplot(gs[2, :])  # Span the entire bottom row
 
     for ch in quantities["Voltage Magnitude"]:
-        if ch in chandata and len(chandata[ch]) == len(time):  # Ensure time and data lengths match
+        if ch in chandata and len(chandata[ch]) == len(
+            time
+        ):  # Ensure time and data lengths match
             voltage_ax.plot(time, chandata[ch], label=chanid[ch])
         else:
             print(f"Skipping channel {ch} due to mismatched data length.")
@@ -276,8 +286,7 @@ from typing import Union
 
 
 def bspssepy_export_to_csv(
-    output_file: Union[str, os.PathLike, Path],
-    debug_print: bool = False
+    output_file: Union[str, os.PathLike, Path], debug_print: bool = False
 ) -> None:
     """
     Extracts data from a PSS/E .out file and exports it to a CSV file.
@@ -318,19 +327,23 @@ def bspssepy_export_to_csv(
         return
 
     # Extract time column (ensure it's in seconds)
-    time = np.array(chan_data['time'])  
+    time = np.array(chan_data["time"])
 
     # Write the extracted data to CSV
-    with open(csv_file, mode='w', newline='') as file:
+    with open(csv_file, mode="w", newline="") as file:
         writer = csv.writer(file)
 
         # Create headers (Time + Channel Names)
-        headers = ["time (s)"] + [chan_id[ch] for ch in chan_id.keys() if ch != 'time']
+        headers = ["time (s)"] + [
+            chan_id[ch] for ch in chan_id.keys() if ch != "time"
+        ]
         writer.writerow(headers)
 
         # Write simulation data
         for i in range(len(time)):
-            row = [time[i]] + [chan_data[ch][i] for ch in chan_id.keys() if ch != 'time']
+            row = [time[i]] + [
+                chan_data[ch][i] for ch in chan_id.keys() if ch != "time"
+            ]
             writer.writerow(row)
 
     print(f"✅ Export successful! Data saved to: {csv_file}")

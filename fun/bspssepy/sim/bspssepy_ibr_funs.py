@@ -99,28 +99,61 @@ async def build_bspssepy_ibr(
         # --> This is the frequency channel for the generator
         # (will be fetched from config.Channels)
         bspssepy_ibr["FChannel"] = -1
-
+        
+        # This channel is used to monitor the SOC of the IBR
+        bspssepy_ibr["SOCChannel"] = -1
+        
         for ibr_row_index, ibr_row in bspssepy_ibr.iterrows():
+            ibr_bus_num = ibr_row["NUMBER"]
+            ibr_id = ibr_row["ID"]
+            ibr_name = ibr_row["MCNAME"]
             for key in bspssepy_ibr_ch_mapping.keys():
-                ierr = psspy.machine_array_channel(
-                    [
-                        -1,  # Next available channel
-                        # status(2) --> quantity to monitor
-                        bspssepy_ibr_ch_mapping[key],
-                        # Bus number corresponding to machine location
-                        int(ibr_row["NUMBER"]),
-                    ],
-                    ibr_row["ID"],  # ID of the machine
-                    key + ibr_row["MCNAME"],  # Channel Identifier
-                )
-
-                if ierr != 0:
-                    bp(
-                        f"[ERROR] Error occured during adding channel for IBR: {ibr_row['MCNAME']} to monitor {key} with key_status number: {bspssepy_ibr_ch_mapping[key]}",
-                        app=app,
+                
+                # Check if key is SOC --> find the right channel
+                if key == "SOC":
+                    ierr, L = psspy.windmind(
+                        ibr_bus_num,
+                        ibr_id,
+                        'WELEC',
+                        'VAR',
                     )
-                    await asyncio.sleep(app.async_print_delay if app else 0)
+                    if ierr != 0:
+                        bp(
+                            f"[ERROR] Error occured when trying to get SOC "
+                            f"channel for IBR: {ibr_row['MCNAME']}. "
+                            f"Error code: {ierr}",
+                            app=app,
+                        )
+                        await asyncio.sleep(
+                            app.async_print_delay if app else 0
+                        )
+                        continue
+                    ierr = psspy.var_channel(
+                        [-1, L+bspssepy_ibr_ch_mapping[key]],
+                        ibr_name + " Residual Energy",
+                    )
                 else:
+                    
+                    ierr = psspy.machine_array_channel(
+                        [
+                            -1,  # Next available channel
+                            # status(2) --> quantity to monitor
+                            bspssepy_ibr_ch_mapping[key],
+                            # Bus number corresponding to machine location
+                            int(ibr_row["NUMBER"]),
+                        ],
+                        ibr_row["ID"],  # ID of the machine
+                        key + ibr_row["MCNAME"],  # Channel Identifier
+                    )
+
+                    if ierr != 0:
+                        bp(
+                            f"[ERROR] Error occured during adding channel for IBR: {ibr_row['MCNAME']} to monitor {key} with key_status number: {bspssepy_ibr_ch_mapping[key]}",
+                            app=app,
+                        )
+                        await asyncio.sleep(app.async_print_delay if app else 0)
+                
+                if ierr == 0:
                     bspssepy_ibr.at[ibr_row_index, key + "Channel"] = (
                         sim_config.CurrentChannelIndex
                     )

@@ -132,6 +132,7 @@ bspssepy_ibr_ch_mapping = {
     "WQCMND": 23,
     "PELEC": 2,
     "QELEC": 3,
+    "SOC": 4,
 }
 
 
