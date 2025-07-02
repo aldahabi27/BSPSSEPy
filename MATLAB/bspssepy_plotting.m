@@ -282,7 +282,7 @@ ylabel("$SOC [p.u.]$", "Interpreter", "latex");
 
 %% Plotting MATLAB Simulation output for comparison
 
-MATFile = "I:\Work\Research\Control & Power Systems\JWSP Research\HONI Project\Files From Harry\5 Jun 2025 - MATLAB BESS Integration\250529_ESS_in_frequency\250529_ESS_in_frequency\HarryPlotData30-Jun-2025.mat";
+MATFile = "I:\Work\Research\Control & Power Systems\JWSP Research\HONI Project\Files From Harry\5 Jun 2025 - MATLAB BESS Integration\250529_ESS_in_frequency\250529_ESS_in_frequency\HarryPlotData01-Jul-2025_noBESS.mat";
 
 
 HarryPlotData = load(MATFile);
