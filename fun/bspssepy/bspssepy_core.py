@@ -54,9 +54,9 @@ class BSPSSEPy:
         # Initialize configuration settings
         self.config = config()
         await self.config.config_init(
-            CaseName=CaseName,
-            Ver=Ver,
-            ConfigPath=ConfigPath,
+            case_name=CaseName,
+            ver=Ver,
+            config_path=ConfigPath,
             debug_print=debug_print,
             app=app,
         )

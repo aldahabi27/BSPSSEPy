@@ -90,32 +90,32 @@ async def run_simulation(app: App, dummy_run: bool | None = False):
             if app.debug_checkbox.value:
                 bp("Debug Information:", app=app)
                 await asyncio.sleep(app.async_print_delay if app else 0)
-                bp(f"  Case Name: {app.bspssepy.config.CaseName}", app=app)
+                bp(f"  Case Name: {app.bspssepy.config.case_name}", app=app)
                 await asyncio.sleep(app.async_print_delay if app else 0)
-                bp(f"  Version: {app.bspssepy.config.Ver}", app=app)
+                bp(f"  Version: {app.bspssepy.config.ver}", app=app)
                 await asyncio.sleep(app.async_print_delay if app else 0)
                 bp(
-                    f"  Number of Buses: {app.bspssepy.config.NumberOfBuses}",
+                    f"  Number of Buses: {app.bspssepy.config.num_of_buses}",
                     app=app,
                 )
                 await asyncio.sleep(app.async_print_delay if app else 0)
                 bp(
-                    f"  Buses to Monitor (Frequency): {app.bspssepy.config.BusesToMonitor_Frequency}",
+                    f"  Buses to Monitor (Frequency): {app.bspssepy.config.freq_buses_to_monitor}",
                     app=app,
                 )
                 await asyncio.sleep(app.async_print_delay if app else 0)
                 bp(
-                    f"  Buses to Monitor (Voltage): {app.bspssepy.config.BusesToMonitor_Voltage}",
+                    f"  Buses to Monitor (Voltage): {app.bspssepy.config.v_buses_to_monitor}",
                     app=app,
                 )
                 await asyncio.sleep(app.async_print_delay if app else 0)
                 bp(
-                    f"  Frequency Flag: {app.bspssepy.config.FrequencyFlag}",
+                    f"  Frequency Flag: {app.bspssepy.config.freq_flag}",
                     app=app,
                 )
                 await asyncio.sleep(app.async_print_delay if app else 0)
                 bp(
-                    f"  PSSE Max Iteration (Newton-Raphson): {app.bspssepy.config.PSSEMaxIterationNewtonRaphson}",
+                    f"  PSSE Max Iteration (Newton-Raphson): {app.bspssepy.config.psse_max_iter_newton_raphson}",
                     app=app,
                 )
                 await asyncio.sleep(app.async_print_delay if app else 0)

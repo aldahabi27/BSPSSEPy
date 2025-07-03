@@ -8,7 +8,7 @@ from fun.bspssepy.config.config import config
 
 def bspssepy_plot_freq(config: config, psse, debug_print=False, base_freq=1):
     # Use dyntools to read the output file
-    chnf = dyntools.CHNF(str(config.SimOutputFile))
+    chnf = dyntools.CHNF(str(config.sim_output_file))
 
     # Extract data
     short_title, chanid, chandata = chnf.get_data()

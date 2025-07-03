@@ -886,19 +886,19 @@ class sim:
             - The function runs in a loop, incrementing time steps until all actions are completed.
         """
 
-        self.BSPSSEPyDashbaoard = None
+        self.bspssepy_dashboard = None
 
         # ==========================
         #  Initialize Simulation Variables
         # ==========================
-        self.EndSimulationFlag = False  # Main loop exit condition
-        CurrentSimTime = 0  # Current simulation time in seconds
-        LastPrintedTime = 0  # Controls how frequently messages are printed
-        self.Actions = (
+        self.end_sim_flag = False  # Main loop exit condition
+        current_sim_time = 0  # Current simulation time in seconds
+        last_print_time = 0  # Controls how frequently messages are printed
+        self.actions = (
             []
         )  # Initialize a list to store multiple action dictionaries
-        AllActionsExecuted = False  # A flag to exit the simulation when all actions are executed and the freuqnecy is regulated back to nominal value!
-        FrequencyRegulated = False
+        all_actions_executed = False  # A flag to exit the simulation when all actions are executed and the freuqnecy is regulated back to nominal value!
+        freq_regulated = False
         old_freq_dev = [0.0] * (
             len(self.bspssepy_gen) + 1
         )  # Initialize the rate of frequency deviation Δf' (Hz/s) (last element is for the average)
@@ -906,23 +906,23 @@ class sim:
         await asyncio.sleep(app.async_print_delay if app else 0)
 
         # Track the time shift due to execution delays
-        self.TimeShift = 0
+        self.time_shift = 0
 
         # ==========================
         #  Main Simulation Loop
         # ==========================
 
         temp_flag = True
-        while not self.EndSimulationFlag:
+        while not self.end_sim_flag:
             # Keep track if CurrentSimTime cycle is already accounted for in "self.TimeShift"
-            AccountedForDelay = False
-            AllActionsExecuted = True  # Always assume we are done!
+            account_for_delay = False
+            all_actions_executed = True  # Always assume we are done!
 
-            CurrentSimTime >= self.config.BSPSSEPyHardTimeLimit * 60
+            current_sim_time >= self.config.BSPSSEPyHardTimeLimit * 60
             if app:
                 ProgressBarUpdate(
                     app.top_bar_progress_bar,
-                    CurrentSimTime,
+                    current_sim_time,
                     self.config.BSPSSEPyHardTimeLimit * 60,
                     App=app,
                     label=app.top_bar_progress_bar_label,
@@ -950,23 +950,23 @@ class sim:
 
             if self.debug_print:
                 bp(
-                    f"[DEBUG] Current Simulation Time: {CurrentSimTime}",
+                    f"[DEBUG] Current Simulation Time: {current_sim_time}",
                     app=app,
                 )
                 await asyncio.sleep(app.async_print_delay if app else 0)
-                bp(f"[DEBUG] Actions before cleanup: {self.Actions}", app=app)
+                bp(f"[DEBUG] Actions before cleanup: {self.actions}", app=app)
                 await asyncio.sleep(app.async_print_delay if app else 0)
 
             # Remove completed tasks from self.Actions
             # ActionStatus: 0 -> Not Started, 1 -> In Progress, 2 -> Completed
-            self.Actions = [
+            self.actions = [
                 action
-                for action in self.Actions
+                for action in self.actions
                 if action["ActionStatus"] != 2
             ]
 
             if self.debug_print:
-                bp(f"[DEBUG] Actions after cleanup: {self.Actions}", app=app)
+                bp(f"[DEBUG] Actions after cleanup: {self.actions}", app=app)
                 await asyncio.sleep(app.async_print_delay if app else 0)
 
             # ==========================
@@ -976,7 +976,7 @@ class sim:
             for RowIndex, Row in self.config.bspssepy_sequence.iterrows():
                 action_time = (
                     Row["Action Time"] * 60
-                ) + self.TimeShift  # Convert to seconds + Apply time shift
+                ) + self.time_shift  # Convert to seconds + Apply time shift
 
                 # Check if ControlSequenceAsIs Flag is enabled --> ignore action-time
                 if self.config.ControlSequenceAsIs:
@@ -1021,7 +1021,7 @@ class sim:
                         not any(
                             action["ElementIDValue"]
                             == Row["Identification Value"]
-                            for action in self.Actions
+                            for action in self.actions
                         )
                     ) and (Row["Action Status"] not in [2, -999]):
                         if self.debug_print:
@@ -1034,7 +1034,7 @@ class sim:
                             )
                         if self.EnforceActionLock and any(
                             action["ActionStatus"] in [0, 1]
-                            for action in self.Actions
+                            for action in self.actions
                         ):
                             if self.debug_print:
                                 bp(
@@ -1060,7 +1060,7 @@ class sim:
                             ],  # 0: Not started, 1: In progress, 2: Completed
                             "BSPSSEPySequenceRowIndex": RowIndex,  # Add the row index
                         }
-                        self.Actions.append(NewAction)
+                        self.actions.append(NewAction)
 
                         # Check if self.config.BypassTiedActions is True → Add all tied actions linked to the current action
                         if self.config.BypassTiedActions:
@@ -1072,7 +1072,7 @@ class sim:
                                 # Ensure tied action is not already in the execution queue
                                 if not any(
                                     action["UID"] == tied_row["UID"]
-                                    for action in self.Actions
+                                    for action in self.actions
                                 ):
                                     TiedAction = {
                                         "UID": tied_row["UID"],
@@ -1093,7 +1093,7 @@ class sim:
                                         ],  # 0: Not started, 1: In progress, 2: Completed
                                         "BSPSSEPySequenceRowIndex": tied_row.name,  # Row index
                                     }
-                                    self.Actions.append(TiedAction)
+                                    self.actions.append(TiedAction)
 
                                     if self.debug_print:
                                         bp(
@@ -1122,12 +1122,12 @@ class sim:
 
                     # Check if the action should start and is not already added to self.Actions
                     if (
-                        (CurrentSimTime >= action_time)
+                        (current_sim_time >= action_time)
                         and (
                             not any(
                                 action["ElementIDValue"]
                                 == Row["Identification Value"]
-                                for action in self.Actions
+                                for action in self.actions
                             )
                         )
                         and (Row["Action Status"] not in [2, -999])
@@ -1136,7 +1136,7 @@ class sim:
                         # If EnforceActionLock is true and an action is already in progress, skip adding new actions
                         if self.EnforceActionLock and any(
                             action["ActionStatus"] in [0, 1]
-                            for action in self.Actions
+                            for action in self.actions
                         ):
                             if self.debug_print:
                                 bp(
@@ -1162,7 +1162,7 @@ class sim:
                             ],  # 0: Not started, 1: In progress, 2: Completed
                             "BSPSSEPySequenceRowIndex": RowIndex,  # Add the row index
                         }
-                        self.Actions.append(NewAction)
+                        self.actions.append(NewAction)
 
                         # Check if self.config.BypassTiedActions is True → Add all tied actions linked to the current action
                         if self.config.BypassTiedActions:
@@ -1174,7 +1174,7 @@ class sim:
                                 # Ensure tied action is not already in the execution queue
                                 if not any(
                                     action["UID"] == tied_row["UID"]
-                                    for action in self.Actions
+                                    for action in self.actions
                                 ):
                                     TiedAction = {
                                         "UID": tied_row["UID"],
@@ -1195,7 +1195,7 @@ class sim:
                                         ],  # 0: Not started, 1: In progress, 2: Completed
                                         "BSPSSEPySequenceRowIndex": tied_row.name,  # Row index
                                     }
-                                    self.Actions.append(TiedAction)
+                                    self.actions.append(TiedAction)
 
                                     if self.debug_print:
                                         bp(
@@ -1223,12 +1223,12 @@ class sim:
                 for RowIndex, Row in self.config.bspssepy_sequence.iterrows()
             ):
                 # we still have some actions to do!
-                AllActionsExecuted = False
+                all_actions_executed = False
 
             # ==========================
             #  Execute Actions
             # ==========================
-            for action in self.Actions:
+            for action in self.actions:
                 if self.debug_print:
                     bp(f"[DEBUG] Processing action: {action}", app=app)
                     await asyncio.sleep(app.async_print_delay if app else 0)
@@ -1259,12 +1259,12 @@ class sim:
 
                             if (
                                 self.config.AccountForActionExecutionDelays
-                                and not AccountedForDelay
+                                and not account_for_delay
                             ):
-                                self.TimeShift += (
+                                self.time_shift += (
                                     self.config.BSPSSEPyTimeStep
                                 )  # Increment by self.config.BSPSSEPyTimeStep
-                                AccountedForDelay = True
+                                account_for_delay = True
                             continue  # Skip this action for now
 
                     # Determine action function
@@ -1317,7 +1317,7 @@ class sim:
                         # Create the keyword argument dictionary
                         kwargs = {
                             ElementArgumentName: ElementIDValue,
-                            "t": CurrentSimTime,
+                            "t": current_sim_time,
                             bspssepy_df_arg_mapping[ElementType]: getattr(
                                 self, bspssepy_df_arg_mapping[ElementType]
                             ),
@@ -1352,7 +1352,7 @@ class sim:
                             self.DashBoardStyle == 0
                         ):
                             bp(
-                                f"Executing action: ==> {ElementActionType} for {ElementType} ==> {ElementIDType} : {ElementIDValue} (t = {CurrentSimTime}s)",
+                                f"Executing action: ==> {ElementActionType} for {ElementType} ==> {ElementIDType} : {ElementIDValue} (t = {current_sim_time}s)",
                                 app=app,
                             )
                             await asyncio.sleep(
@@ -1361,7 +1361,7 @@ class sim:
 
                         # action["ActionStartTime"] += self.TimeShift  # Adjust start times
                         if action["ActionStatus"] == 0:
-                            action["StartTime"] = CurrentSimTime
+                            action["StartTime"] = current_sim_time
 
                         # Call the action function (pass appropriate arguments as per your function requirements)
                         action["ActionStatus"] = await ActionFunction(
@@ -1398,7 +1398,7 @@ class sim:
 
                         if action["ActionStatus"] == -999:
 
-                            action["EndTime"] = CurrentSimTime
+                            action["EndTime"] = current_sim_time
 
                             # This action will be ignored as it will be embedded with a generator action. Modify the plan to avoid this error/msg.
                             if self.debug_print:
@@ -1409,14 +1409,14 @@ class sim:
                                 await asyncio.sleep(
                                     app.async_print_delay if app else 0
                                 )
-                            self.Actions = [
+                            self.actions = [
                                 action
-                                for action in self.Actions
+                                for action in self.actions
                                 if action["ActionStatus"] != -999
                             ]
 
                         if action["ActionStatus"] in [2, -999]:
-                            action["EndTime"] = CurrentSimTime
+                            action["EndTime"] = current_sim_time
 
                         # Update Action Status using the stored row index
                         self.config.bspssepy_sequence.at[
@@ -1432,7 +1432,7 @@ class sim:
 
             if not (
                 self.config.delay_agc_after_action
-                >= CurrentSimTime
+                >= current_sim_time
                 - max(
                     (
                         row["End Time"]
@@ -1445,7 +1445,7 @@ class sim:
                 (
                     self.bspssepy_gen,
                     self.bspssepy_agc,
-                    FrequencyRegulated,
+                    freq_regulated,
                     old_freq_dev,
                 ) = await AGCControl(
                     bspssepy_gen=self.bspssepy_gen,
@@ -1466,40 +1466,40 @@ class sim:
             #  Update Simulation Time
             # ==========================
             # Determine the next simulation time step to run
-            NextSimTime = CurrentSimTime + self.config.BSPSSEPyTimeStep
+            NextSimTime = current_sim_time + self.config.BSPSSEPyTimeStep
             CutPrintMessagesFlag = False
             if (
                 self.config.BSPSSEPyHardTimeLimitFlag
-                and CurrentSimTime >= self.config.BSPSSEPyHardTimeLimit * 60
+                and current_sim_time >= self.config.BSPSSEPyHardTimeLimit * 60
             ):
                 CutPrintMessagesFlag = True
-                self.EndSimulationFlag = True
+                self.end_sim_flag = True
             elif (
                 not self.config.BSPSSEPyHardTimeLimitFlag
-                and FrequencyRegulated
-                and AllActionsExecuted
+                and freq_regulated
+                and all_actions_executed
             ):
                 CutPrintMessagesFlag = True
-                self.EndSimulationFlag = True
+                self.end_sim_flag = True
 
             # Print message only every BSPSSEPyProgressPrintTime minutes
             if (
                 (
-                    int(CurrentSimTime)
+                    int(current_sim_time)
                     // (self.config.BSPSSEPyProgressPrintTime * 60)
-                    != int(LastPrintedTime)
+                    != int(last_print_time)
                     // (self.config.BSPSSEPyProgressPrintTime * 60)
                     and not CutPrintMessagesFlag
                 )
-                or CurrentSimTime == 0
+                or current_sim_time == 0
             ) & (self.DashBoardStyle == 0):
                 if app == None:
                     bp(
-                        f"running simulation from {CurrentSimTime/60} to {CurrentSimTime/60 + self.config.BSPSSEPyProgressPrintTime} minutes",
+                        f"running simulation from {current_sim_time/60} to {current_sim_time/60 + self.config.BSPSSEPyProgressPrintTime} minutes",
                         app=app,
                     )
                     await asyncio.sleep(app.async_print_delay if app else 0)
-                LastPrintedTime = CurrentSimTime
+                last_print_time = current_sim_time
 
             if self.print_all_t_flag:
                 print(f"t = {NextSimTime}s")
@@ -1554,7 +1554,7 @@ class sim:
             )  # Number of time steps between plotting CRT channels
 
             # Update the current simulation time
-            CurrentSimTime = NextSimTime
+            current_sim_time = NextSimTime
 
             if self.DashBoardStyle == 1 & (not self.debug_print):
                 from .bspssepy_live_monitoring import CreateMainDashboard

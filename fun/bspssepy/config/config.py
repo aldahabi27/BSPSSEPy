@@ -52,20 +52,21 @@ class config:
 
     async def config_init(
         self,
-        ConfigPath=None,
-        CaseName=None,
-        Ver=None,
+        config_path=None,
+        case_name=None,
+        ver=None,
         debug_print=None,
         app=None,
     ):
         """
-        Initializes the config class with default values or loads from a configuration file.
+        Initializes the config class with default values or loads from a
+        configuration file.
 
         Parameters:
-            ConfigPath (str): The path to the configuration file. If None, default values are used.
-            CaseName (str): The name of the power system case.
-            Ver (int): The version of the case.
-            debug_print (bool): Enables debug messages when True.
+            ConfigPath (str): The path to the configuration file. If None,
+            default values are used. CaseName (str): The name of the power
+            system case. Ver (int): The version of the case. debug_print
+            (bool): Enables debug messages when True.
         """
 
         if (debug_print is None) and app:
@@ -75,34 +76,42 @@ class config:
             bp("[DEBUG] Entering config Constructor...", app=app)
             await asyncio.sleep(app.async_print_delay if app else 0)
 
-        # Default value for CaseName
-        # The name of the case, which should match the case folder name.
-        # This is used to locate case-specific data files (e.g., *.sav files).
-        self.CaseName = ""  # Default is an empty string, should match the name of the case folder exactly.
+        # Default value for CaseName The name of the case, which should match
+        # the case folder name. This is used to locate case-specific data
+        # files (e.g., *.sav files).
 
-        # Default value for Ver (Version)
-        # The version number derived from the .sav file name (e.g., 3Bus_Ver2.sav). If no version is specified,
-        # the default value is -1. This helps identify the specific configuration version of the case.
-        self.Ver = -1  # Default is -1, meaning no version specified.
+        # Default is an empty string, should match the name of the case folder
+        # exactly.
+        self.case_name = ""
 
-        # Default value for NumberOfBuses
-        # Specifies the number of buses in the system. If this value is unknown or not provided,
-        # setting it to 0 will prompt the code to automatically derive this from the case data.
-        # This is useful for cases where the user might not know the exact number of buses ahead of time.
-        self.NumberOfBuses = 0  # Default is 0, which will trigger automatic calculation from case data.
+        # Default value for Ver (Version) The version number derived from the
+        # .sav file name (e.g., 3Bus_Ver2.sav). If no version is specified,
+        # the default value is -1. This helps identify the specific
+        # configuration version of the case.
+
+        self.ver = -1  # Default is -1, meaning no version specified.
+
+        # Default value for NumberOfBuses Specifies the number of buses in the
+        # system. If this value is unknown or not provided, setting it to 0
+        # will prompt the code to automatically derive this from the case
+        # data. This is useful for cases where the user might not know the
+        # exact number of buses ahead of time.
+        # Default is 0, which will
+        # trigger automatic calculation from case data.
+        self.num_of_buses = 0
 
         # Default value for BusesToMonitor_Voltage
         # This is a list of buses whose voltage is to be monitored during the simulation.
         # The user can specify specific buses (e.g., [1, 2, 3]) or use a range notation to specify a range of buses.
         # This can be used to focus on specific buses for voltage monitoring, which helps in monitoring system stability.
-        self.BusesToMonitor_Voltage = (
+        self.v_buses_to_monitor = (
             []
         )  # Default is an empty list. User can specify buses to monitor.
 
         # Default value for BusesToMonitor_Frequency
         # This is a list of buses whose frequency is to be monitored during the simulation.
         # Similar to voltage monitoring, this can be used to track frequency at specific buses of interest.
-        self.BusesToMonitor_Frequency = (
+        self.freq_buses_to_monitor = (
             []
         )  # Default is an empty list. User can specify buses to monitor for frequency.
 
@@ -115,7 +124,7 @@ class config:
         #   4: Monitor all load buses.
         #   5: Monitor all buses.
         # This gives the user flexibility in selecting which buses to monitor for voltage.
-        self.VoltageFlag = 0  # Default is 0 (use the buses specified in BusesToMonitor_Voltage).
+        self.v_flag = 0  # Default is 0 (use the buses specified in BusesToMonitor_Voltage).
 
         # Default value for FrequencyFlag
         # This flag controls how the frequency monitoring works:
@@ -126,60 +135,60 @@ class config:
         #   4: Monitor all load buses.
         #   5: Monitor all buses.
         # This flag offers flexibility in monitoring frequency at various locations in the system.
-        self.FrequencyFlag = 0  # Default is 0 (use the buses specified in BusesToMonitor_Frequency).
+        self.freq_flag = 0  # Default is 0 (use the buses specified in BusesToMonitor_Frequency).
 
         # Default value for SimulationTimeStep
         # This specifies the time step for the simulation in seconds. The default value is set to 1ms (0.001 seconds),
         # which is typically used for high-resolution simulations in power systems.
         # The user can change this to smaller or larger time steps depending on the simulation accuracy needed.
-        self.SimulationTimeStep = 1e-3  # Default is 1ms (0.001 seconds).
+        self.sim_time_step = 1e-3  # Default is 1ms (0.001 seconds).
 
         # Default value for Simulationfreqfilter
         # This specifies the frequency filtering threshold for the simulation in seconds. The default value is
         # 4 times the SimulationTimeStep. This helps smooth out high-frequency noise during simulations.
-        self.Simulationfreqfilter = (
-            4 * self.SimulationTimeStep
+        self.sim_freq_filter = (
+            4 * self.sim_time_step
         )  # Default is 4 times the SimulationTimeStep.
 
         # Default value for PSSEMaxIterationNewtonRaphson
         # This specifies the maximum number of iterations allowed for the PSSE Newton-Raphson solver during power flow calculations.
         # Increasing the number may improve convergence for complex systems, but it also increases computation time.
-        self.PSSEMaxIterationNewtonRaphson = 100  # Default is 100 iterations.
+        self.psse_max_iter_newton_raphson = 100  # Default is 100 iterations.
 
         # Default value for IgnoreCNVFile
         # If set to True, this forces regeneration of the CNV file, regardless of its existence.
         # The CNV file is used for system network data and is generated during the power flow analysis.
-        self.IgnoreCNVFile = False  # Default is False, meaning the CNV file will be reused if it exists.
+        self.ignore_cnv_file = False  # Default is False, meaning the CNV file will be reused if it exists.
 
         # Default value for IgnoreSNPFile
         # If set to True, this forces regeneration of the SNP file, regardless of its existence.
         # The SNP file is used for storing system snapshot data during simulations.
-        self.IgnoreSNPFile = False  # Default is False, meaning the SNP file will be reused if it exists.
+        self.ignore_snp_file = False  # Default is False, meaning the SNP file will be reused if it exists.
 
         # assign debug_print to self.debug_print
         self.debug_print = debug_print
 
         # BSPSSEPy Hard Time Limit in minutes (ignored if BSPSSEPyHardTimeLimitFlag is False)
-        self.BSPSSEPyHardTimeLimit = 1  # minutes
+        self.bspssepy_hard_time_limit = 1  # minutes
 
         # If true, BSPSSEPy will enforce a hard time limit on the simulation.
-        self.BSPSSEPyHardTimeLimitFlag = True
+        self.bspssepy_hard_time_limit_flag = True
 
         # BSPSSEPy Time Step in seconds
         # This timestep controls the python functions execution rate.
         # This controls AGC, control actions, and other time-dependent functions.
         # Default is 1 second.
         # Note: This is different from the simulation time step specified for dynamic modeling in PSSE.
-        self.BSPSSEPyTimeStep = 1  # seconds
+        self.bspssepy_time_step = 1  # seconds
 
         # BSPSSEPyProgressPrintTime controls the frequency of progress print messages in minutes.
-        self.BSPSSEPyProgressPrintTime = 1  # minutes
+        self.bspssepy_progress_print_time = 1  # minutes
 
         # Starting from Channel 1
-        self.CurrentChannelIndex = 1
+        self.current_channel_index = 1
 
         # Channels mapping for monitoring
-        self.Channels = (
+        self.channels = (
             []
         )  # Stores channel-related information for monitoring
 
@@ -224,33 +233,33 @@ class config:
         #   - Cranking load Array: Power array [PL, QL, IP, IQ, YP, YQ, Power Factor]
         #
         #   For BS Generators, the status should be "ON", and the rest of the parameters are all ignored.
-        self.GeneratorsConfig = []  # Default is an empty list.
+        self.gen_config = []  # Default is an empty list.
 
         self.ibr_config = []  # Default is an empty list.
 
-        self.EnforceActionLock = (
+        self.enforce_action_lock = (
             True  # Flag to enforce checking action lock logic
         )
 
-        self.ControlSequenceAsIs = False
+        self.control_sequence_as_is = False
         # If True, the control sequence is executed as is without looking at action time.
         # To set this to True, EnforceActionLock must be True (to excute actions sequentially).
         # If True and EnforceActionLock is False, program will throw an error and exits.
         # If False, the program will execute the control sequence based on the action time.
 
-        self.BypassTiedActions = True  # Flag to excute TiedActions with their main action. If an action is linked/tied to others, it will be executed with them.
+        self.bypass_tied_actions = True  # Flag to excute TiedActions with their main action. If an action is linked/tied to others, it will be executed with them.
 
-        self.AccountForActionExecutionDelays = True  # If True, the system will adjust action timings to compensate for unforeseen execution delays (e.g., AGC frequency regulation or prolonged generator startup) while maintaining the planned time gaps.
+        self.account_for_action_exec_delays = True  # If True, the system will adjust action timings to compensate for unforeseen execution delays (e.g., AGC frequency regulation or prolonged generator startup) while maintaining the planned time gaps.
 
-        self.EnforceFrequencySafetyMargin = True  # If True, the program will enforce a safety margin on the frequency to avoid
+        self.enforce_freq_safety_margin = True  # If True, the program will enforce a safety margin on the frequency to avoid
         # the frequency to go below FreqSafetyMarginMin or above FreqSafetyMarginMax.
-        self.FreqSafetyMarginMin = 59.5  # Minimum frequency allowed in Hz
-        self.FreqSafetyMarginMax = 60.5  # Maximum frequency allowed in Hz
+        self.freq_safety_margin_min = 59.5  # Minimum frequency allowed in Hz
+        self.freq_safety_margin_max = 60.5  # Maximum frequency allowed in Hz
 
         # Note: If EnforceFrequencySafetyMargin is True, the system will wait until "AGC" regulate the frequency to be within limits before executing the next action.
         #       If EnforceFrequencySafetyMargin is False, the system will execute the next action regardless of the frequency.
 
-        self.TieActionsByExecutionTime = False  # If True, actions will be tied by their execution time. If action is also "tied" by their "values" information, they will be part of the parent
+        self.tie_actions_by_exec_time = False  # If True, actions will be tied by their execution time. If action is also "tied" by their "values" information, they will be part of the parent
 
         self.delay_agc_after_action = (
             0  # seconds -- delay AGC after action execution
@@ -263,58 +272,58 @@ class config:
         # await asyncio.sleep(app.async_print_delay if app else 0)
 
         # Define main project directory
-        self.MainFolder = Path(os.getcwd())  # Current working directory
+        self.main_folder = Path(os.getcwd())  # Current working directory
 
         # Define ConfigPath based on CaseName and Ver
-        if CaseName is not None:
-            if Ver is not None and Ver > 0:
-                ConfigPath = (
-                    self.MainFolder
+        if case_name is not None:
+            if ver is not None and ver > 0:
+                config_path = (
+                    self.main_folder
                     / "Case"
-                    / CaseName
-                    / f"{CaseName}_Ver{Ver}_Config.py"
+                    / case_name
+                    / f"{case_name}_Ver{ver}_Config.py"
                 )
             else:
-                ConfigPath = (
-                    self.MainFolder
+                config_path = (
+                    self.main_folder
                     / "Case"
-                    / CaseName
-                    / f"{CaseName}_Config.py"
+                    / case_name
+                    / f"{case_name}_Config.py"
                 )
             if debug_print:
                 bp(
-                    f"[DEBUG] ConfigPath derived from CaseName and Version: {ConfigPath}",
+                    f"[DEBUG] ConfigPath derived from CaseName and Version: {config_path}",
                     app=app,
                 )
                 await asyncio.sleep(app.async_print_delay if app else 0)
 
-        elif ConfigPath:
+        elif config_path:
             # ConfigPath = Path(ConfigPath)
             if debug_print:
                 bp(
-                    f"[DEBUG] ConfigPath provided directly: {ConfigPath}",
+                    f"[DEBUG] ConfigPath provided directly: {config_path}",
                     app=app,
                 )
                 await asyncio.sleep(app.async_print_delay if app else 0)
 
         # await asyncio.sleep(app.async_print_delay if app else 0)
 
-        if isinstance(ConfigPath, str):
-            ConfigPath = Path(ConfigPath)
+        if isinstance(config_path, str):
+            config_path = Path(config_path)
 
         bp(
-            f'Attempting to load configuration file "{ConfigPath.name}"',
+            f'Attempting to load configuration file "{config_path.name}"',
             app=app,
         )
         await asyncio.sleep(app.async_print_delay if app else 0)
 
-        if ConfigPath and ConfigPath.exists():
+        if config_path and config_path.exists():
             if debug_print:
                 bp("[DEBUG] Loading configuration from file...", app=app)
                 await asyncio.sleep(app.async_print_delay if app else 0)
             await load_config(
                 self=self,
-                config_path=ConfigPath,
+                config_path=config_path,
                 debug_print=debug_print,
                 app=app,
             )
@@ -340,19 +349,19 @@ class config:
         debug_print = self.debug_print
 
         # Prepare directories for the case
-        self.CaseFolder = self.MainFolder / f"Case/{self.CaseName}"
-        self.LogsFolder = self.CaseFolder / "Logs"
-        self.SimFolder = self.CaseFolder / "Simulations"
+        self.case_folder = self.main_folder / f"Case/{self.case_name}"
+        self.logs_folder = self.case_folder / "Logs"
+        self.sim_folder = self.case_folder / "Simulations"
 
         # Ensure all required directories exist
-        await self._CreateDirectory(
-            self.CaseFolder, "Case directory", app=app
+        await self._create_directory(
+            self.case_folder, "Case directory", app=app
         )
-        await self._CreateDirectory(
-            self.LogsFolder, "Logs directory", app=app
+        await self._create_directory(
+            self.logs_folder, "Logs directory", app=app
         )
-        await self._CreateDirectory(
-            self.SimFolder, "Simulations directory", app=app
+        await self._create_directory(
+            self.sim_folder, "Simulations directory", app=app
         )
         # await asyncio.sleep(app.async_print_delay if app else 0)
 
@@ -361,37 +370,39 @@ class config:
             await asyncio.sleep(app.async_print_delay if app else 0)
 
         # Record the current system time
-        self.SysTime = datetime.datetime.now()
-        self.SysFormattedTime = self.SysTime.strftime(
+        self.sys_time = datetime.datetime.now()
+        self.sys_formatted_time = self.sys_time.strftime(
             "%H%M%S_%d%m%y"
         )  # Format: hhmmss_DDMMYY
 
         if debug_print:
-            bp(f"[DEBUG] System time recorded: {self.SysTime}", app=app)
+            bp(f"[DEBUG] System time recorded: {self.sys_time}", app=app)
             await asyncio.sleep(app.async_print_delay if app else 0)
 
         # Define simulation-related file paths based on the case version.
 
-        BaseCaseName = (
-            f"{self.CaseName}_Ver{self.Ver}"
-            if self.Ver >= 1
-            else self.CaseName
+        base_case_name = (
+            f"{self.case_name}_Ver{self.ver}"
+            if self.ver >= 1
+            else self.case_name
         )
 
-        self.sav_file = self.CaseFolder / f"{BaseCaseName}.sav"
-        self.DYRFile = self.CaseFolder / f"{BaseCaseName}.dyr"
-        self.CNVFile = self.CaseFolder / f"{BaseCaseName}.cnv"
-        self.SNPFile = self.CaseFolder / f"{BaseCaseName}.snp"
-        self.LogFile = (
-            self.LogsFolder / f"{BaseCaseName}_{self.SysFormattedTime}.log"
+        self.sav_file = self.case_folder / f"{base_case_name}.sav"
+        self.dyr_file = self.case_folder / f"{base_case_name}.dyr"
+        self.cnv_file = self.case_folder / f"{base_case_name}.cnv"
+        self.snp_file = self.case_folder / f"{base_case_name}.snp"
+        self.log_file = (
+            self.logs_folder
+            / f"{base_case_name}_{self.sys_formatted_time}.log"
         )
-        self.ConvCodeFile = self.CaseFolder / f"{BaseCaseName}_Conv.py"
-        self.SimOutputFile = (
-            self.SimFolder / f"{BaseCaseName}_{self.SysFormattedTime}.out"
+        self.conf_code_file = self.case_folder / f"{base_case_name}_Conv.py"
+        self.sim_output_file = (
+            self.sim_folder
+            / f"{base_case_name}_{self.sys_formatted_time}.out"
         )
-        self.CSVControlPlan = self.CaseFolder / f"{BaseCaseName}.csv"
-        self.AllDevicesList = (
-            self.CaseFolder / f"{BaseCaseName}_AllDevices.csv"
+        self.csv_control_plan = self.case_folder / f"{base_case_name}.csv"
+        self.all_devices_list = (
+            self.case_folder / f"{base_case_name}_AllDevices.csv"
         )
 
         if debug_print:
@@ -401,14 +412,14 @@ class config:
 
         # Read the CSV file into a DataFrame
         self.bspssepy_sequence = await bspssepy_control_seq_table(
-            self.CSVControlPlan, debug_print=debug_print, app=app
+            self.csv_control_plan, debug_print=debug_print, app=app
         )
 
         self.bspssepy_sequence.insert(0, "Control Sequence", 0)
         self.bspssepy_sequence.insert(0, "Start Time", 0)
         self.bspssepy_sequence.insert(0, "End Time", 0)
 
-        if self.TieActionsByExecutionTime:
+        if self.tie_actions_by_exec_time:
             """
             If enabled, this logic ensures that actions occurring at the same "Action Time"
             are grouped under the first action of that time as the reference.
@@ -416,16 +427,16 @@ class config:
             """
 
             # Dictionary to track the first UID for each "Action Time"
-            ActionTimeToUID = {}
+            action_time_to_uid = {}
 
             for idx in self.bspssepy_sequence.index:
                 action_time = self.bspssepy_sequence.at[idx, "Action Time"]
-                UID = self.bspssepy_sequence.at[idx, "UID"]
+                uid = self.bspssepy_sequence.at[idx, "UID"]
 
                 # If this Action Time was not seen before, set it as the reference UID
-                if action_time not in ActionTimeToUID:
-                    ActionTimeToUID[action_time] = (
-                        UID  # Store this UID as the main reference
+                if action_time not in action_time_to_uid:
+                    action_time_to_uid[action_time] = (
+                        uid  # Store this UID as the main reference
                     )
                     self.bspssepy_sequence.at[idx, "Tied Action"] = (
                         -1
@@ -433,20 +444,20 @@ class config:
                 else:
                     # Set "Tied Action" to reference the first action's UID
                     self.bspssepy_sequence.at[idx, "Tied Action"] = (
-                        ActionTimeToUID[action_time]
+                        action_time_to_uid[action_time]
                     )
 
-        # with pd.option_context(
-        #     "display.max_rows", None,  # Show all rows
+        # with pd.option_context( "display.max_rows", None,  # Show all rows
         #     "display.max_columns", None,  # Show all columns
         #     "display.width", 0,  # Auto-adjust width for full visibility
-        #     "display.colheader_justify", "center",  # Center column headers for readability
-        # ):
-        #     bp(self.bspssepy_sequence.to_string(index=False))
-        #     await asyncio.sleep(app.async_print_delay if app else 0)
+        #     "display.colheader_justify", "center",  # Center column headers
+        #     for readability ):
+        # bp(self.bspssepy_sequence.to_string(index=False)) await
+        #     asyncio.sleep(app.async_print_delay if app else 0)
 
-        if not self.ControlSequenceAsIs:
-            # Sort by "Action Time" first, then by "Tied Action" to ensure grouped execution
+        if not self.control_sequence_as_is:
+            # Sort by "Action Time" first, then by "Tied Action" to ensure
+            # grouped execution
             self.bspssepy_sequence: (
                 pd.DataFrame
             ) = self.bspssepy_sequence.sort_values(
@@ -470,25 +481,25 @@ class config:
             ProcessedUIDs = set()
 
             for action in SequenceList:
-                UID = action["UID"]
+                uid = action["UID"]
                 TiedAction = action["Tied Action"]
 
                 if TiedAction != -1:
                     continue
 
                 # Skip if already added (to avoid duplication)
-                if UID in ProcessedUIDs:
+                if uid in ProcessedUIDs:
                     continue
 
                 # Add the main action first
                 ReorderedSequence.append(action)
-                ProcessedUIDs.add(UID)
+                ProcessedUIDs.add(uid)
 
                 # Find and move tied actions immediately after their parent action
                 TiedActions = [
                     a
                     for a in SequenceList
-                    if str(a.get("Tied Action", "")) == str(UID)
+                    if str(a.get("Tied Action", "")) == str(uid)
                 ]
                 for tied_action in TiedActions:
                     ReorderedSequence.append(tied_action)
@@ -514,7 +525,7 @@ class config:
                 )
 
                 # If BypassTiedActions is enabled, make tied actions share the same sequence number
-                if self.BypassTiedActions:
+                if self.bypass_tied_actions:
                     TiedActions = self.bspssepy_sequence[
                         self.bspssepy_sequence["Tied Action"]
                         == self.bspssepy_sequence.at[idx, "UID"]
@@ -528,7 +539,7 @@ class config:
                 ControlSequenceIndex += 1
 
             # If BypassTiedActions is False, assign a new control sequence to each tied action
-            elif not self.BypassTiedActions:
+            elif not self.bypass_tied_actions:
                 self.bspssepy_sequence.at[idx, "Control Sequence"] = (
                     ControlSequenceIndex
                 )
@@ -560,7 +571,7 @@ class config:
         #     bp(self.bspssepy_sequence.to_string(index=False))
         #     await asyncio.sleep(app.async_print_delay if app else 0)
 
-    async def _CreateDirectory(self, directory_path, description, app=None):
+    async def _create_directory(self, directory_path, description, app=None):
         """
         Create a directory if it does not exist.
 
