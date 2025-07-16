@@ -249,8 +249,8 @@ async def get_app_dfs(
             "Gen Name": bspssepy_gen["MCNAME"],
             "Bus #": bspssepy_gen["NUMBER"],
             "Bus Name": bspssepy_gen["NAME"],
-            "Δf": bspssepy_agc[
-                "Δf (Hz)"
+            "Δf": bspssepy_agc["Δf (Hz)"][
+                :-1
             ],  # Assuming already in correct format
             "Pᴱ MW (p.u.)": [
                 f"{mw} MW ({pu} p.u.)" for mw, pu in zip(pelec_mw, pelec_pu)
@@ -1161,8 +1161,8 @@ def BSPSSEPyAppResetTable(
         bp("[DEBUG] Table update completed.", app=app)
 
 
-def BSPSSEPyAppUpdateTables(*args, app=None) -> None:
-    """This function will update the BSPSSEPyApp Tables using the available data-frames and by calling PSSE functions to collect new measurements (mainly from channels)"""
+# def BSPSSEPyAppUpdateTables(*args, app=None) -> None:
+#     """This function will update the BSPSSEPyApp Tables using the available data-frames and by calling PSSE functions to collect new measurements (mainly from channels)"""
 
 
 # async def GetLoadInfoPSSE(LoadNames: list(str), debug_print, app):

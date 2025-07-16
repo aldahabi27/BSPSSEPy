@@ -51,3 +51,11 @@ The BESS bus (Bus 5) code is changed to 2 (PV bus). The scheduled voltage was mo
 IEEE9_Ver16
 This is built on top of IEEE_Ver15.
 I have modified the parmaeters of the BESS to fix the behavior observed while the BESS is offline.
+
+
+IEEE9_Ver17
+This is built from IEEE_Ver16, but the plan is fixed to follow Harry's setup correctly.
+
+
+IEEE9_Ver18
+This is a "truncated" plan version from IEEE9_Ver17 to investigate the behavior observed on the frequencies.

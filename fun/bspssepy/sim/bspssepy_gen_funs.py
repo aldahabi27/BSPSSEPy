@@ -22,13 +22,14 @@
 # pyright: reportMissingImports=false
 import psspy  # noqa: F401 pylint: disable=import-error
 import pandas as pd
+from fun.bspssepy.config.config import config
 from fun.bspssepy.bspssepy_dict import *
 from .bspssepy_channels import FetchChannelValue
 from fun.bspssepy.app.app_helper_funs import bp
 import asyncio
 
 
-async def GetGenInfo(
+async def get_gen_info(
     GenKeys,  # The key(s) for the required information of the generator(s)
     # Generator Name (optional) --> could be a list
     GenName=None,
@@ -288,7 +289,7 @@ async def GetGenInfoPSSE(
 async def ExtendBSPSSEPyGenDataFrame(
     bspssepy_gen,
     ConfigTable,
-    SimConfig,
+    SimConfig: config,
     bspssepy_trn,
     bspssepy_bus,
     bspssepy_brn,
@@ -362,6 +363,7 @@ async def ExtendBSPSSEPyGenDataFrame(
         "GenTrnBrnName": "",
         "POPF": 0.0,
         "QOPF": 0.0,
+        "H": 1.0,  # Inertia constant in seconds (H)
     }
 
     # Add new columns if they don't already exist
@@ -460,6 +462,7 @@ async def ExtendBSPSSEPyGenDataFrame(
         UseGenRampRate = config.get("UseGenRampRate", False)
         LoadEnabledResponse = config.get("Load Enabled Response", False)
         LERPF = config.get("LERPF", -1)
+        H = config.get("Inertia Constant", 1.0)
 
         # if debug_print:
         # bp(f"[DEBUG] Calling GetGeneratorInfoFun with string = 'Active Power Output (Pgen) MW'",app=app)
@@ -540,6 +543,7 @@ async def ExtendBSPSSEPyGenDataFrame(
             "UseGenRampRate": UseGenRampRate,
             "LoadEnabledResponse": LoadEnabledResponse,
             "LERPF": LERPF,
+            "H": H,  # Inertia constant in seconds (H)
         }
 
         # # Prepare values to update
@@ -617,6 +621,12 @@ async def ExtendBSPSSEPyGenDataFrame(
     bspssepy_gen["ConnectionElementToBus"] = None
     bspssepy_gen["ConnectionElementID"] = None
     bspssepy_gen["ConnectionElementName"] = None
+    bspssepy_gen["p_elec"] = 0
+    bspssepy_gen["p_mech"] = 0
+    bspssepy_gen["q_elec"] = 0
+    bspssepy_gen["g_ref"] = 0
+    bspssepy_gen["v_ref"] = 0
+    bspssepy_gen["freq"] = 0
 
     bp(
         "Adding 'GREF', 'VREF', 'PELEC', 'QELEC', 'PMECH' channels to all generators + custom loads for non-black-start generators.",
@@ -719,15 +729,17 @@ async def ExtendBSPSSEPyGenDataFrame(
                 await asyncio.sleep(app.async_print_delay if app else 0)
             else:
                 bspssepy_gen.at[GeneratorRowIndex, key + "Channel"] = (
-                    SimConfig.CurrentChannelIndex
+                    SimConfig.current_channel_index
                 )
                 if debug_print:
                     bp(
-                        f"[DEBUG] Successfully added channel for Gen: {gen_row['MCNAME']} to monitor {key} with channel index {SimConfig.CurrentChannelIndex}",
+                        f"[DEBUG] Successfully added channel for Gen: {gen_row['MCNAME']} to monitor {key} with channel index {SimConfig.current_channel_index}",
                         app=app,
                     )
                     await asyncio.sleep(app.async_print_delay if app else 0)
-                SimConfig.CurrentChannelIndex += 1  # Increament Channel index
+                SimConfig.current_channel_index += (
+                    1  # Increament Channel index
+                )
 
         # Check if generator is a black-start generator
         if GeneratorType.lower() in [
@@ -1545,7 +1557,7 @@ async def GenDisable(
         await asyncio.sleep(app.async_print_delay if app else 0)
 
     # Fetch Generator details
-    GenRow = await GetGenInfo(
+    GenRow = await get_gen_info(
         [
             "NAME",
             "MCNAME",
@@ -1721,7 +1733,7 @@ async def GenDisable(
 
     # Updating bspssepy_gen to reflect that the generator is not connected
     if not (bspssepy_gen is None or bspssepy_gen.empty):
-        GenUpdatedStatus = await GetGenInfo(
+        GenUpdatedStatus = await get_gen_info(
             "STATUS", GenName=GenName, debug_print=debug_print, app=app
         )
 

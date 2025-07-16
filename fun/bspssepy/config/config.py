@@ -395,7 +395,7 @@ class config:
             self.logs_folder
             / f"{base_case_name}_{self.sys_formatted_time}.log"
         )
-        self.conf_code_file = self.case_folder / f"{base_case_name}_Conv.py"
+        self.conv_code_file = self.case_folder / f"{base_case_name}_Conv.py"
         self.sim_output_file = (
             self.sim_folder
             / f"{base_case_name}_{self.sys_formatted_time}.out"

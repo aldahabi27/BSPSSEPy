@@ -18,6 +18,7 @@ from fun.bspssepy.app.app_helper_funs import bp
 import asyncio
 import io
 from contextlib import redirect_stdout
+from fun.bspssepy.config.config import config
 
 
 class psse:
@@ -35,7 +36,7 @@ class psse:
 
         pass
 
-    async def PSSEInit(self, config, debug_print=None, app=None):
+    async def PSSEInit(self, config: config, debug_print=None, app=None):
         """
         Initializes the PSSE simulation environment and loads necessary files.
 
@@ -67,22 +68,20 @@ class psse:
 
             # Use the context manager to capture the stdout
             with redirect_stdout(output_capture):
-                self.CaseInitializationFlag = psspy.psseinit(
-                    config.NumberOfBuses
-                )
+                self.case_ini_flag = psspy.psseinit(config.num_of_buses)
             # Get the captured output
             captured_output = output_capture.getvalue()
 
             bp(captured_output, app=app)
             await asyncio.sleep(app.async_print_delay if app else 0)
 
-            if self.CaseInitializationFlag != 0:
-                # if app:
-                #     raise Exception(f"PSSE initialization failed with error code {self.CaseInitializationFlag}.")
-                # else:
+            if self.case_ini_flag != 0:
+                # if app: raise Exception(f"PSSE initialization failed with
+                #     error code {self.CaseInitializationFlag}.") else:
                 #
                 raise RuntimeError(
-                    f"PSSE initialization failed with error code {self.CaseInitializationFlag}."
+                    f"PSSE initialization failed with error code "
+                    f"{self.case_ini_flag}."
                 )
             else:
                 bp("PSSE initialized successfully.", app=app)
@@ -90,13 +89,16 @@ class psse:
 
             if debug_print:
                 bp(
-                    f"[DEBUG] Case Initialization Flag: {self.CaseInitializationFlag} (0 indicates no errors)",
+                    f"[DEBUG] Case Initialization Flag: {self.case_ini_flag} "
+                    f"(0 indicates no errors)",
                     app=app,
                 )
                 await asyncio.sleep(app.async_print_delay if app else 0)
 
-            # Retrieve default PSSE values for inputs
-            # Those values can be used when we want to modify certain parameters in the models, without changing the other parameters values. So we simply say "default" for the other values.
+            # Retrieve default PSSE values for inputs Those values can be used
+            # when we want to modify certain parameters in the models, without
+            # changing the other parameters values. So we simply say "default"
+            # for the other values.
             self.default_int, self.default_real, self.default_char = (
                 bspssepy_default_vars_fun()
             )
@@ -105,8 +107,8 @@ class psse:
                 await asyncio.sleep(app.async_print_delay if app else 0)
 
             # Redirect PSSE progress output to log file
-            psspy.progress_output(2, str(config.LogFile), [0, 0])
-            bp(f"Log file will be saved to: {config.LogFile}", app=app)
+            psspy.progress_output(2, str(config.log_file), [0, 0])
+            bp(f"Log file will be saved to: {config.log_file}", app=app)
             await asyncio.sleep(app.async_print_delay if app else 0)
 
             # ==========================
@@ -137,22 +139,22 @@ class psse:
             # Starting indices (use defaults unless you know what you're doing)
             startindx = [1, 1, 1, 1]
             ierr = psspy.dyre_new_2(
-                startindx, str(config.DYRFile)
-            )  # Use CaseDYRFile directly
+                startindx, str(config.dyr_file)
+            )  # Use Casedyr_file directly
 
             # Check for errors
             if ierr == 0:
                 bp(
-                    f"[SUCCESS] DYR file '{config.DYRFile.name}' loaded successfully.",
+                    f"[SUCCESS] DYR file '{config.dyr_file.name}' loaded successfully.",
                     app=app,
                 )
                 await asyncio.sleep(app.async_print_delay if app else 0)
             else:
                 # if app:
-                #     raise Exception (f"[ERROR] Failed to load DYR file '{config.DYRFile.name}'. Error code: {ierr}")
+                #     raise Exception (f"[ERROR] Failed to load DYR file '{config.dyr_file.name}'. Error code: {ierr}")
                 # else:
                 raise RuntimeError(
-                    f"[ERROR] Failed to load DYR file '{config.DYRFile.name}'. Error code: {ierr}"
+                    f"[ERROR] Failed to load DYR file '{config.dyr_file.name}'. Error code: {ierr}"
                 )
 
             # ==========================
@@ -171,64 +173,64 @@ class psse:
 
             # The following code will convert loads and generators, as well as the case file to prepare it for dynamic simulation.
             # It will generate two files, SNP and CNV. The code will check to see, if those files are available, it will read them.
-            # If you encounter error, update the flags "IgnoreCNVFile" & "IgnoreSNPFile" to force generate new files (warning, this overwrites the files)
+            # If you encounter error, update the flags "Ignore_cnv_file" & "Ignore_snp_file" to force generate new files (warning, this overwrites the files)
 
             # ==========================
             #  CNV File Handling
             # ==========================
             bp("Checking and Loading CNV File...", app=app)
             await asyncio.sleep(app.async_print_delay if app else 0)
-            if os.path.exists(config.CNVFile) and not config.IgnoreCNVFile:
+            if os.path.exists(config.cnv_file) and not config.ignore_cnv_file:
                 bp(
-                    f"CNV file '{config.CNVFile.name}' found. Loading...",
+                    f"CNV file '{config.cnv_file.name}' found. Loading...",
                     app=app,
                 )
                 await asyncio.sleep(app.async_print_delay if app else 0)
-                ierr = psspy.case(str(config.CNVFile))  # load the CNV File
+                ierr = psspy.case(str(config.cnv_file))  # load the CNV File
                 if ierr == 0:
                     bp(
-                        f"[SUCCESS] CNV file '{config.CNVFile.name}' loaded successfully.",
+                        f"[SUCCESS] CNV file '{config.cnv_file.name}' loaded successfully.",
                         app=app,
                     )
                     await asyncio.sleep(app.async_print_delay if app else 0)
                 else:
                     # if app:
-                    #     raise Exception(f"[ERROR] Failed to load CNV file '{config.CNVFile.name}'. Error code: {ierr}")
+                    #     raise Exception(f"[ERROR] Failed to load CNV file '{config.cnv_file.name}'. Error code: {ierr}")
                     # else:
                     raise RuntimeError(
-                        f"[ERROR] Failed to load CNV file '{config.CNVFile.name}'. Error code: {ierr}"
+                        f"[ERROR] Failed to load CNV file '{config.cnv_file.name}'. Error code: {ierr}"
                     )
             else:
                 bp(
-                    f"File '{config.CNVFile.name}' not found or ignored. Converting case '{config.sav_file.name}'",
+                    f"File '{config.cnv_file.name}' not found or ignored. Converting case '{config.sav_file.name}'",
                     app=app,
                 )
                 await asyncio.sleep(app.async_print_delay if app else 0)
                 bp(
-                    f"Importing conversion script in {config.ConvCodeFile.name}",
+                    f"Importing conversion script in {config.conv_code_file.name}",
                     app=app,
                 )
                 await asyncio.sleep(app.async_print_delay if app else 0)
 
-                # We read the file content in ConvCodeFile
-                with open(config.ConvCodeFile, "r") as file:
+                # We read the file content in conv_code_file
+                with open(config.conv_code_file, "r") as file:
                     exec(file.read())
 
-                bp(f"Saving the CNV File '{config.CNVFile.name}'", app=app)
+                bp(f"Saving the CNV File '{config.cnv_file.name}'", app=app)
                 await asyncio.sleep(app.async_print_delay if app else 0)
-                ierr = psspy.save(str(config.CNVFile))
+                ierr = psspy.save(str(config.cnv_file))
                 if ierr == 0:
                     bp(
-                        f"[SUCCESS] Converted case saved to '{config.CNVFile.name}'.",
+                        f"[SUCCESS] Converted case saved to '{config.cnv_file.name}'.",
                         app=app,
                     )
                     await asyncio.sleep(app.async_print_delay if app else 0)
                 else:
                     # if app:
-                    #     raise Exception(f"[ERROR] Failed to save CNV file '{config.CNVFile.name}'. Error code: {ierr}")
+                    #     raise Exception(f"[ERROR] Failed to save CNV file '{config.cnv_file.name}'. Error code: {ierr}")
                     # else:
                     raise RuntimeError(
-                        f"[ERROR] Failed to save CNV file '{config.CNVFile.name}'. Error code: {ierr}"
+                        f"[ERROR] Failed to save CNV file '{config.cnv_file.name}'. Error code: {ierr}"
                     )
 
             # ==========================
@@ -236,64 +238,64 @@ class psse:
             # ==========================
             bp("Checking and Loading SNP File...", app=app)
             await asyncio.sleep(app.async_print_delay if app else 0)
-            if os.path.exists(config.SNPFile) and not config.IgnoreSNPFile:
+            if os.path.exists(config.snp_file) and not config.ignore_snp_file:
                 bp(
-                    f"SNP file '{config.SNPFile.name}' found. Loading...",
+                    f"SNP file '{config.snp_file.name}' found. Loading...",
                     app=app,
                 )
                 await asyncio.sleep(app.async_print_delay if app else 0)
-                ierr = psspy.rstr(str(config.SNPFile))  # load the SNP File
+                ierr = psspy.rstr(str(config.snp_file))  # load the SNP File
                 if ierr == 0:
                     bp(
-                        f"[SUCCESS] Snapshot file '{config.SNPFile.name}' loaded successfully.",
+                        f"[SUCCESS] Snapshot file '{config.snp_file.name}' loaded successfully.",
                         app=app,
                     )
                     await asyncio.sleep(app.async_print_delay if app else 0)
                 else:
                     # if app:
-                    #     raise Exception(f"[ERROR] Failed to load SNP file '{config.SNPFile.name}'. Error code: {ierr}")
+                    #     raise Exception(f"[ERROR] Failed to load SNP file '{config.snp_file.name}'. Error code: {ierr}")
                     # else:
                     raise RuntimeError(
-                        f"[ERROR] Failed to load SNP file '{config.SNPFile.name}'. Error code: {ierr}"
+                        f"[ERROR] Failed to load SNP file '{config.snp_file.name}'. Error code: {ierr}"
                     )
             else:
                 bp(
-                    f"File '{config.SNPFile.name}' not found or ignored. Creating new SNP file...",
+                    f"File '{config.snp_file.name}' not found or ignored. Creating new SNP file...",
                     app=app,
                 )
                 await asyncio.sleep(app.async_print_delay if app else 0)
-                bp(f"Loading DYRE file '{config.DYRFile}'", app=app)
+                bp(f"Loading DYRE file '{config.dyr_file}'", app=app)
                 await asyncio.sleep(app.async_print_delay if app else 0)
-                ierr = psspy.dyre_new_2([1, 1, 1, 1], str(config.DYRFile))
+                ierr = psspy.dyre_new_2([1, 1, 1, 1], str(config.dyr_file))
                 if ierr == 0:
                     bp(
-                        f"[SUCCESS] Dynamics data from file '{config.DYRFile.name}' loaded successfully.",
+                        f"[SUCCESS] Dynamics data from file '{config.dyr_file.name}' loaded successfully.",
                         app=app,
                     )
                     await asyncio.sleep(app.async_print_delay if app else 0)
                 else:
                     # if app:
-                    #     raise Exception(f"[ERROR] Failed to load DYRE file '{config.DYRFile.name}'. Error code: {ierr}")
+                    #     raise Exception(f"[ERROR] Failed to load DYRE file '{config.dyr_file.name}'. Error code: {ierr}")
                     # else:
                     raise RuntimeError(
-                        f"[ERROR] Failed to load DYRE file '{config.DYRFile.name}'. Error code: {ierr}"
+                        f"[ERROR] Failed to load DYRE file '{config.dyr_file.name}'. Error code: {ierr}"
                     )
 
-                bp(f" Saving snapshot to '{config.SNPFile}'", app=app)
+                bp(f" Saving snapshot to '{config.snp_file}'", app=app)
                 await asyncio.sleep(app.async_print_delay if app else 0)
-                ierr = psspy.snap([-1, -1, -1, -1, -1], str(config.SNPFile))
+                ierr = psspy.snap([-1, -1, -1, -1, -1], str(config.snp_file))
                 if ierr == 0:
                     bp(
-                        f"[SUCCESS] Snapshot saved to '{config.SNPFile.name}'.",
+                        f"[SUCCESS] Snapshot saved to '{config.snp_file.name}'.",
                         app=app,
                     )
                     await asyncio.sleep(app.async_print_delay if app else 0)
                 else:
                     # if app:
-                    #     raise Exception(f"[ERROR] Failed to save SNP file '{config.SNPFile.name}'. Error code: {ierr}")
+                    #     raise Exception(f"[ERROR] Failed to save SNP file '{config.snp_file.name}'. Error code: {ierr}")
                     # else:
                     raise RuntimeError(
-                        f"[ERROR] Failed to save SNP file '{config.SNPFile.name}'. Error code: {ierr}"
+                        f"[ERROR] Failed to save SNP file '{config.snp_file.name}'. Error code: {ierr}"
                     )
 
             bp(

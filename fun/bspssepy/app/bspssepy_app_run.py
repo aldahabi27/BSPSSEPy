@@ -46,7 +46,7 @@ async def run_simulation(app: App, dummy_run: bool | None = False):
         # Call the main constructor and load the configurations for PSSE Simulation
         app.bspssepy = BSPSSEPy()
 
-        await app.bspssepy.bspssepy_init(ConfigPath=app.config_path, app=app)
+        await app.bspssepy.bspssepy_init(config_path=app.config_path, app=app)
 
         app.dummy_run = False
         app.case_tree.disabled = False
@@ -74,7 +74,7 @@ async def run_simulation(app: App, dummy_run: bool | None = False):
             app.bspssepy = BSPSSEPy()
 
             await app.bspssepy.bspssepy_init(
-                ConfigPath=app.config_path, app=app
+                config_path=app.config_path, app=app
             )
             await BSPSSEPyAppResetTables(app)
 
@@ -125,7 +125,7 @@ async def run_simulation(app: App, dummy_run: bool | None = False):
                 )
                 await asyncio.sleep(app.async_print_delay if app else 0)
                 bp(
-                    f"  Case Initialization Flag: {app.bspssepy.psse.CaseInitializationFlag} (0 indicates no errors)",
+                    f"  Case Initialization Flag: {app.bspssepy.psse.case_ini_flag} (0 indicates no errors)",
                     app=app,
                 )
                 await asyncio.sleep(app.async_print_delay if app else 0)

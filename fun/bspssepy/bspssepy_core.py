@@ -34,9 +34,9 @@ class BSPSSEPy:
 
     async def bspssepy_init(
         self,
-        CaseName=None,
+        case_name=None,
         Ver=None,
-        ConfigPath=None,
+        config_path=None,
         debug_print=None,
         app=None,
     ):
@@ -54,9 +54,9 @@ class BSPSSEPy:
         # Initialize configuration settings
         self.config = config()
         await self.config.config_init(
-            case_name=CaseName,
+            case_name=case_name,
             ver=Ver,
-            config_path=ConfigPath,
+            config_path=config_path,
             debug_print=debug_print,
             app=app,
         )

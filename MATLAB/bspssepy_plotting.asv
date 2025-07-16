@@ -9,7 +9,8 @@ clc;
 close all;
 
 csv_file = "I:\Work\Research\Control & Power Systems\JWSP Research\HONI Project\PSSE\BSPSSEPy\case\IEEE9\Simulations\IEEE9_Ver17_092539_280625.csv";
-csv_file = "I:\Work\Research\Control & Power Systems\JWSP Research\HONI Project\PSSE\BSPSSEPy\case\IEEE9\Simulations\IEEE9_Ver17_171553_300625.csv";
+csv_file = "I:\Work\Research\Control & Power Systems\JWSP Research\HONI Project\PSSE\BSPSSEPy\case\IEEE9\Simulations\IEEE9_Ver17_172347_300625.csv";
+csv_file = "I:\Work\Research\Control & Power Systems\JWSP Research\HONI Project\PSSE\BSPSSEPy\case\IEEE9\Simulations\IEEE9_Ver17_114341_150725.csv";
 
 opts = delimitedTextImportOptions('DataLines',3,VariableNamesLine=2,VariableNamingRule='preserve');
 bspssepy_data = readtable(csv_file ,opts,"ReadVariableNames", true);
@@ -19,11 +20,23 @@ freq_index = find(startsWith(bspssepy_data.Properties.VariableNames, 'freq', 'Ig
 
 freq = cellfun(@str2double, table2array(bspssepy_data(:,freq_index)));
 
-[~, i_freq_avg] = max(abs(freq) > 0.00000001,[],1);
+[~, i_freq_avg] = max(abs(freq) > 0.00001,[],1);
 
 freq_mask = bsxfun(@gt, (1:size(freq,1))', i_freq_avg);
 freq_nan = freq;
 freq_nan(~freq_mask) = NaN;
+
+w1 = 1;
+w2 = 2;
+w3 = 3;
+
+w_tot = freq_mask(:,1).*w1 + freq_mask(:,2).*w2 + freq_mask(:,3).*w3;
+
+w1 = w1
+
+avg_freq = freq_nan(:,1).*w1 + freq_nan(:,2).*w2 + freq_nan(:,3).*w3;
+
+
 avg_freq = mean(freq_nan,2, 'omitnan');
 avg_freq(isnan(avg_freq)) = 0;
 
@@ -114,7 +127,7 @@ xlabel("$t [k]$", "Interpreter", "latex");
 ylabel("$G_{\mathsf{ref}}$", "Interpreter", "latex");
 
 
-subplot(2,3,2); % VREF
+subplot(2,4,2); % VREF
 hold on
 VREF1 = cellfun(@str2double, table2array(bspssepy_data(:,Gen1_index(2))));
 VREF2 = cellfun(@str2double, table2array(bspssepy_data(:,Gen2_index(2))));
@@ -143,7 +156,7 @@ xlabel("$t [k]$", "Interpreter", "latex");
 ylabel("$V_{\mathsf{ref}}$", "Interpreter", "latex");
 
 
-subplot(2,3,3); % PELEC
+subplot(2,4,3); % PELEC
 hold on
 PELEC1 = cellfun(@str2double, table2array(bspssepy_data(:,Gen1_index(3))));
 PELEC2 = cellfun(@str2double, table2array(bspssepy_data(:,Gen2_index(3))));
@@ -173,7 +186,7 @@ ylabel("$P_{\mathsf{elec}} (p.u. - S_{\mathrm{base}})$", "Interpreter", "latex")
 
 
 
-subplot(2,3,5); % QELEC
+subplot(2,4,5); % QELEC
 hold on
 QELEC1 = cellfun(@str2double, table2array(bspssepy_data(:,Gen1_index(4))));
 QELEC2 = cellfun(@str2double, table2array(bspssepy_data(:,Gen2_index(4))));
@@ -202,7 +215,7 @@ xlabel("$t [k]$", "Interpreter", "latex");
 ylabel("$Q_{\mathsf{elec}} (p.u. - S_{\mathrm{base}})$", "Interpreter", "latex");
 
 
-subplot(2,3,6); % PMECH
+subplot(2,4,6); % PMECH
 hold on
 PMECH1 = cellfun(@str2double, table2array(bspssepy_data(:,Gen1_index(5))));
 PMECH2 = cellfun(@str2double, table2array(bspssepy_data(:,Gen2_index(5))));
@@ -231,7 +244,7 @@ ylabel("$P_{\mathsf{m}} (p.u. - S_{\mathrm{m}})$", "Interpreter", "latex");
 
 
 
-subplot(2,3,7); % FREQ
+subplot(2,4,7); % FREQ
 hold on
 
 my_legend = {};
@@ -259,14 +272,30 @@ ylabel("$f (Hz)$", "Interpreter", "latex");
 
 
 
-subplot(2,3,4); % FREQ
+subplot(2,4,4); % SOC
 hold on
 SOC_index = find(endsWith(bspssepy_data.Properties.VariableNames, 'residual energy', 'IgnoreCase',true));
-GREF1 = cellfun(@str2double, table2array(bspssepy_data(:,Gen1_index(1))));
+SOC = cellfun(@str2double, table2array(bspssepy_data(:,SOC_index(1))));
+
+my_legend = {};
+plot(time-1, SOC, 'LineWidth', 3);
+my_legend = [my_legend, {"BESS5 SOC"}];
+
+
+myleg = legend(my_legend, "location", "best");
+
+myleg.NumColumns = 1;
+myleg.IconColumnWidth = 8;
+
+grid on;
+
+xlabel("$t [k]$", "Interpreter", "latex");
+ylabel("$SOC [p.u.]$", "Interpreter", "latex");
+
 
 %% Plotting MATLAB Simulation output for comparison
 
-MATFile = "I:\Work\Research\Control & Power Systems\JWSP Research\HONI Project\Files From Harry\5 Jun 2025 - MATLAB BESS Integration\250529_ESS_in_frequency\250529_ESS_in_frequency\HarryPlotData30-Jun-2025.mat";
+MATFile = "I:\Work\Research\Control & Power Systems\JWSP Research\HONI Project\Files From Harry\5 Jun 2025 - MATLAB BESS Integration\250529_ESS_in_frequency\250529_ESS_in_frequency\HarryPlotData01-Jul-2025_noBESS.mat";
 
 
 HarryPlotData = load(MATFile);

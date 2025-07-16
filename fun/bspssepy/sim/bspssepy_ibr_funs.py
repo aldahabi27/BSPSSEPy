@@ -17,15 +17,15 @@ import pandas as pd
 import psspy  # noqa: F401 pylint: disable=import-error
 from fun.bspssepy.sim.bspssepy_default_vars import bspssepy_default_vars_fun
 from fun.bspssepy.app.app_helper_funs import bp
-from fun.bspssepy.sim.bspssepy_gen_funs import GetGenInfo
-
+from fun.bspssepy.sim.bspssepy_gen_funs import get_gen_info
+from fun.bspssepy.config.config import config
 from fun.bspssepy.bspssepy_dict import bspssepy_ibr_ch_mapping
 
 
 async def build_bspssepy_ibr(
     ibr_config,
     bspssepy_ibr,
-    sim_config,
+    sim_config: config,
     app,
     debug_print: bool | None = False,
 ) -> pd.DataFrame:
@@ -53,7 +53,7 @@ async def build_bspssepy_ibr(
                 "IBR Type": "ibr_type",
                 "GFM Flag": "gfm_flag",
                 "Initial Capacity": "init_cap",
-                "Ramp Rate": "ramp_rate",               
+                "Ramp Rate": "ramp_rate",
             }
         )
 
@@ -63,14 +63,8 @@ async def build_bspssepy_ibr(
         # (you could also use 'Bus Name' → 'NAME' if needed)
         bspssepy_ibr = bspssepy_ibr.merge(
             ibr_config_df[
-                [
-                    "MCNAME",
-                    "ibr_type",
-                    "gfm_flag",
-                    "init_cap",
-                    'ramp_rate'
-                    ]
-                ],
+                ["MCNAME", "ibr_type", "gfm_flag", "init_cap", "ramp_rate"]
+            ],
             on="MCNAME",
             how="left",
         )
@@ -99,23 +93,28 @@ async def build_bspssepy_ibr(
         # --> This is the frequency channel for the generator
         # (will be fetched from config.Channels)
         bspssepy_ibr["FChannel"] = -1
-        
+
         # This channel is used to monitor the SOC of the IBR
         bspssepy_ibr["SOCChannel"] = -1
-        
+
+        # This channel is used to monitor the frequency of the IBR
+        bspssepy_ibr["FChannel"] = -1
+
+        bspssepy_ibr["curr_cap"] = bspssepy_ibr["init_cap"].copy()
+
         for ibr_row_index, ibr_row in bspssepy_ibr.iterrows():
             ibr_bus_num = ibr_row["NUMBER"]
             ibr_id = ibr_row["ID"]
             ibr_name = ibr_row["MCNAME"]
             for key in bspssepy_ibr_ch_mapping.keys():
-                
+
                 # Check if key is SOC --> find the right channel
                 if key == "SOC":
                     ierr, L = psspy.windmind(
                         ibr_bus_num,
                         ibr_id,
-                        'WELEC',
-                        'VAR',
+                        "WELEC",
+                        "VAR",
                     )
                     if ierr != 0:
                         bp(
@@ -129,11 +128,11 @@ async def build_bspssepy_ibr(
                         )
                         continue
                     ierr = psspy.var_channel(
-                        [-1, L+bspssepy_ibr_ch_mapping[key]],
+                        [-1, L + bspssepy_ibr_ch_mapping[key]],
                         ibr_name + " Residual Energy",
                     )
                 else:
-                    
+
                     ierr = psspy.machine_array_channel(
                         [
                             -1,  # Next available channel
@@ -151,23 +150,24 @@ async def build_bspssepy_ibr(
                             f"[ERROR] Error occured during adding channel for IBR: {ibr_row['MCNAME']} to monitor {key} with key_status number: {bspssepy_ibr_ch_mapping[key]}",
                             app=app,
                         )
-                        await asyncio.sleep(app.async_print_delay if app else 0)
-                
+                        await asyncio.sleep(
+                            app.async_print_delay if app else 0
+                        )
+
                 if ierr == 0:
                     bspssepy_ibr.at[ibr_row_index, key + "Channel"] = (
-                        sim_config.CurrentChannelIndex
+                        sim_config.current_channel_index
                     )
                     if debug_print:
                         bp(
-                            f"[DEBUG] Successfully added channel for IBR: {ibr_row['MCNAME']} to monitor {key} with channel index {sim_config.CurrentChannelIndex}",
+                            f"[DEBUG] Successfully added channel for IBR: {ibr_row['MCNAME']} to monitor {key} with channel index {sim_config.current_channel_index}",
                             app=app,
                         )
                         await asyncio.sleep(
                             app.async_print_delay if app else 0
                         )
                     # Increament Channel index
-                    sim_config.CurrentChannelIndex += 1
-
+                    sim_config.current_channel_index += 1
 
             ibr_p_set_point = ibr_row["PGEN"]
             ibr_q_set_point = ibr_row["QGEN"]
@@ -178,16 +178,20 @@ async def build_bspssepy_ibr(
             _i, _r, _c = bspssepy_default_vars_fun()
 
             # Set the IBR output real power to
-            ierr_pref = psspy.change_pref(ibr_bus_num, ibr_id, ibr_p_set_point)
-            ierr_qref = psspy.change_qvref(ibr_bus_num, ibr_id, ibr_q_set_point)
+            ierr_pref = psspy.change_pref(
+                ibr_bus_num, ibr_id, ibr_p_set_point
+            )
+            ierr_qref = psspy.change_qvref(
+                ibr_bus_num, ibr_id, ibr_q_set_point
+            )
 
             if (ierr_pref + ierr_qref) > 0:
                 bp(
                     f"Error in setting IBR {ibr_name} set-point during "
                     f"initialization.",
-                    app=app
+                    app=app,
                 )
-            
+
         return bspssepy_ibr.copy()
     return pd.DataFrame()
 
@@ -244,7 +248,7 @@ async def ibr_enable(
             f"IBR with name '{ibr_name}' not found in bspssepy_ibr DataFrame."
         )
 
-    curr_status = await GetGenInfo(
+    curr_status = await get_gen_info(
         "STATUS", GenName=ibr_name, debug_print=debug_print, app=app
     )
 
@@ -267,7 +271,7 @@ async def ibr_enable(
         [_r] * 17,
         [_c] * 2,
     )
-    
+
     if ierr != 0:
         if debug_print:
             bp(
@@ -281,7 +285,7 @@ async def ibr_enable(
             f" with ID {ibr_id}. Error code: {ierr}"
         )
 
-    new_status = await GetGenInfo(
+    new_status = await get_gen_info(
         "STATUS", GenName=ibr_name, debug_print=debug_print, app=app
     )
 
@@ -324,13 +328,10 @@ async def ibr_enable(
     values: dict = config.bspssepy_sequence.at[
         action["BSPSSEPySequenceRowIndex"], "Values"
     ]
-    
-    
+
     ibr_p_set_point = values["P"] if "P" in values else 0
     ibr_q_set_point = values["Q"] if "Q" in values else 0
 
-
-    
     ibr_row_df = bspssepy_ibr[bspssepy_ibr["MCNAME"] == ibr_name]
     if ibr_row_df.empty:
         raise ValueError(
@@ -347,11 +348,10 @@ async def ibr_enable(
 
     # Set the IBR output real power to
     ierr = psspy.change_pref(ibr_bus_num, ibr_id, ibr_p_set_point_pu)
-    
-    
-    
+
     # Enable ibr_bus
     from fun.bspssepy.sim.bspssepy_bus_funs import BusClose
+
     await BusClose(
         t=t,
         bspssepy_bus=bspssepy_bus,
@@ -359,8 +359,7 @@ async def ibr_enable(
         debug_print=debug_print,
         app=app,
     )
-    
-    
+
     return ierr
 
 
@@ -414,7 +413,7 @@ async def ibr_disable(
             f"IBR with name '{ibr_name}' not found in bspssepy_ibr DataFrame."
         )
 
-    curr_status = await GetGenInfo(
+    curr_status = await get_gen_info(
         "STATUS", GenName=ibr_name, debug_print=debug_print, app=app
     )
 
@@ -450,7 +449,7 @@ async def ibr_disable(
             f" with ID {ibr_id}. Error code: {ierr}"
         )
 
-    new_status = await GetGenInfo(
+    new_status = await get_gen_info(
         "STATUS", GenName=ibr_name, debug_print=debug_print, app=app
     )
     # here
@@ -499,7 +498,7 @@ async def ibr_update(
     config,
     debug_print=False,
     app=None,
-    bspssepy_bus:pd.DataFrame() | None = None,
+    bspssepy_bus: pd.DataFrame() | None = None,
 ):
     """
     This function will update the output "power" of the IBR device.
@@ -553,7 +552,7 @@ async def ibr_update(
 
     # Set the IBR output real power to
     ierr = psspy.change_pref(ibr_bus_num, ibr_id, ibr_p_set_point_pu)
-    
+
     if ierr != 0:
         bp(
             f"[ERROR] Error occured when setting IBR: {ibr_name} output real "

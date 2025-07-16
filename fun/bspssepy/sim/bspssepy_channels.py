@@ -3,6 +3,7 @@ import pandas as pd
 import psse3601
 import psspy
 from dyntools import CHNF
+
 # from .bspssepy_gen_funs import GetGenInfo
 from fun.bspssepy.app.app_helper_funs import bp
 import asyncio
@@ -19,7 +20,7 @@ async def BuildChannelMapping(OUTFile, debug_print=False, app=None):
     Returns:
         dict: A dictionary where keys are descriptive names (e.g., "Frequency Bus 1")
             and values are channel indices.
-    
+
     Notes:
         - This function extracts all available channel data from the .out file
         and organizes it into a dictionary format for quick lookup.
@@ -29,9 +30,13 @@ async def BuildChannelMapping(OUTFile, debug_print=False, app=None):
     short_title, chanid, chandata = chnf.get_data()
 
     if debug_print:
-        bp("[DEBUG] Short Title:", short_title,app)  # Brief title of the .out file
+        bp(
+            "[DEBUG] Short Title:", short_title, app
+        )  # Brief title of the .out file
         await asyncio.sleep(app.async_print_delay if app else 0)
-        bp("[DEBUG] Channel IDs:", chanid,app)      # Mapping of channel descriptions to indices
+        bp(
+            "[DEBUG] Channel IDs:", chanid, app
+        )  # Mapping of channel descriptions to indices
         await asyncio.sleep(app.async_print_delay if app else 0)
 
     # Build the mapping dictionary: {description: index}
@@ -40,16 +45,18 @@ async def BuildChannelMapping(OUTFile, debug_print=False, app=None):
         ChannelMapping[channel_description] = channel_index
 
     if debug_print:
-        bp("[DEBUG] Channel Mapping Built:",app)
+        bp("[DEBUG] Channel Mapping Built:", app)
         await asyncio.sleep(app.async_print_delay if app else 0)
         for desc, idx in ChannelMapping.items():
-            bp(f"    {desc}: Channel {idx}",app)
+            bp(f"    {desc}: Channel {idx}", app)
             await asyncio.sleep(app.async_print_delay if app else 0)
 
     return ChannelMapping
 
 
-async def FetchChannelValue(ChannelIndex, OUTFile=None, debug_print=False, app=None):
+async def FetchChannelValue(
+    ChannelIndex, OUTFile=None, debug_print=False, app=None
+):
     """
     Attempts to fetch frequency data using psspy.chnval. If it fails, falls back to dyntools.
 
@@ -70,31 +77,47 @@ async def FetchChannelValue(ChannelIndex, OUTFile=None, debug_print=False, app=N
         ierr, ChannelData = psspy.chnval(ChannelIndex)
         if ierr == 0:
             if debug_print:
-                bp(f"[DEBUG] Retrieved data from chnval: {ChannelData} Hz (Channel {ChannelIndex})",app)
+                bp(
+                    f"[DEBUG] Retrieved data from chnval: {ChannelData} Hz (Channel {ChannelIndex})",
+                    app,
+                )
                 await asyncio.sleep(app.async_print_delay if app else 0)
             return ChannelData
         else:
             if debug_print:
-                bp(f"[DEBUG] chnval failed for Channel {ChannelIndex}, ierr={ierr}.",app)
+                bp(
+                    f"[DEBUG] chnval failed for Channel {ChannelIndex}, ierr={ierr}.",
+                    app,
+                )
                 await asyncio.sleep(app.async_print_delay if app else 0)
             # Fallback to .out file if available
             if OUTFile:
-                ChannelData = await FetchChannelValuesFromOUTFile(OUTFile, ChannelIndex, debug_print,app=app)
+                ChannelData = await FetchChannelValuesFromOUTFile(
+                    OUTFile, ChannelIndex, debug_print, app=app
+                )
                 if ChannelData:
                     if debug_print:
-                        bp(f"[DEBUG] Retrieved Frequency from OUT file: {ChannelData[-1]} Hz",app)
-                        await asyncio.sleep(app.async_print_delay if app else 0)
-                    return ChannelData[-1]  # Return the last value in the time-series
+                        bp(
+                            f"[DEBUG] Retrieved Frequency from OUT file: {ChannelData[-1]} Hz",
+                            app,
+                        )
+                        await asyncio.sleep(
+                            app.async_print_delay if app else 0
+                        )
+                    return ChannelData[
+                        -1
+                    ]  # Return the last value in the time-series
             return 0.0  # Default fallback if all retrieval methods fail
     except Exception as e:
         if debug_print:
-            bp(f"[DEBUG] Error fetching frequency: {e}",app)
+            bp(f"[DEBUG] Error fetching frequency: {e}", app)
             await asyncio.sleep(app.async_print_delay if app else 0)
         return 0.0  # Default fallback in case of an exception
-    
 
 
-async def FetchChannelValuesFromOUTFile(OUTFile, ChannelIndex, debug_print=False, app=None):
+async def FetchChannelValuesFromOUTFile(
+    OUTFile, ChannelIndex, debug_print=False, app=None
+):
     """
     Fetches frequency data from the .out file for a specific channel.
 
@@ -115,16 +138,17 @@ async def FetchChannelValuesFromOUTFile(OUTFile, ChannelIndex, debug_print=False
     _, _, chandata = chnf.get_data()
 
     if debug_print:
-        bp(f"[DEBUG] Fetching frequency data for Channel {ChannelIndex}",app)
+        bp(f"[DEBUG] Fetching frequency data for Channel {ChannelIndex}", app)
         await asyncio.sleep(app.async_print_delay if app else 0)
 
     # Return the frequency data as a list
     return chandata.get(ChannelIndex, [])
 
 
+async def get_avg_freq(
+    bspssepy_gen, Channels, OUTFile=None, debug_print=False, app=None
+):
 
-async def GetAvgFrequency(bspssepy_gen, Channels, OUTFile = None, debug_print=False, app=None):
-    
     # Build a mapping of bus numbers to frequency channel indices
     FrequencyChannels = {
         channel["Bus Number"]: channel["Channel Index"]
@@ -133,7 +157,7 @@ async def GetAvgFrequency(bspssepy_gen, Channels, OUTFile = None, debug_print=Fa
     }
 
     if debug_print:
-        bp("[DEBUG] Frequency Channels Mapping:", FrequencyChannels,app)
+        bp("[DEBUG] Frequency Channels Mapping:", FrequencyChannels, app)
         await asyncio.sleep(app.async_print_delay if app else 0)
 
     # Fetch frequency deviations for all generators
@@ -141,40 +165,55 @@ async def GetAvgFrequency(bspssepy_gen, Channels, OUTFile = None, debug_print=Fa
     # for _, gen_row in bspssepy_gen[bspssepy_gen["BSPSSEPyStatus"]==3].iterrows():
     for _, gen_row in bspssepy_gen.iterrows():
 
-        bus_num = gen_row['NUMBER']
+        bus_num = gen_row["NUMBER"]
         ChannelIndex = FrequencyChannels.get(bus_num, None)
-        if gen_row["BSPSSEPyStatus"] == 3:    
+        if gen_row["BSPSSEPyStatus"] == 3:
             if ChannelIndex is not None:
                 # Use either the `.out` file or `psspy.chnval` based on the UseOutFile flag
                 if OUTFile:
-                    FrequencyDeviation = await FetchChannelValuesFromOUTFile(OUTFile, ChannelIndex, debug_print,app=app)[-1]
+                    FrequencyDeviation = await FetchChannelValuesFromOUTFile(
+                        OUTFile, ChannelIndex, debug_print, app=app
+                    )[-1]
                 else:
-                    FrequencyDeviation = await FetchChannelValue(ChannelIndex, OUTFile, debug_print,app=app)
+                    FrequencyDeviation = await FetchChannelValue(
+                        ChannelIndex, OUTFile, debug_print, app=app
+                    )
                     import numpy as np
 
                     if np.isnan(FrequencyDeviation):
-                        bp("WARNING: NAN frequency deviation detected. NO AGC Action will be taken.",app)
-                        await asyncio.sleep(app.async_print_delay if app else 0)
+                        bp(
+                            "WARNING: NAN frequency deviation detected. NO AGC Action will be taken.",
+                            app,
+                        )
+                        await asyncio.sleep(
+                            app.async_print_delay if app else 0
+                        )
                         return bspssepy_gen
-
 
                 GeneratorFrequencies.append(FrequencyDeviation)
             else:
                 if debug_print:
-                    bp(f"[DEBUG] No frequency channel for Bus {bus_num}. Defaulting to 0 Hz.",app)
+                    bp(
+                        f"[DEBUG] No frequency channel for Bus {bus_num}. Defaulting to 0 Hz.",
+                        app,
+                    )
                     await asyncio.sleep(app.async_print_delay if app else 0)
                 GeneratorFrequencies.append(0.0)
         else:
             if debug_print:
-                bp(f"[DEBUG] Generator {gen_row['MCNAME']} at Bus {gen_row['NUMBER']} is not in service. The frequency reading won't be used.",app)
+                bp(
+                    f"[DEBUG] Generator {gen_row['MCNAME']} at Bus {gen_row['NUMBER']} is not in service. The frequency reading won't be used.",
+                    app,
+                )
                 await asyncio.sleep(app.async_print_delay if app else 0)
-    
 
     # Calculate the average system frequency deviation
     AverageFrequencyDeviation = np.mean(GeneratorFrequencies)
     if debug_print:
-        bp(f"[DEBUG] Average Frequency Deviation: {AverageFrequencyDeviation:.6f} Hz",app)
+        bp(
+            f"[DEBUG] Average Frequency Deviation: {AverageFrequencyDeviation:.6f} Hz",
+            app,
+        )
         await asyncio.sleep(app.async_print_delay if app else 0)
 
-    
     return AverageFrequencyDeviation + 60

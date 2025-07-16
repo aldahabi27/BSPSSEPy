@@ -21,67 +21,67 @@
 # ┖┈┈┈┈┈┈┈┈┈┈┈┈┈┈୨♡୧┈┈┈┈┈┈┈┈┈┈┈┈┈┈┚
 
 # Should match the name of the case folder exactly.
-CaseName = "IEEE9"
+case_name = "IEEE9"
 
 # Version number from the .sav file name (e.g., 3Bus_Ver2.sav). Use -1 if no version is specified.
-Ver = 17
+ver = 17
 
 # Number of buses in the system. If unsure, leave as 0, and the code will derive this automatically from the case data.
-NumberOfBuses = 50
+num_of_buses = 50
 
 # Specify buses to monitor voltage as a list of bus numbers.
 # Use 'Range(start, end)' syntax to indicate a range of buses.
 # Flag 'VoltageFlag' may override this setting.
-BusesToMonitor_Voltage = range(1, 10)
+v_buses_to_monitor = range(1, 10)
 
 # Specify buses to monitor frequency as a list of bus numbers.
 # Flag 'FrequencyFlag' may override this setting.
-BusesToMonitor_Frequency = [1, 2, 3, 5]
+freq_buses_to_monitor = [1, 2, 3, 5]
 
 # Flag for voltage monitoring behavior:
 # 0 = use specified buses, 1 = all generator buses,
 # 2 = all transformer buses, 3 = gen+TF buses,
 # 4 = all load buses, 5 = all buses.
-VoltageFlag = 0
+v_flag = 0
 
 # Flag for frequency monitoring behavior:
 # 0 = use specified buses, 1 = all generator buses,
 # 2 = all transformer buses, 3 = gen+TF buses,
 # 4 = all load buses, 5 = all buses.
-FrequencyFlag = 0
+freq_flag = 0
 
 # Time step for the simulation in seconds. Default is 1ms (0.001).
-SimulationTimeStep = 1e-3  # seconds
+sim_time_step = 1e-3  # seconds
 
 # Frequency filtering threshold for simulation in seconds. Default is 4 times the SimulationTimeStep.
-Simulationfreqfilter = 4 * SimulationTimeStep
+sim_freq_filter = 4 * sim_time_step
 
 # Maximum iterations allowed for PSSE Newton-Raphson solver. Default is 100.
-PSSEMaxIterationNewtonRaphson = 100
+psse_max_iter_newton_raphson = 100
 
 # If true, forces regeneration of the CNV file regardless of its existence.
-IgnoreCNVFile = True
+ignore_cnv_file = True
 
 # If true, forces regeneration of the SNP file regardless of its existence.
-IgnoreSNPFile = True
+ignore_snp_file = True
 
 # BSPSSEPy Hard Time Limit in minutes (ignored if BSPSSEPyHardTimeLimitFlag is False)
-BSPSSEPyHardTimeLimit = 130  # 12  # 30 #minutes
+bspssepy_hard_time_limit = 130  # 12  # 30 #minutes
 
 # If true, BSPSSEPy will enforce a hard time limit on the simulation.
 # BSPSSEPyHardTimeLimitFlag = True
-BSPSSEPyHardTimeLimitFlag = True
+bspssepy_hard_time_limit_flag = True
 
 # BSPSSEPy Time Step in seconds
 # This timestep controls the python functions execution rate.
 # This controls AGC, control actions, and other time-dependent functions.
 # Default is 1 second.
 # Note: This is different from the simulation time step specified for dynamic modeling in PSSE.
-BSPSSEPyTimeStep = 1  # seconds
+bspssepy_time_step = 1  # seconds
 
 
 # BSPSSEPyProgressPrintTime controls the frequency of progress print messages in minutes.
-BSPSSEPyProgressPrintTime = 1  # minutes
+bspssepy_progress_print_time = 1  # minutes
 
 
 # Table of Generators Configuration
@@ -98,7 +98,7 @@ BSPSSEPyProgressPrintTime = 1  # minutes
 # For BS generators, only Generator Name, Bus Name, Status, and Generator Type are required. The rest are ignored.
 # For NBS generators, all fields are required to model all phases correctly!
 
-GeneratorsConfig = [
+gen_config = [
     {
         "Generator Name": "GEN1",
         "Bus Name": "Bus1",
@@ -189,22 +189,22 @@ ibr_config = [
 
 
 # Debug print flag. If true, prints debug messages.
-DebugPrintFlag = True
+debug_print = True
 # DebugPrintFlag = False
 
 
 # Flag to enforce checking the action lock logic.
 # True => ensuring no concurrent actions are allowed.
 # EnforceActionLock = True
-EnforceActionLock = False
+enforce_action_lock = False
 
 # BypassTiedActions = True  # Flag to execute TiedActions with their main action. If an action is linked/tied to others, it will be executed with them (even if EnforceActionLock is True).
 
-BypassTiedActions = False
+bypass_tied_actions = False
 
 
 # ControlSequenceAsIs = True  # If True, the control sequence is executed as is without looking at action time.
-ControlSequenceAsIs = False
+control_sequence_as_is = False
 # To set this to True, EnforceActionLock must be True (to execute actions sequentially).
 # If True and EnforceActionLock is False, program will throw an error and exits.
 # If False, the program will execute the control sequence based on the action time.
@@ -212,18 +212,18 @@ ControlSequenceAsIs = False
 # We need to include a delay in action executions as when we have multiple loads after each other, teh program now execute the actions at once (or with 1 sec diff) as the frequency drop is not instantaneous.
 
 # AccountForActionExecutionDelays = True  # If True, the system will adjust action timings to compensate for unforeseen execution delays (e.g., AGC frequency regulation or prolonged generator startup) while maintaining the planned time gaps.
-AccountForActionExecutionDelays = True
+account_for_action_exec_delays = True
 
 # EnforceFrequencySafetyMargin = True  # If True, the program will enforce a safety margin on the frequency to avoid
-EnforceFrequencySafetyMargin = True
+enforce_freq_safety_margin = True
 #                                      the frequency to go below FreqSafetyMarginMin or above FreqSafetyMarginMax.
-FreqSafetyMarginMin = 59.95  # Minimum frequency allowed in Hz
-FreqSafetyMarginMax = 60.5  # Maximum frequency allowed in Hz
+freq_safety_margin_min = 59.95  # Minimum frequency allowed in Hz
+freq_safety_margin_max = 60.5  # Maximum frequency allowed in Hz
 
 # Note: If EnforceFrequencySafetyMargin is True, the system will wait until "AGC" regulate the frequency to be within limits before executing the next action.
 #       If EnforceFrequencySafetyMargin is False, the system will execute the next action regardless of the frequency.
 
-TieActionsByExecutionTime = True  # If True, actions will be tied by their execution time. If action is also "tied" by their "values" information, they will be part of the parent
+tie_actions_by_exec_time = True  # If True, actions will be tied by their execution time. If action is also "tied" by their "values" information, they will be part of the parent
 
 
 delay_agc_after_action = 30  # seconds

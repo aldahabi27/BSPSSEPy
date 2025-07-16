@@ -8,8 +8,11 @@ clear;
 clc;
 close all;
 
+format long
+
 csv_file = "I:\Work\Research\Control & Power Systems\JWSP Research\HONI Project\PSSE\BSPSSEPy\case\IEEE9\Simulations\IEEE9_Ver17_092539_280625.csv";
 csv_file = "I:\Work\Research\Control & Power Systems\JWSP Research\HONI Project\PSSE\BSPSSEPy\case\IEEE9\Simulations\IEEE9_Ver17_172347_300625.csv";
+csv_file = "I:\Work\Research\Control & Power Systems\JWSP Research\HONI Project\PSSE\BSPSSEPy\case\IEEE9\Simulations\IEEE9_Ver17_114341_150725.csv";
 
 opts = delimitedTextImportOptions('DataLines',3,VariableNamesLine=2,VariableNamingRule='preserve');
 bspssepy_data = readtable(csv_file ,opts,"ReadVariableNames", true);
@@ -19,13 +22,31 @@ freq_index = find(startsWith(bspssepy_data.Properties.VariableNames, 'freq', 'Ig
 
 freq = cellfun(@str2double, table2array(bspssepy_data(:,freq_index)));
 
-[~, i_freq_avg] = max(abs(freq) > 0.00000001,[],1);
+[~, i_freq_avg] = max(abs(freq) > 0.00001,[],1);
 
 freq_mask = bsxfun(@gt, (1:size(freq,1))', i_freq_avg);
 freq_nan = freq;
 freq_nan(~freq_mask) = NaN;
-avg_freq = mean(freq_nan,2, 'omitnan');
-avg_freq(isnan(avg_freq)) = 0;
+freq_nan = freq;
+
+w1 = 5;
+w2 = 3;
+w3 = 2;
+
+w_tot = ones(length(freq_mask(:,1)),1).*w1 + freq_mask(:,2).*w2 + freq_mask(:,3).*w3;
+
+w1 = freq_mask(:,1).*w1;
+w2 = freq_mask(:,2).*w2;
+w3 = freq_mask(:,3).*w3;
+w1s = w1./w_tot;
+w2s = w2./w_tot;
+w3s = w3./w_tot;
+
+avg_freq = freq_nan(:,1).*w1s + freq_nan(:,2).*w2s + freq_nan(:,3).*w3s;
+
+
+% avg_freq = mean(freq_nan,2, 'omitnan');
+% avg_freq(isnan(avg_freq)) = 0;
 
 % convert freq to hz
 avg_freq = avg_freq.*60;

@@ -1,4 +1,4 @@
-ConfigPath = r"""I:\Work\Research\Control & Power Systems\JWSP Research\HONI Project\PSSE\BSPSSEPy\case\IEEE9\IEEE9_Ver17_Config.py"""
+config_path = r"""I:\Work\Research\Control & Power Systems\JWSP Research\HONI Project\PSSE\BSPSSEPy\case\IEEE9\IEEE9_Ver18_Config.py"""
 
 
 # Essential Imports to install missing libraries
@@ -68,7 +68,7 @@ sys.path.append(str(MainFolder / "fun"))
 
 from fun.bspssepy.bspssepy_core import BSPSSEPy
 
-config_file = Path(ConfigPath)
+config_file = Path(config_path)
 print(f"  Config File: {config_file.name}")
 print(f"  Full Config File Path: {config_file}")
 
@@ -80,7 +80,7 @@ try:
     myBSPSSEPy = BSPSSEPy()
 
     asyncio.run(
-        myBSPSSEPy.bspssepy_init(ConfigPath=ConfigPath, debug_print=False)
+        myBSPSSEPy.bspssepy_init(config_path=config_path, debug_print=False)
     )
 
     DebugPrint = (
@@ -90,8 +90,7 @@ try:
     asyncio.run(myBSPSSEPy.sim.SetBlackStart())
     myBSPSSEPy.sim.print_all_t_flag = True
     asyncio.run(myBSPSSEPy.sim.Run())
-    asyncio.run(myBSPSSEPy.plot(debug_print=DebugPrint))
-
+    myBSPSSEPy.plot(debug_print=DebugPrint)
 finally:
     # Ensure the license is always released
     print("Releasing the PSSE license and halting the engine...")

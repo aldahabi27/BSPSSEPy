@@ -8,7 +8,7 @@ from .sim.bspssepy_bus_funs import BusClose, BusTrip
 from .sim.bspssepy_ibr_funs import ibr_disable, ibr_enable, ibr_update
 
 # This maps the actions on elements to their corresponding functions
-ElementTypeFunctionMapping = {
+element_type_fun_map = {
     "GEN": {"on": GenEnable, "off": GenDisable, "update": GenUpdate},
     "TRN": {"on": TrnClose, "off": TrnTrip},
     "BRN": {"on": BrnClose, "off": BrnTrip},

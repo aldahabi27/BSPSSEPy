@@ -11,36 +11,38 @@ def bspssepy_plot_freq(config: config, psse, debug_print=False, base_freq=1):
     chnf = dyntools.CHNF(str(config.sim_output_file))
 
     # Extract data
-    short_title, chanid, chandata = chnf.get_data()
+    short_title, channel_id, channel_data = chnf.get_data()
 
     # Debugging: Print file details and channels
     print("Short Title:", short_title)
-    print("Channel IDs:", chanid)
-    print("Channel Data Keys:", chandata.keys())
+    print("Channel IDs:", channel_id)
+    print("Channel Data Keys:", channel_data.keys())
 
     # Check if data is empty
-    if not chandata:
+    if not channel_data:
         print(
             "The .out file was read but contains no data. Please verify the output channels in PSSE."
         )
 
     # Extract time and frequency data
-    time = chandata["time"]  # Time array
-    frequency_channels = [ch for ch in chanid if "freq" in chanid[ch].lower()]
+    time = channel_data["time"]  # Time array
+    freq_channels = [
+        ch for ch in channel_id if "freq" in channel_id[ch].lower()
+    ]
 
     # Check available frequency channels
-    print("Available Frequency Channels:", frequency_channels)
+    print("Available Frequency Channels:", freq_channels)
 
     # Slice data to take every 100th point
     step = 1  # Adjust this step size as needed
-    for channel in frequency_channels:
-        FreqData = chandata[channel]
+    for channel in freq_channels:
+        freq_data = channel_data[channel]
 
         # Heuristic check: If max absolute value is < 1, assume it's in p.u. and scale it
-        if max(abs(x) for x in FreqData) < 1:
-            FreqData = [x * base_freq for x in FreqData]
+        if max(abs(x) for x in freq_data) < 1:
+            freq_data = [x * base_freq for x in freq_data]
 
-        plt.plot(time[::step], FreqData[::step], label=chanid[channel])
+        plt.plot(time[::step], freq_data[::step], label=channel_id[channel])
 
     # Add plot labels and legend
     plt.title("Frequency Response (Reduced Points)")
@@ -51,8 +53,8 @@ def bspssepy_plot_freq(config: config, psse, debug_print=False, base_freq=1):
     plt.show()
 
     # Assuming 'time' and 'chandata' are available
-    for channel in frequency_channels:
-        pltt.plot(time[::step], chandata[channel][::step])
+    for channel in freq_channels:
+        pltt.plot(time[::step], channel_data[channel][::step])
 
     pltt.title("Frequency Response (Reduced Points)")
     pltt.xlabel("Time (s)")
@@ -67,7 +69,7 @@ def bspssepy_plot_freq(config: config, psse, debug_print=False, base_freq=1):
 #     import numpy as np
 
 #     # Use dyntools to read the output file
-#     chnf = dyntools.CHNF(str(config.SimOutputFile))
+#     chnf = dyntools.CHNF(str(config.sim_output_file))
 
 #     # Extract data
 #     short_title, chanid, chandata = chnf.get_data()
@@ -142,7 +144,7 @@ def bspssepy_plot_freq(config: config, psse, debug_print=False, base_freq=1):
 #     plt.show()
 
 
-def bspssepy_plot_gen(config, psse, debug_print=False, base_freq=1):
+def bspssepy_plot_gen(config: config, psse, debug_print=False, base_freq=1):
     import matplotlib.pyplot as plt
     from matplotlib.gridspec import GridSpec
     from collections import OrderedDict
@@ -153,11 +155,11 @@ def bspssepy_plot_gen(config, psse, debug_print=False, base_freq=1):
     psspy.delete_all_plot_channels()  # Clean up channels (optional)
 
     # Use dyntools to read the output file
-    chnf = dyntools.CHNF(str(config.SimOutputFile))
+    chnf = dyntools.CHNF(str(config.sim_output_file))
 
     chnf.csvout(
-        outfile=str(config.SimOutputFile),
-        csvfile=str(config.SimOutputFile).replace(".out", ".csv"),
+        outfile=str(config.sim_output_file),
+        csvfile=str(config.sim_output_file).replace(".out", ".csv"),
     )
 
     # Extract data
@@ -183,12 +185,12 @@ def bspssepy_plot_gen(config, psse, debug_print=False, base_freq=1):
     quantities = {
         # "WPCMND":[],
         # "WQCMND":[],
-        "GREF": [],
-        "VREF": [],
-        "PELEC": [],
-        "QELEC": [],
-        "PMECH": [],
-        "Frequency": [],
+        "GREF (M_base)": [],
+        "VREF (M_base)": [],
+        "PELEC (S_base)": [],
+        "QELEC (S_base)": [],
+        "PMECH (M_base)": [],
+        "Frequency (Hz)": [],
         "Voltage Magnitude": [],
     }
 
@@ -312,22 +314,22 @@ def bspssepy_export_to_csv(
 
     # load the .out file using dyntools
     chnf = dyntools.CHNF(str(output_path))
-    short_title, chan_id, chan_data = chnf.get_data()
+    short_title, channel_id, channel_data = chnf.get_data()
 
     # Debugging output
     if debug_print:
         print(f"Exporting Data to: {csv_file}")
         print(f"Short Title: {short_title}")
-        print(f"Channel IDs: {chan_id}")
-        print(f"Channel Data Keys: {chan_data.keys()}")
+        print(f"Channel IDs: {channel_id}")
+        print(f"Channel Data Keys: {channel_data.keys()}")
 
     # Ensure there's data to export
-    if not chan_data:
+    if not channel_data:
         print("ERROR: The .out file was read but contains no data.")
         return
 
     # Extract time column (ensure it's in seconds)
-    time = np.array(chan_data["time"])
+    time = np.array(channel_data["time"])
 
     # Write the extracted data to CSV
     with open(csv_file, mode="w", newline="") as file:
@@ -335,14 +337,16 @@ def bspssepy_export_to_csv(
 
         # Create headers (Time + Channel Names)
         headers = ["time (s)"] + [
-            chan_id[ch] for ch in chan_id.keys() if ch != "time"
+            channel_id[ch] for ch in channel_id.keys() if ch != "time"
         ]
         writer.writerow(headers)
 
         # Write simulation data
         for i in range(len(time)):
             row = [time[i]] + [
-                chan_data[ch][i] for ch in chan_id.keys() if ch != "time"
+                channel_data[ch][i]
+                for ch in channel_id.keys()
+                if ch != "time"
             ]
             writer.writerow(row)
 

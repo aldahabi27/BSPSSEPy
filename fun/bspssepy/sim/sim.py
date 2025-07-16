@@ -16,6 +16,8 @@ import sys
 import os
 import pandas as pd
 
+from fun.bspssepy.psse.psse import psse
+from fun.bspssepy.config.config import config
 from .bspssepy_meas_update import bspssepy_meas_update
 from .bspssepy_brn_funs import *
 from .bspssepy_bus_funs import *
@@ -27,7 +29,7 @@ from .bspssepy_ibr_funs import *
 from fun.bspssepy.bspssepy_dict import *
 from fun.bspssepy.bspssepy_funs_dict import *
 from .bspssepy_agc import *
-from .bspssepy_channels import GetAvgFrequency
+from .bspssepy_channels import get_avg_freq
 from fun.bspssepy.app.app_helper_funs import bp, ProgressBarUpdate
 import asyncio
 
@@ -56,7 +58,11 @@ class sim:
         pass
 
     async def sim_init(
-        self, config=None, PSSE=None, debug_print=None, app=None
+        self,
+        config: config | None = None,
+        PSSE=None,
+        debug_print=None,
+        app=None,
     ):
         """
         Initializes the simulation environment by setting up system elements
@@ -114,26 +120,26 @@ class sim:
         #  load System Elements
         # ==========================
         # This function retrieves system components from PSSE and initializes monitoring channels.
-        await self.GetAllElements(app=app)
+        await self.get_all_elements(app=app)
 
         # ==========================
         #  Initialize Dynamic Simulation
         # ==========================
         # This function sets up simulation parameters and prepares the PSSE environment.
-        await self.InitializeDynamicSimulation(app=app)
+        await self.ini_dynamic_sim(app=app)
 
         # ==========================
         #  Action Tracking Variables
         # ==========================
-        self.EnforceActionLock = (
-            self.config.EnforceActionLock
+        self.enforce_action_lock = (
+            self.config.enforce_action_lock
         )  # Ensures sequential execution of actions.
-        self.ActionInProgress = (
+        self.action_in_progress = (
             False  # Flag to track if an action is currently in progress.
         )
 
         # Dictionary to store details of the currently executing action.
-        self.Action = {
+        self.action = {
             "ElementName": None,  # Name of the device being acted upon
             "ElementType": None,  # Type of the device (Bus, Branch, Transformer, etc.)
             "Action": None,  # Action being performed (Enable, Disable, Trip, Close, etc.)
@@ -141,7 +147,7 @@ class sim:
             "ActionEndTime": None,  # Time when the action ended
         }
 
-        self.DashBoardStyle = 0  # this is the basic output format
+        self.dashboard_style = 0  # this is the basic output format
         # self.DashBoardStyle = 1 # this is the rich output format (nice interface with tables and progress bar)
 
         # if self.DashBoardStyle == 1:
@@ -154,7 +160,7 @@ class sim:
         # To setup black start, call sim.SetBlackStart()
         # To run the simulation, call sim.Run()
 
-    async def InitializeDynamicSimulation(self, app=None):
+    async def ini_dynamic_sim(self, app=None):
         """
         Initializes the PSSE dynamic simulation environment.
 
@@ -173,7 +179,7 @@ class sim:
             - Initializes generator power threshold settings.
 
         Notes:
-            - This function must be called after `self.GetAllElements()`.
+            - This function must be called after `self.get_all_elements()`.
             - PSSE's `set_genpwr` function is used to enable power monitoring with a threshold.
             - Uses `self.config` attributes to dynamically set simulation constraints.
         """
@@ -192,14 +198,14 @@ class sim:
         # ==========================
         #  Start Output File
         # ==========================
-        psspy.strt_2([0, 0], str(self.config.SimOutputFile))
+        psspy.strt_2([0, 0], str(self.config.sim_output_file))
 
         # ==========================
         #  Configure Dynamic Simulation Parameters
         # ==========================
         psspy.dynamics_solution_param_2(
             [
-                self.config.PSSEMaxIterationNewtonRaphson,  # Max iterations for network solution
+                self.config.psse_max_iter_newton_raphson,  # Max iterations for network solution
                 default_int,  # Number of monitored channels
                 default_int,  # Number of state variables used
                 default_int,  # Next available location in the CON array
@@ -211,8 +217,8 @@ class sim:
             [
                 default_real,  # Acceleration factor for network solution
                 default_real,  # Convergence tolerance for network solution
-                self.config.SimulationTimeStep,  # Simulation Time step (DELT)
-                self.config.Simulationfreqfilter,  # Filter time constant for bus frequency deviations
+                self.config.sim_time_step,  # Simulation Time step (DELT)
+                self.config.sim_freq_filter,  # Filter time constant for bus frequency deviations
                 default_real,  # Intermediate simulation mode time step threshold
                 default_real,  # Large (island frequency) mode time step threshold
                 default_real,  # Large (island frequency) mode acceleration factor
@@ -251,10 +257,11 @@ class sim:
         #  Reinitialize Simulation Output File
         # ==========================
         # This is necessary to ensure the simulation starts from a clean state.
-        psspy.strt_2([0, 0], str(self.config.SimOutputFile))
+        psspy.strt_2([0, 0], str(self.config.sim_output_file))
         if self.debug_print:
             bp(
-                f"[DEBUG] Dynamic simulation initialized. Output file: {self.config.SimOutputFile}",
+                f"[DEBUG] Dynamic simulation initialized. Output file: "
+                f"{self.config.sim_output_file}",
                 app=app,
             )
             await asyncio.sleep(app.async_print_delay if app else 0)
@@ -277,12 +284,14 @@ class sim:
             )
             await asyncio.sleep(app.async_print_delay if app else 0)
 
-    async def GetAllElements(self, app=None):
+    async def get_all_elements(self, app=None):
         """
         Retrieves and initializes all system elements from PSSE.
 
-        This function collects data for different power system elements (buses, branches, transformers, generators, loads)
-        and initializes data frames for storing this information. It also sets up voltage and frequency monitoring channels.
+        This function collects data for different power system elements
+        (buses, branches, transformers, generators, loads) and initializes
+        data frames for storing this information. It also sets up voltage and
+        frequency monitoring channels.
 
         Parameters:
             None (uses self attributes for configuration)
@@ -300,7 +309,8 @@ class sim:
 
         Notes:
             - This function must be called before running the simulation.
-            - Uses `self.config` attributes to dynamically define system elements.
+            - Uses `self.config` attributes to dynamically define system
+              elements.
         """
 
         if self.debug_print:
@@ -422,7 +432,8 @@ class sim:
         )
         bspssepy_load["BSPSSEPySimulationNotes"] = "Initialized"
 
-        # Initialize columns for tied device information - Important for "Custom loads" that are created for BSPSSEPy Simulations
+        # Initialize columns for tied device information - Important for
+        # "Custom loads" that are created for BSPSSEPy Simulations
         bspssepy_load["BSPSSEPyTiedDeviceName"] = (
             None  # Placeholder for tied device name
         )
@@ -488,16 +499,16 @@ class sim:
         # ==========================
         #  Set Up Voltage and Frequency Monitoring Channels
         # ==========================
-        self.config = await SetupVoltageFrequencyChannels(
+        self.config = await setup_v_freq_channels(
             self.config, debug_print=self.debug_print, app=app
         )
 
         # ==========================
         #  Configure Newton-Raphson Solution Parameters
         # ==========================
-        # This line sets the max number of iterations for the Newton-Raphson method (ITMXN) to PSSEMaxIterationNewtonRaphson
+        # This line sets the max number of iterations for the Newton-Raphson method (ITMXN) to psse_max_iter_newton_raphson
         bp(
-            f"Setting max iterations for Newton-Raphson method to {self.config.PSSEMaxIterationNewtonRaphson}",
+            f"Setting max iterations for Newton-Raphson method to {self.config.psse_max_iter_newton_raphson}",
             app=app,
         )
         await asyncio.sleep(app.async_print_delay if app else 0)
@@ -508,7 +519,7 @@ class sim:
                 (
                     default_int
                     if i != 1
-                    else self.config.PSSEMaxIterationNewtonRaphson
+                    else self.config.psse_max_iter_newton_raphson
                 )
                 for i in range(9)
             ],
@@ -525,14 +536,14 @@ class sim:
             )
             await asyncio.sleep(app.async_print_delay if app else 0)
             if app:
-                raise Exception("Error In GetAllElements function!")
+                raise Exception("Error In get_all_elements function!")
             else:
                 sys.exit(1)
 
         # ==========================
         #  Retrieve and Initialize Generator Information
         # ==========================
-        bspssepy_gen = await GetGenInfo(
+        bspssepy_gen = await get_gen_info(
             GenKeys=[
                 "ID",
                 "MCNAME",
@@ -568,7 +579,7 @@ class sim:
             await ExtendBSPSSEPyGenDataFrame(
                 bspssepy_gen=bspssepy_gen,
                 bspssepy_bus=self.bspssepy_bus,
-                ConfigTable=self.config.GeneratorsConfig,
+                ConfigTable=self.config.gen_config,
                 SimConfig=self.config,
                 bspssepy_load=self.bspssepy_load,
                 bspssepy_trn=self.bspssepy_trn,
@@ -599,6 +610,23 @@ class sim:
                 "Δf' (Hz/s)": [0]
                 * len(bspssepy_gen),  # Initialize Δf' (rate of Δf)
             }
+        )
+
+        # Add a row for the system average frequency tracking
+        bspssepy_agc = pd.concat(
+            [
+                bspssepy_agc,
+                pd.DataFrame(
+                    {
+                        "Gen Name": ["avg_freq"],
+                        "Alpha": [0.0],
+                        "ΔPᴳ": [0.0],
+                        "Δf (Hz)": [0.0],
+                        "Δf' (Hz/s)": [0.0],
+                    }
+                ),
+            ],
+            ignore_index=True,
         )
 
         # Explicitly set the column data types
@@ -682,15 +710,17 @@ class sim:
 
     async def SetBlackStart(self, app=None):
         """
-        Configures the system for a black-start scenario by disabling all loads,
-        tripping all branches and two-winding transformers, and handling generators.
+        Configures the system for a black-start scenario by disabling all
+        loads, tripping all branches and two-winding transformers, and
+        handling generators.
 
-        A black-start scenario involves restarting the power system without relying on
-        an external power grid. In this function:
+        A black-start scenario involves restarting the power system without
+        relying on an external power grid. In this function:
 
         - **All branches and transformers are tripped** to isolate components.
         - **All loads are disabled** to prevent premature power draw.
-        - **Black-start generators remain operational**, while non-black-start generators
+        - **Black-start generators remain operational**, while non-black-start
+          generators
         are handled using a controlled startup sequence.
 
         Parameters:
@@ -700,14 +730,17 @@ class sim:
             - Trips all branches in the system.
             - Trips all two-winding transformers.
             - Disables all loads.
-            - Leaves black-start generators operational while handling non-black-start generators.
+            - Leaves black-start generators operational while handling
+              non-black-start generators.
             - Reinitializes the simulation.
 
         Notes:
-            - This function must be called before starting a black-start sequence.
-            - Non-black-start generators will not be manually disabled, as their associated transformers
-            and branches are already tripped.
-            - After execution, the system is fully prepared for black-start restoration.
+            - This function must be called before starting a black-start
+              sequence.
+            - Non-black-start generators will not be manually disabled, as
+              their associated transformers
+            and branches are already tripped. - After execution, the system is
+            fully prepared for black-start restoration.
         """
 
         if self.debug_print:
@@ -843,7 +876,7 @@ class sim:
         # ==========================
         bp("Reinitializing simulation...", app=app)
         await asyncio.sleep(app.async_print_delay if app else 0)
-        psspy.strt_2([0, 0], str(self.config.SimOutputFile))
+        psspy.strt_2([0, 0], str(self.config.sim_output_file))
 
         bp("Disabling all IBRs", app=app)
         await asyncio.sleep(app.async_print_delay if app else 0)
@@ -882,7 +915,7 @@ class sim:
 
         Notes:
             - The function handles black-start generators separately to avoid disruptions.
-            - Uses `self.config.BSPSSEPyHardTimeLimitFlag` to enforce a maximum simulation time.
+            - Uses `self.config.bspssepy_hard_time_limit_flag` to enforce a maximum simulation time.
             - The function runs in a loop, incrementing time steps until all actions are completed.
         """
 
@@ -918,12 +951,12 @@ class sim:
             account_for_delay = False
             all_actions_executed = True  # Always assume we are done!
 
-            current_sim_time >= self.config.BSPSSEPyHardTimeLimit * 60
+            current_sim_time >= self.config.bspssepy_hard_time_limit * 60
             if app:
                 ProgressBarUpdate(
                     app.top_bar_progress_bar,
                     current_sim_time,
-                    self.config.BSPSSEPyHardTimeLimit * 60,
+                    self.config.bspssepy_hard_time_limit * 60,
                     App=app,
                     label=app.top_bar_progress_bar_label,
                 )
@@ -936,15 +969,17 @@ class sim:
 
             # Update the Measurements for all elements
 
-            meas_updated, errors = await bspssepy_meas_update(
-                self.bspssepy_ibr,
-                self.bspssepy_agc,
-                self.bspssepy_brn,
-                self.bspssepy_bus,
-                self.bspssepy_gen,
-                self.bspssepy_load,
-                self.bspssepy_trn,
+            meas_updated, errors, old_freq_dev = await bspssepy_meas_update(
+                bspssepy_ibr=self.bspssepy_ibr,
+                bspssepy_agc=self.bspssepy_agc,
+                bspssepy_brn=self.bspssepy_brn,
+                bspssepy_bus=self.bspssepy_bus,
+                bspssepy_gen=self.bspssepy_gen,
+                bspssepy_load=self.bspssepy_load,
+                bspssepy_trn=self.bspssepy_trn,
+                old_freq_dev=old_freq_dev,
                 debug_print=self.debug_print,
+                time_step=self.config.bspssepy_time_step,
                 app=app,
             )
 
@@ -973,22 +1008,22 @@ class sim:
             #  Check for New Actions
             # ==========================
             # Iterate over bspssepy_sequence to check for new actions
-            for RowIndex, Row in self.config.bspssepy_sequence.iterrows():
+            for row_index, row in self.config.bspssepy_sequence.iterrows():
                 action_time = (
-                    Row["Action Time"] * 60
+                    row["Action Time"] * 60
                 ) + self.time_shift  # Convert to seconds + Apply time shift
 
-                # Check if ControlSequenceAsIs Flag is enabled --> ignore action-time
-                if self.config.ControlSequenceAsIs:
+                # Check if control_sequence_as_is Flag is enabled --> ignore action-time
+                if self.config.control_sequence_as_is:
                     # ==========================
                     #  Enforce Action Locking
                     # ==========================
-                    if not self.EnforceActionLock:
+                    if not self.enforce_action_lock:
                         if app:
                             # Need a code to perform this request, for now, it will simply ignore it.
-                            self.EnforceActionLock = True
+                            self.enforce_action_lock = True
                             bp(
-                                '[WARNING] "EnforceActionLock" is set to False while "ControlSequenceAsIs" is True. "EnforceActionLock" has been overridden to True.',
+                                '[WARNING] "EnforceActionLock" is set to False while "control_sequence_as_is" is True. "EnforceActionLock" has been overridden to True.',
                                 app=app,
                             )
                             await asyncio.sleep(
@@ -997,13 +1032,13 @@ class sim:
                         else:
                             if str.lower(
                                 input(
-                                    "EnforceActionLock is False and ControlSequenceAsIs is True. EnforceActionLock Should be True. Overridde?  [y/n]:"
+                                    "EnforceActionLock is False and control_sequence_as_is is True. EnforceActionLock Should be True. Overridde?  [y/n]:"
                                 )
                             ) in ["y", "yes", "ok", "true", "t", "1"]:
-                                self.EnforceActionLock = True
+                                self.enforce_action_lock = True
                             else:
                                 bp(
-                                    "[ERROR] Since ControlSequenceAsIs is enabled, EnforceActionLock must be enabled. Exiting...",
+                                    "[ERROR] Since control_sequence_as_is is enabled, EnforceActionLock must be enabled. Exiting...",
                                     app=app,
                                 )
                                 await asyncio.sleep(
@@ -1020,19 +1055,19 @@ class sim:
                     if (
                         not any(
                             action["ElementIDValue"]
-                            == Row["Identification Value"]
+                            == row["Identification Value"]
                             for action in self.actions
                         )
-                    ) and (Row["Action Status"] not in [2, -999]):
+                    ) and (row["Action Status"] not in [2, -999]):
                         if self.debug_print:
                             bp(
-                                "[DEBUG] ControlSequenceAsIs is enabled. Skipping action-time validation.",
+                                "[DEBUG] control_sequence_as_is is enabled. Skipping action-time validation.",
                                 app=app,
                             )
                             await asyncio.sleep(
                                 app.async_print_delay if app else 0
                             )
-                        if self.EnforceActionLock and any(
+                        if self.enforce_action_lock and any(
                             action["ActionStatus"] in [0, 1]
                             for action in self.actions
                         ):
@@ -1047,34 +1082,34 @@ class sim:
                             continue
 
                         # Add action to queue
-                        NewAction = {
-                            "UID": Row["UID"],
-                            "ElementIDValue": Row["Identification Value"],
-                            "ElementIDType": Row["Identification Type"],
-                            "ElementType": Row["Device Type"],
-                            "Action": Row["Action Type"],
+                        new_action = {
+                            "UID": row["UID"],
+                            "ElementIDValue": row["Identification Value"],
+                            "ElementIDType": row["Identification Type"],
+                            "ElementType": row["Device Type"],
+                            "Action": row["Action Type"],
                             "StartTime": action_time,
                             "EndTime": -1,
-                            "ActionStatus": Row[
+                            "ActionStatus": row[
                                 "Action Status"
                             ],  # 0: Not started, 1: In progress, 2: Completed
-                            "BSPSSEPySequenceRowIndex": RowIndex,  # Add the row index
+                            "BSPSSEPySequenceRowIndex": row_index,  # Add the row index
                         }
-                        self.actions.append(NewAction)
+                        self.actions.append(new_action)
 
-                        # Check if self.config.BypassTiedActions is True → Add all tied actions linked to the current action
-                        if self.config.BypassTiedActions:
-                            TiedActions = self.config.bspssepy_sequence[
+                        # Check if self.config.bypass_tied_actions is True → Add all tied actions linked to the current action
+                        if self.config.bypass_tied_actions:
+                            tied_actions = self.config.bspssepy_sequence[
                                 self.config.bspssepy_sequence["Tied Action"]
-                                == Row["UID"]
+                                == row["UID"]
                             ]
-                            for _, tied_row in TiedActions.iterrows():
+                            for _, tied_row in tied_actions.iterrows():
                                 # Ensure tied action is not already in the execution queue
                                 if not any(
                                     action["UID"] == tied_row["UID"]
                                     for action in self.actions
                                 ):
-                                    TiedAction = {
+                                    tied_action = {
                                         "UID": tied_row["UID"],
                                         "ElementIDValue": tied_row[
                                             "Identification Value"
@@ -1093,11 +1128,11 @@ class sim:
                                         ],  # 0: Not started, 1: In progress, 2: Completed
                                         "BSPSSEPySequenceRowIndex": tied_row.name,  # Row index
                                     }
-                                    self.actions.append(TiedAction)
+                                    self.actions.append(tied_action)
 
                                     if self.debug_print:
                                         bp(
-                                            f"[DEBUG] Added tied action alongside parent: {TiedAction}",
+                                            f"[DEBUG] Added tied action alongside parent: {tied_action}",
                                             app=app,
                                         )
                                         await asyncio.sleep(
@@ -1108,14 +1143,14 @@ class sim:
 
                         if self.debug_print:
                             bp(
-                                f"[DEBUG] Added new action: {NewAction}",
+                                f"[DEBUG] Added new action: {new_action}",
                                 app=app,
                             )
                             await asyncio.sleep(
                                 app.async_print_delay if app else 0
                             )
 
-                else:  # ControlSequenceAsIs Flag is disabled --> Standard time-based execution
+                else:  # control_sequence_as_is Flag is disabled --> Standard time-based execution
                     # ==========================
                     #  Handle Time-Based Execution
                     # ==========================
@@ -1126,15 +1161,15 @@ class sim:
                         and (
                             not any(
                                 action["ElementIDValue"]
-                                == Row["Identification Value"]
+                                == row["Identification Value"]
                                 for action in self.actions
                             )
                         )
-                        and (Row["Action Status"] not in [2, -999])
+                        and (row["Action Status"] not in [2, -999])
                     ):
 
                         # If EnforceActionLock is true and an action is already in progress, skip adding new actions
-                        if self.EnforceActionLock and any(
+                        if self.enforce_action_lock and any(
                             action["ActionStatus"] in [0, 1]
                             for action in self.actions
                         ):
@@ -1149,34 +1184,34 @@ class sim:
                             continue
 
                         # Add the new action to self.Actions
-                        NewAction = {
-                            "UID": Row["UID"],
-                            "ElementIDValue": Row["Identification Value"],
-                            "ElementIDType": Row["Identification Type"],
-                            "ElementType": Row["Device Type"],
-                            "Action": Row["Action Type"],
+                        new_action = {
+                            "UID": row["UID"],
+                            "ElementIDValue": row["Identification Value"],
+                            "ElementIDType": row["Identification Type"],
+                            "ElementType": row["Device Type"],
+                            "Action": row["Action Type"],
                             "StartTime": action_time,
                             "EndTime": -1,
-                            "ActionStatus": Row[
+                            "ActionStatus": row[
                                 "Action Status"
                             ],  # 0: Not started, 1: In progress, 2: Completed
-                            "BSPSSEPySequenceRowIndex": RowIndex,  # Add the row index
+                            "BSPSSEPySequenceRowIndex": row_index,  # Add the row index
                         }
-                        self.actions.append(NewAction)
+                        self.actions.append(new_action)
 
-                        # Check if self.config.BypassTiedActions is True → Add all tied actions linked to the current action
-                        if self.config.BypassTiedActions:
-                            TiedActions = self.config.bspssepy_sequence[
+                        # Check if self.config.bypass_tied_actions is True → Add all tied actions linked to the current action
+                        if self.config.bypass_tied_actions:
+                            tied_actions = self.config.bspssepy_sequence[
                                 self.config.bspssepy_sequence["Tied Action"]
-                                == Row["UID"]
+                                == row["UID"]
                             ]
-                            for _, tied_row in TiedActions.iterrows():
+                            for _, tied_row in tied_actions.iterrows():
                                 # Ensure tied action is not already in the execution queue
                                 if not any(
                                     action["UID"] == tied_row["UID"]
                                     for action in self.actions
                                 ):
-                                    TiedAction = {
+                                    tied_action = {
                                         "UID": tied_row["UID"],
                                         "ElementIDValue": tied_row[
                                             "Identification Value"
@@ -1195,11 +1230,11 @@ class sim:
                                         ],  # 0: Not started, 1: In progress, 2: Completed
                                         "BSPSSEPySequenceRowIndex": tied_row.name,  # Row index
                                     }
-                                    self.actions.append(TiedAction)
+                                    self.actions.append(tied_action)
 
                                     if self.debug_print:
                                         bp(
-                                            f"[DEBUG] Added tied action alongside parent: {TiedAction}",
+                                            f"[DEBUG] Added tied action alongside parent: {tied_action}",
                                             app=app,
                                         )
                                         await asyncio.sleep(
@@ -1210,7 +1245,7 @@ class sim:
 
                         if self.debug_print:
                             bp(
-                                f"[DEBUG] Added new action: {NewAction}",
+                                f"[DEBUG] Added new action: {new_action}",
                                 app=app,
                             )
                             await asyncio.sleep(
@@ -1219,8 +1254,8 @@ class sim:
 
             # for RowIndex, Row in self.config.bspssepy_sequence.iterrows():
             if any(
-                Row["Action Status"] not in [2, -999]
-                for RowIndex, Row in self.config.bspssepy_sequence.iterrows()
+                row["Action Status"] not in [2, -999]
+                for row_index, row in self.config.bspssepy_sequence.iterrows()
             ):
                 # we still have some actions to do!
                 all_actions_executed = False
@@ -1237,20 +1272,20 @@ class sim:
                     action["ActionStatus"] != 2
                 ):  # Action is pending or in progress
                     # Handle frequency safety margin if enabled
-                    if self.config.EnforceFrequencySafetyMargin:
-                        AvgFreq = await GetAvgFrequency(
+                    if self.config.enforce_freq_safety_margin:
+                        avg_freq = await get_avg_freq(
                             self.bspssepy_gen,
-                            self.config.Channels,
+                            self.config.channels,
                             debug_print=self.debug_print,
                         )
                         if (
-                            self.config.FreqSafetyMarginMin - AvgFreq
+                            self.config.freq_safety_margin_min - avg_freq
                         ) > 1e-3 or (
-                            AvgFreq - self.config.FreqSafetyMarginMax
+                            avg_freq - self.config.freq_safety_margin_max
                         ) > 1e-3:
                             if self.debug_print:
                                 bp(
-                                    f"[DEBUG] Frequency deviation detected. Action delayed. (f_avg = {AvgFreq} Hz)",
+                                    f"[DEBUG] Frequency deviation detected. Action delayed. (f_avg = {avg_freq} Hz)",
                                     app=app,
                                 )
                                 await asyncio.sleep(
@@ -1258,32 +1293,36 @@ class sim:
                                 )
 
                             if (
-                                self.config.AccountForActionExecutionDelays
+                                self.config.account_for_action_exec_delays
                                 and not account_for_delay
                             ):
                                 self.time_shift += (
-                                    self.config.BSPSSEPyTimeStep
-                                )  # Increment by self.config.BSPSSEPyTimeStep
+                                    self.config.bspssepy_time_step
+                                )  # Increment by self.config.bspssepy_time_step
                                 account_for_delay = True
                             continue  # Skip this action for now
 
                     # Determine action function
-                    ElementType = device_type_mapping[
+                    element_type = device_type_mapping[
                         action["ElementType"].lower()
                     ]
-                    ElementIDType = identification_type_mapping[
+                    element_id_type = identification_type_mapping[
                         action["ElementIDType"].lower()
                     ]
-                    ElementIDValue = action["ElementIDValue"]
-                    ElementActionType = action_type_mapping[
+                    element_id_val = action["ElementIDValue"]
+                    element_action_type = action_type_mapping[
                         action["Action"].lower()
                     ].lower()
 
                     if self.debug_print:
-                        # bp(f"[DEBUG] Preparing to execute: ElementType={ElementType}, ElementIDType={ElementIDType}, ElementIDValue={ElementIDValue}, ActionType={ElementActionType}",app=app)
-                        # await asyncio.sleep(app.async_print_delay if app else 0)
+                        # bp(f"[DEBUG] Preparing to execute:
+                        # ElementType={ElementType},
+                        # ElementIDType={ElementIDType},
+                        # ElementIDValue={ElementIDValue},
+                        # ActionType={ElementActionType}",app=app) await
+                        # asyncio.sleep(app.async_print_delay if app else 0)
                         bp(
-                            f"[DEBUG] Preparing to execute action: {ElementActionType} on {ElementType} ({ElementIDType}: {ElementIDValue})",
+                            f"[DEBUG] Preparing to execute action: {element_action_type} on {element_type} ({element_id_type}: {element_id_val})",
                             app=app,
                         )
                         await asyncio.sleep(
@@ -1292,49 +1331,52 @@ class sim:
 
                     # Determine the function to call based on element type and action type
                     if (
-                        ElementType in ElementTypeFunctionMapping
-                        and ElementActionType
-                        in ElementTypeFunctionMapping[ElementType]
+                        element_type in element_type_fun_map
+                        and element_action_type
+                        in element_type_fun_map[element_type]
                     ):
-                        ActionFunction = ElementTypeFunctionMapping[
-                            ElementType
-                        ][ElementActionType]
+                        action_fun = element_type_fun_map[element_type][
+                            element_action_type
+                        ]
 
                         if self.debug_print:
                             bp(
-                                f"[DEBUG] Calling function {ActionFunction} for ElementIDValue={ElementIDValue}",
+                                f"[DEBUG] Calling function {action_fun} for ElementIDValue={element_id_val}",
                                 app=app,
                             )
                             await asyncio.sleep(
                                 app.async_print_delay if app else 0
                             )
 
-                        # Map the identification type to the correct argument name
-                        ElementArgumentName = id_type_mapping[ElementIDType][
-                            ElementType
+                        # Map the identification type to the correct argument
+                        # name
+                        element_arg_name = id_type_mapping[element_id_type][
+                            element_type
                         ]
 
                         # Create the keyword argument dictionary
                         kwargs = {
-                            ElementArgumentName: ElementIDValue,
+                            element_arg_name: element_id_val,
                             "t": current_sim_time,
-                            bspssepy_df_arg_mapping[ElementType]: getattr(
-                                self, bspssepy_df_arg_mapping[ElementType]
+                            bspssepy_df_arg_mapping[element_type]: getattr(
+                                self, bspssepy_df_arg_mapping[element_type]
                             ),
                             "debug_print": self.debug_print,
                             "app": app,
                         }
 
-                        # Add 'bspssepy_bus' to 'kwargs' if `ElementType` is "BRN" or "TRN"
-                        if ElementType in ["BRN", "TRN"]:
+                        # Add 'bspssepy_bus' to 'kwargs' if `ElementType` is
+                        # "BRN" or "TRN"
+                        if element_type in ["BRN", "TRN"]:
                             kwargs["bspssepy_bus"] = self.bspssepy_bus
 
-                        if ElementType in ["LOAD"]:
+                        if element_type in ["LOAD"]:
                             kwargs["bspssepy_gen"] = self.bspssepy_gen
                             kwargs["bspssepy_agc"] = self.bspssepy_agc
 
-                        # Add the following to 'kwargs' if 'ElementType' is "GEN"
-                        if ElementType == "GEN":
+                        # Add the following to 'kwargs' if 'ElementType' is
+                        # "GEN"
+                        if element_type == "GEN":
                             kwargs["action"] = action
                             kwargs["bspssepy_brn"] = self.bspssepy_brn
                             kwargs["bspssepy_trn"] = self.bspssepy_trn
@@ -1343,16 +1385,16 @@ class sim:
                             kwargs["bspssepy_agc"] = self.bspssepy_agc
                             kwargs["config"] = self.config
 
-                        if ElementType in ["IBR", "BESS", "ESS"]:
+                        if element_type in ["IBR", "BESS", "ESS"]:
                             kwargs["action"] = action
                             kwargs["config"] = self.config
                             kwargs["bspssepy_bus"] = self.bspssepy_bus
 
                         if (action["ActionStatus"] == 0) & (
-                            self.DashBoardStyle == 0
+                            self.dashboard_style == 0
                         ):
                             bp(
-                                f"Executing action: ==> {ElementActionType} for {ElementType} ==> {ElementIDType} : {ElementIDValue} (t = {current_sim_time}s)",
+                                f"Executing action: ==> {element_action_type} for {element_type} ==> {element_id_type} : {element_id_val} (t = {current_sim_time}s)",
                                 app=app,
                             )
                             await asyncio.sleep(
@@ -1363,19 +1405,20 @@ class sim:
                         if action["ActionStatus"] == 0:
                             action["StartTime"] = current_sim_time
 
-                        # Call the action function (pass appropriate arguments as per your function requirements)
-                        action["ActionStatus"] = await ActionFunction(
-                            **kwargs
-                        )
+                        # Call the action function (pass appropriate arguments
+                        # as per your function requirements)
+                        action["ActionStatus"] = await action_fun(**kwargs)
 
-                        if ElementType in [
+                        if element_type in [
                             "BRN",
                             "BUS",
                             "LOAD",
                             "TRN",
                             "IBR",
                         ]:
-                            # Those functions returns ierr value from psspy functions, and if ierr == 0 --> no errors occured and actions are completed successfully.
+                            # Those functions returns ierr value from psspy
+                            # functions, and if ierr == 0 --> no errors
+                            # occured and actions are completed successfully.
                             if action["ActionStatus"] == 0:
                                 action["ActionStatus"] = (
                                     2  # update it to state 2 --> marking that the action was completed successfully for BSPSSEPy program
@@ -1447,18 +1490,18 @@ class sim:
                     self.bspssepy_agc,
                     freq_regulated,
                     old_freq_dev,
-                ) = await AGCControl(
+                ) = await agc_control(
                     bspssepy_gen=self.bspssepy_gen,
                     bspssepy_agc=self.bspssepy_agc,
-                    Channels=self.config.Channels,
-                    TimeStep=self.config.BSPSSEPyTimeStep,
-                    AGCTimeConstant=60.0,
-                    Deadband=0.001,  # Hz and Hz/s for rate of dev
+                    channels=self.config.channels,
+                    time_step=self.config.bspssepy_time_step,
+                    agc_time_constant=60.0,
+                    deadband=0.001,  # Hz and Hz/s for rate of dev
                     debug_print=self.debug_print,
-                    UseOutFile=False,
+                    use_out_file=False,
                     app=app,
-                    BaseFrequency=self.base_freq,
-                    FrequencyRegulated=False,
+                    base_freq=self.base_freq,
+                    freq_regulated=False,
                     old_freq_dev=old_freq_dev,  # Δf[k-1] (Hz)
                 )
 
@@ -1466,43 +1509,44 @@ class sim:
             #  Update Simulation Time
             # ==========================
             # Determine the next simulation time step to run
-            NextSimTime = current_sim_time + self.config.BSPSSEPyTimeStep
-            CutPrintMessagesFlag = False
+            next_sim_time = current_sim_time + self.config.bspssepy_time_step
+            cut_print_msgs_flag = False
             if (
-                self.config.BSPSSEPyHardTimeLimitFlag
-                and current_sim_time >= self.config.BSPSSEPyHardTimeLimit * 60
+                self.config.bspssepy_hard_time_limit_flag
+                and current_sim_time
+                >= self.config.bspssepy_hard_time_limit * 60
             ):
-                CutPrintMessagesFlag = True
+                cut_print_msgs_flag = True
                 self.end_sim_flag = True
             elif (
-                not self.config.BSPSSEPyHardTimeLimitFlag
+                not self.config.bspssepy_hard_time_limit_flag
                 and freq_regulated
                 and all_actions_executed
             ):
-                CutPrintMessagesFlag = True
+                cut_print_msgs_flag = True
                 self.end_sim_flag = True
 
             # Print message only every BSPSSEPyProgressPrintTime minutes
             if (
                 (
                     int(current_sim_time)
-                    // (self.config.BSPSSEPyProgressPrintTime * 60)
+                    // (self.config.bspssepy_progress_print_time * 60)
                     != int(last_print_time)
-                    // (self.config.BSPSSEPyProgressPrintTime * 60)
-                    and not CutPrintMessagesFlag
+                    // (self.config.bspssepy_progress_print_time * 60)
+                    and not cut_print_msgs_flag
                 )
                 or current_sim_time == 0
-            ) & (self.DashBoardStyle == 0):
+            ) & (self.dashboard_style == 0):
                 if app == None:
                     bp(
-                        f"running simulation from {current_sim_time/60} to {current_sim_time/60 + self.config.BSPSSEPyProgressPrintTime} minutes",
+                        f"running simulation from {current_sim_time/60} to {current_sim_time/60 + self.config.bspssepy_progress_print_time} minutes",
                         app=app,
                     )
                     await asyncio.sleep(app.async_print_delay if app else 0)
                 last_print_time = current_sim_time
 
             if self.print_all_t_flag:
-                print(f"t = {NextSimTime}s")
+                print(f"t = {next_sim_time}s")
 
             #####################################################
             #####################################################
@@ -1547,17 +1591,17 @@ class sim:
 
             psspy.run(
                 0,  # Network solution convergence monitor option
-                NextSimTime,  # Time to run the simulation to (in seconds)
+                next_sim_time,  # Time to run the simulation to (in seconds)
                 1000,  # Number of time steps between channel value prints
                 50,  # Number of time steps between writing output channel values
                 0,
             )  # Number of time steps between plotting CRT channels
 
             # Update the current simulation time
-            current_sim_time = NextSimTime
+            current_sim_time = next_sim_time
 
-            if self.DashBoardStyle == 1 & (not self.debug_print):
-                from .bspssepy_live_monitoring import CreateMainDashboard
+            if self.dashboard_style == 1 & (not self.debug_print):
+                from .bspssepy_live_monitoring import create_main_dashboard
 
                 # CreateMainDashboard(5, 0.5)
             from fun.bspssepy.app.app_helper_funs import (
@@ -1571,19 +1615,21 @@ class sim:
         await asyncio.sleep(app.async_print_delay if app else 0)
 
 
-async def SetupVoltageFrequencyChannels(config, debug_print=False, app=None):
+async def setup_v_freq_channels(config: config, debug_print=False, app=None):
     """
     Sets up voltage and frequency monitoring channels in PSSE.
 
-    This function configures PSSE to monitor voltage magnitudes, voltage angles,
-    and bus frequency deviations for the specified buses.
+    This function configures PSSE to monitor voltage magnitudes, voltage
+    angles, and bus frequency deviations for the specified buses.
 
     Parameters:
         config (config): The configuration object containing buses to monitor.
-        debug_print (bool, optional): If True, prints debug messages for troubleshooting.
+        debug_print (bool, optional): If True, prints debug messages for
+        troubleshooting.
 
     Returns:
-        config (config): Updated configuration object with added monitoring channels.
+        config (config): Updated configuration object with added monitoring
+        channels.
 
     This function performs the following steps:
         - Adds voltage magnitude and angle monitoring for specified buses.
@@ -1591,7 +1637,9 @@ async def SetupVoltageFrequencyChannels(config, debug_print=False, app=None):
         - Updates `config.Channels` with the newly created channels.
 
     Notes:
-        - The buses to be monitored are specified in `config.BusesToMonitor_Voltage` and `config.BusesToMonitor_Frequency`.
+        - The buses to be monitored are specified in
+          `config.BusesToMonitor_Voltage` and
+          `config.BusesToMonitor_Frequency`.
         - The channel index is managed through `config.CurrentChannelIndex`.
     """
 
@@ -1601,39 +1649,39 @@ async def SetupVoltageFrequencyChannels(config, debug_print=False, app=None):
     bp("Setting up voltage channels...", app=app)
     await asyncio.sleep(app.async_print_delay if app else 0)
 
-    for bus in config.BusesToMonitor_Voltage:
+    for bus in config.v_buses_to_monitor:
         # Add monitoring for voltage magnitude and angle
         ierr = psspy.voltage_and_angle_channel([-1, -1, -1, bus])
 
         if ierr == 0:
             # Add voltage magnitude channel to config.Channels
-            config.Channels.append(
+            config.channels.append(
                 {
                     "Channel Type": "Voltage Magnitude",
                     "Bus Number": bus,
                     "Element Index": bus,  # Assuming bus number as the index for buses
                     "Element Name": f"Bus {bus}",
-                    "Channel Index": config.CurrentChannelIndex,
+                    "Channel Index": config.current_channel_index,
                     "Additional Info": "Voltage magnitude (pu)",
                 }
             )
             if debug_print:
                 bp(
-                    f"[DEBUG] Voltage Magnitude channel setup for Bus {bus} - Channel Index {config.CurrentChannelIndex}.",
+                    f"[DEBUG] Voltage Magnitude channel setup for Bus {bus} - Channel Index {config.current_channel_index}.",
                     app=app,
                 )
                 await asyncio.sleep(app.async_print_delay if app else 0)
 
-            config.CurrentChannelIndex += 1  # Increment index
+            config.current_channel_index += 1  # Increment index
 
             # Add voltage angle channel to config.Channels
-            config.Channels.append(
+            config.channels.append(
                 {
                     "Channel Type": "Voltage Angle",
                     "Bus Number": bus,
                     "Element Index": bus,  # Assuming bus number as the index for buses
                     "Element Name": f"Bus {bus}",
-                    "Channel Index": config.CurrentChannelIndex,
+                    "Channel Index": config.current_channel_index,
                     "Additional Info": "Voltage angle (degrees)",
                 }
             )
@@ -1644,7 +1692,7 @@ async def SetupVoltageFrequencyChannels(config, debug_print=False, app=None):
                 )
                 await asyncio.sleep(app.async_print_delay if app else 0)
 
-            config.CurrentChannelIndex += 1  # Increment index
+            config.current_channel_index += 1  # Increment index
 
             bp(
                 f"[SUCCESS] Voltage monitoring (Magnitude and Angle) added for Bus {bus}.",
@@ -1674,29 +1722,29 @@ async def SetupVoltageFrequencyChannels(config, debug_print=False, app=None):
     # ==========================
     bp("Setting up frequency channels...", app=app)
     await asyncio.sleep(app.async_print_delay if app else 0)
-    for bus in config.BusesToMonitor_Frequency:
+    for bus in config.freq_buses_to_monitor:
         # Add monitoring for frequency deviation
         ierr = psspy.bus_frequency_channel([-1, bus])
         if ierr == 0:
             # Use CurrentChannelIndex from config and increment it
-            config.Channels.append(
+            config.channels.append(
                 {
                     "Channel Type": "Frequency",
                     "Bus Number": bus,
                     "Element Index": bus,  # Assuming bus number as the index for buses
                     "Element Name": f"Bus{bus}",
-                    "Channel Index": config.CurrentChannelIndex,
+                    "Channel Index": config.current_channel_index,
                     "Additional Info": "Frequency deviation in Hz",
                 }
             )
             if debug_print:
                 bp(
-                    f"[DEBUG] Frequency channel setup completed for Bus {bus} - Channel Index {config.CurrentChannelIndex}.",
+                    f"[DEBUG] Frequency channel setup completed for Bus {bus} - Channel Index {config.current_channel_index}.",
                     app=app,
                 )
                 await asyncio.sleep(app.async_print_delay if app else 0)
 
-            config.CurrentChannelIndex += 1  # Increment index
+            config.current_channel_index += 1  # Increment index
 
             bp(
                 f"[SUCCESS] Frequency monitoring added for Bus {bus}.",
