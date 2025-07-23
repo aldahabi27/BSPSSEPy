@@ -1,4 +1,4 @@
-config_path = r"""I:\Work\Research\Control & Power Systems\JWSP Research\HONI Project\PSSE\BSPSSEPy\case\IEEE9\IEEE9_Ver18_Config.py"""
+config_path = r"""I:\Work\Research\Control & Power Systems\JWSP Research\HONI Project\PSSE\BSPSSEPy\case\IEEE9\IEEE9_Ver19_Config.py"""
 
 
 # Essential Imports to install missing libraries

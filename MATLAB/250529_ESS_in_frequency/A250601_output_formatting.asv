@@ -1,0 +1,82 @@
+mpc = case9g_newmodel_ESS;
+[GEN, LOAD, BRANCH, ESS] = F250204_element_names(mpc); % Obtain names of the elements
+
+%% Analysis
+output_plan = ["Device Type", "Identification Type", "Identification Value", "Action Type", "Action Time", "Action Status", "Values"];
+
+dev_types = [BRANCH(:,1);LOAD(:,1);GEN(2:end,1); ESS(:,1)];
+id_values = [BRANCH(:,2);LOAD(:,2);GEN(2:end,2); ESS(:,2)]; % names of the elements in order
+
+
+% activateX matrices has entry 1 in row i at the timestep the ith element turns on.
+activateL = [binL(:,2:end) ones(numL, 1)] - binL;
+activateD = [binD(:,2:end) ones(numD, 1)] - binD;
+activateG = [binG(2:end,2:end) ones(numG -1, 1)] - binG(2:end,:);
+activateE = [binE(:,2:end) ones(numE, 1)] - binE;
+
+% updateG matrix has nonzero value when the output changes at the timestep
+updateG = sdpPG - [zeros(numG, 1), sdpPG(:,1:end-1)];
+updateG = abs(updateG) > 1e-5;
+
+% updateE
+% [sdpPeout;sdpPein]
+updateE = (sdpPein + sdpPeout) > 1e-5;
+updateE_2 = UpdateE(:,2:end)
+
+[rowG, colG] = find(updateG);
+[rowE, colE] = find(updateE);
+
+
+[row,col] = find([activateL; activateD; activateG; activateE]); % find when each element turns on
+
+[col, colI] = sort(col); % reorganizing in order of turning on
+row = row(colI);
+id_values = id_values(row);
+dev_types = dev_types(row);
+
+col = [col; -1];
+colI = [colI; -1];
+count = 1;
+countG = 1;
+countE = 1;
+old_sdpPe = 0;
+for i = 1:T
+    while i == col(count)
+        output_plan = cat(1, output_plan, [dev_types(count), "NAME", id_values(count), "ON", col(count), 0, "{}"]);
+        count = min([count+1, length(col)]);
+    end
+    while i == colG(countG)
+        if sdpPG(rowG(countG),colG(countG)) > 0 % if output is negative, NBSU is cranking so we skip that
+            output_plan = cat(1, output_plan, ["GEN", "NAME", GEN(rowG(countG),2), "UPDATE", colG(countG), 0, "{'P': " + string(baseMVA*sdpPG(rowG(countG),colG(countG))) + "}"]);
+        end
+        countG = min([countG+1, length(colG)]);
+    end
+
+    
+    new_sdpPe = baseMVA*(sdpPeout(rowE(countE), i)-sdpPein(rowE(countE), i));
+    if old_sdpPe ~= new_sdpPe
+        output_plan = cat(1, output_plan, ["BESS", "NAME", ESS(rowE(countE),2), "UPDATE", i, 0, "{'P': " + new_sdpPe + "}"]);
+        old_sdpPe = new_sdpPe; % Update old_sdpPe for the next iteration
+    end
+    countE = countE+1;
+  
+    
+    % if countE < length(colE)
+    %     while i == colE(countE)
+    %         if sdpPein(rowE(countE),colE(countE)) > 0 % BESS is charging
+    %             output_plan = cat(1, output_plan, ["BESS", "NAME", ESS(rowE(countE),2), "UPDATE", colE(countE), 0, "{'P': " + string(-baseMVA*sdpPein(rowE(countE),colE(countE))) + "}"]);
+    %         end
+    % 
+    %         if sdpPeout(rowE(countE),colE(countE)) > 0 % BESS is discharging
+    %             output_plan = cat(1, output_plan, ["BESS", "NAME", ESS(rowE(countE),2), "UPDATE", colE(countE), 0, "{'P': " + string(baseMVA*sdpPeout(rowE(countE),colE(countE))) + "}"]);
+    %         end
+    %         (sdpPeout-sdpPein)'
+    %         countE = countE+1;
+    %     end
+    % end
+    % 
+end
+
+writematrix(output_plan,"plan" + string(today("datetime")) + ".csv")
+
+

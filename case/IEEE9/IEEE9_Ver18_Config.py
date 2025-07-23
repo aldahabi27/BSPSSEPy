@@ -66,7 +66,7 @@ ignore_cnv_file = True
 ignore_snp_file = True
 
 # BSPSSEPy Hard Time Limit in minutes (ignored if BSPSSEPyHardTimeLimitFlag is False)
-bspssepy_hard_time_limit = 12  # 30 #minutes
+bspssepy_hard_time_limit = 14  # 30 #minutes
 
 # If true, BSPSSEPy will enforce a hard time limit on the simulation.
 # BSPSSEPyHardTimeLimitFlag = True
@@ -114,7 +114,7 @@ gen_config = [
             0,
             0,
         ],  # Because it is BS generator, it won't have any associated cranking load
-        "AGC Participation Factor": 1,  # 1/3,
+        "AGC Participation Factor": 0,  # 1,  # 1/3,
         "load Damping Constant": 0,  # D
         "Effective Speed Droop": 0.05,  # R
         "Bias Scaling": 1,  # Bias Scaling (Effective Bias = Bias * Bias Scaling)

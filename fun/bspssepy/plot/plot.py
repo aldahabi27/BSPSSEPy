@@ -198,17 +198,17 @@ def bspssepy_plot_gen(config: config, psse, debug_print=False, base_freq=1):
     for channel, description in chanid.items():
         desc_lower = description.lower()
         if any(key in desc_lower for key in ["gref", "wpcmnd"]):
-            quantities["GREF"].append(channel)
+            quantities["GREF (M_base)"].append(channel)
         elif any(key in desc_lower for key in ["vref", "wqcmnd"]):
-            quantities["VREF"].append(channel)
+            quantities["VREF (M_base)"].append(channel)
         elif "pelec" in desc_lower:
-            quantities["PELEC"].append(channel)
+            quantities["PELEC (S_base)"].append(channel)
         elif "qelec" in desc_lower:
-            quantities["QELEC"].append(channel)
+            quantities["QELEC (S_base)"].append(channel)
         elif "pmech" in desc_lower:
-            quantities["PMECH"].append(channel)
+            quantities["PMECH (M_base)"].append(channel)
         elif "freq" in desc_lower:
-            quantities["Frequency"].append(channel)
+            quantities["Frequency (Hz)"].append(channel)
         elif "volt" in desc_lower:
             # Adjust as per actual descriptions
             quantities["Voltage Magnitude"].append(channel)
@@ -244,7 +244,7 @@ def bspssepy_plot_gen(config: config, psse, debug_print=False, base_freq=1):
                 )  # Convert to numpy array for efficiency
 
                 # Apply BaseFrequency scaling to frequency channels only
-                if quantity == "Frequency":
+                if quantity == "Frequency (Hz)":
                     if np.max(np.abs(data)) < 1:  # If data is in pu, scale it
                         data *= base_freq
 

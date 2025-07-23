@@ -841,7 +841,7 @@ async def BSPSSEPyAppResetTables(
                 "Gen Name": bspssepy_gen["MCNAME"],
                 "Bus #": bspssepy_gen["NUMBER"],
                 "Bus Name": bspssepy_gen["NAME"],
-                "Δf": bspssepy_agc_df["Δf (Hz)"],
+                "Δf": bspssepy_agc_df["Δf (Hz)"][:-1],
                 "Pᴱ": pelec_values,
                 "Pᴹ": pmech_values,
                 "Qᴱ": qelec_values,

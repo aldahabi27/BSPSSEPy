@@ -13,7 +13,10 @@ format long
 csv_file = "I:\Work\Research\Control & Power Systems\JWSP Research\HONI Project\PSSE\BSPSSEPy\case\IEEE9\Simulations\IEEE9_Ver17_092539_280625.csv";
 csv_file = "I:\Work\Research\Control & Power Systems\JWSP Research\HONI Project\PSSE\BSPSSEPy\case\IEEE9\Simulations\IEEE9_Ver17_172347_300625.csv";
 csv_file = "I:\Work\Research\Control & Power Systems\JWSP Research\HONI Project\PSSE\BSPSSEPy\case\IEEE9\Simulations\IEEE9_Ver17_114341_150725.csv";
-
+csv_file = "I:\Work\Research\Control & Power Systems\JWSP Research\HONI Project\PSSE\BSPSSEPy\case\IEEE9\Simulations\IEEE9_Ver19_145104_210725.csv";
+csv_file = "I:\Work\Research\Control & Power Systems\JWSP Research\HONI Project\PSSE\BSPSSEPy\case\IEEE9\Simulations\IEEE9_Ver19_131612_220725.csv";
+csv_file = "I:\Work\Research\Control & Power Systems\JWSP Research\HONI Project\PSSE\BSPSSEPy\case\IEEE9\Simulations\IEEE9_Ver19_141514_220725.csv";
+csv_file = "I:\Work\Research\Control & Power Systems\JWSP Research\HONI Project\PSSE\BSPSSEPy\case\IEEE9\Simulations\IEEE9_Ver19_164350_220725.csv";
 opts = delimitedTextImportOptions('DataLines',3,VariableNamesLine=2,VariableNamingRule='preserve');
 bspssepy_data = readtable(csv_file ,opts,"ReadVariableNames", true);
 
@@ -106,7 +109,7 @@ Gen2_index = find(endsWith(bspssepy_data.Properties.VariableNames, 'gen2', 'Igno
 Gen3_index = find(endsWith(bspssepy_data.Properties.VariableNames, 'gen3', 'IgnoreCase',true));
 BESS5_index = find(endsWith(bspssepy_data.Properties.VariableNames, 'bess5', 'IgnoreCase',true));
 
-subplot(2,4,1); % GREF
+subplot(3,4,1); % GREF
 hold on
 GREF1 = cellfun(@str2double, table2array(bspssepy_data(:,Gen1_index(1))));
 GREF2 = cellfun(@str2double, table2array(bspssepy_data(:,Gen2_index(1))));
@@ -135,7 +138,7 @@ xlabel("$t [k]$", "Interpreter", "latex");
 ylabel("$G_{\mathsf{ref}}$", "Interpreter", "latex");
 
 
-subplot(2,4,2); % VREF
+subplot(3,4,2); % VREF
 hold on
 VREF1 = cellfun(@str2double, table2array(bspssepy_data(:,Gen1_index(2))));
 VREF2 = cellfun(@str2double, table2array(bspssepy_data(:,Gen2_index(2))));
@@ -164,7 +167,7 @@ xlabel("$t [k]$", "Interpreter", "latex");
 ylabel("$V_{\mathsf{ref}}$", "Interpreter", "latex");
 
 
-subplot(2,4,3); % PELEC
+subplot(3,4,3); % PELEC
 hold on
 PELEC1 = cellfun(@str2double, table2array(bspssepy_data(:,Gen1_index(3))));
 PELEC2 = cellfun(@str2double, table2array(bspssepy_data(:,Gen2_index(3))));
@@ -194,7 +197,7 @@ ylabel("$P_{\mathsf{elec}} (p.u. - S_{\mathrm{base}})$", "Interpreter", "latex")
 
 
 
-subplot(2,4,5); % QELEC
+subplot(3,4,5); % QELEC
 hold on
 QELEC1 = cellfun(@str2double, table2array(bspssepy_data(:,Gen1_index(4))));
 QELEC2 = cellfun(@str2double, table2array(bspssepy_data(:,Gen2_index(4))));
@@ -223,7 +226,7 @@ xlabel("$t [k]$", "Interpreter", "latex");
 ylabel("$Q_{\mathsf{elec}} (p.u. - S_{\mathrm{base}})$", "Interpreter", "latex");
 
 
-subplot(2,4,6); % PMECH
+subplot(3,4,6); % PMECH
 hold on
 PMECH1 = cellfun(@str2double, table2array(bspssepy_data(:,Gen1_index(5))));
 PMECH2 = cellfun(@str2double, table2array(bspssepy_data(:,Gen2_index(5))));
@@ -252,7 +255,7 @@ ylabel("$P_{\mathsf{m}} (p.u. - S_{\mathrm{m}})$", "Interpreter", "latex");
 
 
 
-subplot(2,4,7); % FREQ
+subplot(3,4,7); % FREQ
 hold on
 
 my_legend = {};
@@ -280,7 +283,7 @@ ylabel("$f (Hz)$", "Interpreter", "latex");
 
 
 
-subplot(2,4,4); % SOC
+subplot(3,4,4); % SOC
 hold on
 SOC_index = find(endsWith(bspssepy_data.Properties.VariableNames, 'residual energy', 'IgnoreCase',true));
 SOC = cellfun(@str2double, table2array(bspssepy_data(:,SOC_index(1))));
@@ -301,9 +304,66 @@ xlabel("$t [k]$", "Interpreter", "latex");
 ylabel("$SOC [p.u.]$", "Interpreter", "latex");
 
 
+Bus1_index = find(contains(bspssepy_data.Properties.VariableNames, 'bus1', 'IgnoreCase',true));
+Bus4_index = find(contains(bspssepy_data.Properties.VariableNames, 'bus4', 'IgnoreCase',true));
+Bus5_index = find(contains(bspssepy_data.Properties.VariableNames, 'bus5', 'IgnoreCase',true));
+
+subplot(3,4,9:10); % Buses 1, 4 and 5 Voltage Mag
+hold on
+Bus1VMag = cellfun(@str2double, table2array(bspssepy_data(:,Bus1_index(1))));
+Bus4VMag = cellfun(@str2double, table2array(bspssepy_data(:,Bus4_index(1))));
+Bus5VMag = cellfun(@str2double, table2array(bspssepy_data(:,Bus5_index(1))));
+
+my_legend = {};
+plot(time-1, Bus1VMag, 'LineWidth', 3);
+my_legend = [my_legend, {"Bus1 V Mag"}];
+plot(time-1, Bus4VMag, 'LineWidth', 3);
+my_legend = [my_legend, {"Bus4 V Mag"}];
+plot(time-1, Bus5VMag, 'LineWidth', 3);
+my_legend = [my_legend, {"Bus5 V Mag"}];
+
+
+myleg = legend(my_legend, "location", "best");
+
+myleg.NumColumns = 1;
+myleg.IconColumnWidth = 8;
+
+grid on;
+
+xlabel("$t [k]$", "Interpreter", "latex");
+ylabel("$V_{mag} (p.u.)$", "Interpreter", "latex");
+
+subplot(3,4,11:12); % Buses 1, 4 and 5 Voltage Ang
+hold on
+Bus1VAng = cellfun(@str2double, table2array(bspssepy_data(:,Bus1_index(2))));
+Bus4VAng = cellfun(@str2double, table2array(bspssepy_data(:,Bus4_index(2))));
+Bus5VAng = cellfun(@str2double, table2array(bspssepy_data(:,Bus5_index(2))));
+
+my_legend = {};
+plot(time-1, Bus1VAng, 'LineWidth', 3);
+my_legend = [my_legend, {"Bus1 V Ang"}];
+plot(time-1, Bus4VAng, 'LineWidth', 2);
+my_legend = [my_legend, {"Bus4 V Ang"}];
+plot(time-1, Bus5VAng, 'LineWidth', 1);
+my_legend = [my_legend, {"Bus5 V Ang"}];
+
+
+myleg = legend(my_legend, "location", "best");
+
+myleg.NumColumns = 1;
+myleg.IconColumnWidth = 8;
+
+grid on;
+
+xlabel("$t [k]$", "Interpreter", "latex");
+ylabel("$V_{ang} (rad)$", "Interpreter", "latex");
+
+
+
 %% Plotting MATLAB Simulation output for comparison
 
 MATFile = "I:\Work\Research\Control & Power Systems\JWSP Research\HONI Project\Files From Harry\5 Jun 2025 - MATLAB BESS Integration\250529_ESS_in_frequency\250529_ESS_in_frequency\HarryPlotData01-Jul-2025_noBESS.mat";
+MATFile = "I:\Work\Research\Control & Power Systems\JWSP Research\HONI Project\Files From Harry\3 July 2025 - Updated MILP - BESS\250529_ESS_in_frequency\HarryPlotData17-Jul-2025.mat";
 
 
 HarryPlotData = load(MATFile);
@@ -343,7 +403,7 @@ ylim([min(y1(:,1)) - 0.01, max(x)+0.1])
 xline(loads,"-","D" + string(1:numD) + " " + string(100 * demand(:,2))' + "MW","LineStyle","--","LabelVerticalAlignment","bottom");
 hold on
 yyaxis left
-plot(time/stepsize, y1(:,1))
+plot(time/stepsize, y1(:,1), '-','linewidth', 2)
 ylim([min(y1(:,1)) - 0.8, max(x) + 0.8])
 yline(-60*freq_limit,"-","wlim","LineStyle","--","Color","red")
 grid minor
@@ -362,13 +422,31 @@ freq_index = find(startsWith(bspssepy_data.Properties.VariableNames, 'freq', 'Ig
 
 freq = cellfun(@str2double, table2array(bspssepy_data(:,freq_index)));
 
-[~, i_freq_avg] = max(abs(freq) > 0.00000001,[],1);
+[~, i_freq_avg] = max(abs(freq) > 0.00001,[],1);
 
 freq_mask = bsxfun(@gt, (1:size(freq,1))', i_freq_avg);
 freq_nan = freq;
 freq_nan(~freq_mask) = NaN;
-avg_freq = mean(freq_nan,2, 'omitnan');
-avg_freq(isnan(avg_freq)) = 0;
+freq_nan = freq;
+
+w1 = 5;
+w2 = 3;
+w3 = 2;
+
+w_tot = ones(length(freq_mask(:,1)),1).*w1 + freq_mask(:,2).*w2 + freq_mask(:,3).*w3;
+
+w1 = freq_mask(:,1).*w1;
+w2 = freq_mask(:,2).*w2;
+w3 = freq_mask(:,3).*w3;
+w1s = w1./w_tot;
+w2s = w2./w_tot;
+w3s = w3./w_tot;
+
+avg_freq = freq_nan(:,1).*w1s + freq_nan(:,2).*w2s + freq_nan(:,3).*w3s;
+
+
+% avg_freq = mean(freq_nan,2, 'omitnan');
+% avg_freq(isnan(avg_freq)) = 0;
 
 % convert freq to hz
 avg_freq = avg_freq.*60;
@@ -381,8 +459,7 @@ time = time./60;
 
 % convert time to "timestep number"
 time = time./2;
-
-plot(time-1, avg_freq,'-m',  'LineWidth',2)
+plot(time-1, avg_freq,'-m',  'LineWidth',1)
 
 
 
@@ -394,4 +471,6 @@ plot(time-1, avg_freq,'-m',  'LineWidth',2)
 
 hold off
 
+grid on
 
+xlim([-1 62])
