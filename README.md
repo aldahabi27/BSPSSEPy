@@ -22,9 +22,9 @@ BSPSSEPy Application is a Black-Start simulation tool based on PSSE Power Simula
 ## ~~Changes~~ Goals in Version 0.5
 
 - Rewriting the whole application code following PEP 8 standard [in progress].
-- Grouping Measurements in one main function group for all elements [not started].
+- Grouping Measurements in one main function group for all elements [in progress].
 - Generating new documentation following the new structure [not started].
-- Extending the functionality to include BESS modeling and control [not started].
+- Extending the functionality to include BESS modeling and control [Completed !].
 - Fixing minor GUI glitches and upgrading the dependencies if needed [not started].
 
 ---
