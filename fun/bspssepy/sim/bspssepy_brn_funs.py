@@ -37,13 +37,16 @@ import asyncio
 
 # from fun.bspssepy.bspssepy_funs_dict import *
 
-async def get_brn_info(BrnKeys,  # The key(s) for the required information of the Branch
-               BranchName=None,  # Branch Name (optional)
-               FromBus=None,  # From Bus Number or Name (optional)
-               ToBus=None,  # To Bus Number or Name (optional)
-               bspssepy_brn=None,  # bspssepy_brn DataFrame containing BSPSSEPy extra information associated with the branch (optional)
-               debug_print=False,
-               app=None):  # Enable detailed debug output
+
+async def get_brn_info(
+    brn_keys,  # The key(s) for the required information of the Branch
+    brn_name=None,  # Branch Name (optional)
+    from_bus=None,  # From Bus Number or Name (optional)
+    to_bus=None,  # To Bus Number or Name (optional)
+    bspssepy_brn=None,  # bspssepy_brn DataFrame containing BSPSSEPy extra information associated with the branch (optional)
+    debug_print=False,
+    app=None,
+):  # Enable detailed debug output
     """
     Retrieves information about branches based on the specified keys.
 
@@ -56,7 +59,7 @@ async def get_brn_info(BrnKeys,  # The key(s) for the required information of th
     Case 4: Multiple keys for all branches -> Returns a pandas Series for all branches with the requested keys.
 
     Arguments:
-        BrnKeys (str or list of str): The key(s) for the required information. Valid keys include PSSE keys and 
+        BrnKeys (str or list of str): The key(s) for the required information. Valid keys include PSSE keys and
                                          bspssepy_brn columns.
         BranchName (str, optional): Name of the branch to filter. Defaults to None.
         FromBus (str or int, optional): "From Bus" Number or Name. Defaults to None.
@@ -78,110 +81,122 @@ async def get_brn_info(BrnKeys,  # The key(s) for the required information of th
     """
     # Debug logging
     if debug_print:
-        bp(f"[DEBUG] Retrieving branch info for BrnKeys: {BrnKeys}, BranchName: {BranchName}, FromBus: {FromBus}, ToBus: {ToBus}",app=app)
+        bp(
+            f"[DEBUG] Retrieving branch info for BrnKeys: {brn_keys}, BranchName: {brn_name}, FromBus: {from_bus}, ToBus: {to_bus}",
+            app=app,
+        )
         await asyncio.sleep(app.async_print_delay if app else 0)
 
     # Ensure BrnKeys is a list
-    if isinstance(BrnKeys, str):
-        BrnKeys = [BrnKeys]
+    if isinstance(brn_keys, str):
+        brn_keys = [brn_keys]
 
     # Normalize strings to remove extra spaces
-    BrnKeys = [key.strip() for key in BrnKeys]
-    if BranchName:
-        BranchName = BranchName.strip()
-    if isinstance(FromBus, str) and FromBus:
-        FromBus = FromBus.strip()
-        FromBusKey = "FROMNAME"
+    brn_keys = [key.strip() for key in brn_keys]
+    if brn_name:
+        brn_name = brn_name.strip()
+    if isinstance(from_bus, str) and from_bus:
+        from_bus = from_bus.strip()
+        from_bus_key = "FROMNAME"
     else:
-        FromBusKey = "FROMNUMBER"
-        
-    if isinstance(ToBus, str) and ToBus:
-        ToBus = ToBus.strip()
-        ToBusKey = "TONAME"
+        from_bus_key = "FROMNUMBER"
+
+    if isinstance(to_bus, str) and to_bus:
+        to_bus = to_bus.strip()
+        to_bus_key = "TONAME"
     else:
-        ToBusKey = "TONUMBER"
-    
+        to_bus_key = "TONUMBER"
 
     # Separate PSSE and bspssepy_brn keys
-    ValidPSSEKeys = brn_info_dict.keys()
-    ValidBSPSSEPyKeys = [] if bspssepy_brn is None else bspssepy_brn.columns
+    valid_psse_keys = brn_info_dict.keys()
+    valid_bspssepy_keys = [] if bspssepy_brn is None else bspssepy_brn.columns
 
     # Add PSSE Keys needed for basic branch operations
-    _BrnKeys = ["BRANCHNAME", "FROMNUMBER", "FROMNAME", "TONUMBER", "TONAME"]
-    _BrnKeysPSSE = list(_BrnKeys)
-    for key in BrnKeys:
-        if key in ValidPSSEKeys and key not in _BrnKeysPSSE:
-            _BrnKeysPSSE.append(key)
-    
-
+    _brn_keys = ["BRANCHNAME", "FROMNUMBER", "FROMNAME", "TONUMBER", "TONAME"]
+    _brn_keys_psse = list(_brn_keys)
+    for key in brn_keys:
+        if key in valid_psse_keys and key not in _brn_keys_psse:
+            _brn_keys_psse.append(key)
 
     if debug_print:
-        bp(f"[DEBUG] Fetching PSSE data for keys: {_BrnKeysPSSE}",app=app)
+        bp(f"[DEBUG] Fetching PSSE data for keys: {_brn_keys_psse}", app=app)
         await asyncio.sleep(app.async_print_delay if app else 0)
-
 
     # Ensure no duplicate columns are fetched from PSSE if bspssepy_brn is provided
     if bspssepy_brn is not None and not bspssepy_brn.empty:
         # Remove overlapping keys from the PSSE fetch list
-        ValidBSPSSEPyKeys = [key for key in ValidBSPSSEPyKeys if key not in _BrnKeysPSSE]
-
-    if debug_print:
-        bp(f"[DEBUG] Adjusted BSPSSEPy keys to fetch: {ValidBSPSSEPyKeys}",app=app)
-        await asyncio.sleep(app.async_print_delay if app else 0)
-
-    # Fetch PSSE data for the required keys
-    PSSEData = {}
-    for PSSEKey in _BrnKeysPSSE:
-        PSSEData[PSSEKey] = await GetBrnInfoPSSE(PSSEKey, debug_print=debug_print,app=app)
-
-    # Combine PSSEData and bspssepy_brn (if provided) into a single DataFrame
-    if bspssepy_brn is not None and not bspssepy_brn.empty:
-        ValidBSPSSEPyBrn = bspssepy_brn[ValidBSPSSEPyKeys]
-        PSSEDataDF = pd.DataFrame(PSSEData)
-        CombinedData = pd.concat([PSSEDataDF, ValidBSPSSEPyBrn], axis=1)
-    else:
-        CombinedData = pd.DataFrame(PSSEData)
-
-    if debug_print:
-        bp(f"[DEBUG] Combined Data:\n{CombinedData}",app=app)
-        await asyncio.sleep(app.async_print_delay if app else 0)
-    
-
-    # Filter CombinedData based on BranchName, FromBus, and ToBus
-    if BranchName:
-        CombinedData = CombinedData[CombinedData["BRANCHNAME"].str.strip() == BranchName]
-    elif FromBus and ToBus:
-        if isinstance(FromBus, (int, float)):
-            FromBusKey = "FROMNUMBER"
-        else:
-            FromBusKey = "FROMNAME"
-        if isinstance(ToBus, (int, float)):
-            ToBusKey = "TONUMBER"
-        else:
-            ToBusKey = "TONAME"
-
-        CombinedData = CombinedData[
-            (CombinedData[FromBusKey] == FromBus) & 
-            (CombinedData[ToBusKey] == ToBus)
+        valid_bspssepy_keys = [
+            key for key in valid_bspssepy_keys if key not in _brn_keys_psse
         ]
 
     if debug_print:
-        bp(f"[DEBUG] Filtered Data:\n{CombinedData}",app=app)
+        bp(
+            f"[DEBUG] Adjusted BSPSSEPy keys to fetch: {valid_bspssepy_keys}",
+            app=app,
+        )
+        await asyncio.sleep(app.async_print_delay if app else 0)
+
+    # Fetch PSSE data for the required keys
+    psse_data = {}
+    for psse_key in _brn_keys_psse:
+        psse_data[psse_key] = await get_brn_info_psse(
+            psse_key, debug_print=debug_print, app=app
+        )
+
+    # Combine PSSEData and bspssepy_brn (if provided) into a single DataFrame
+    if bspssepy_brn is not None and not bspssepy_brn.empty:
+        valid_bspssepy_brn = bspssepy_brn[valid_bspssepy_keys]
+        psse_data = pd.DataFrame(psse_data)
+        combined_data = pd.concat([psse_data, valid_bspssepy_brn], axis=1)
+    else:
+        combined_data = pd.DataFrame(psse_data)
+
+    if debug_print:
+        bp(f"[DEBUG] Combined Data:\n{combined_data}", app=app)
+        await asyncio.sleep(app.async_print_delay if app else 0)
+
+    # Filter CombinedData based on BranchName, FromBus, and ToBus
+    if brn_name:
+        combined_data = combined_data[
+            combined_data["BRANCHNAME"].str.strip() == brn_name
+        ]
+    elif from_bus and to_bus:
+        if isinstance(from_bus, (int, float)):
+            from_bus_key = "FROMNUMBER"
+        else:
+            from_bus_key = "FROMNAME"
+        if isinstance(to_bus, (int, float)):
+            to_bus_key = "TONUMBER"
+        else:
+            to_bus_key = "TONAME"
+
+        combined_data = combined_data[
+            (combined_data[from_bus_key] == from_bus)
+            & (combined_data[to_bus_key] == to_bus)
+        ]
+
+    if debug_print:
+        bp(f"[DEBUG] Filtered Data:\n{combined_data}", app=app)
         await asyncio.sleep(app.async_print_delay if app else 0)
 
     # Handle cases based on the number of BrnKeys
-    if len(BrnKeys) == 1:
-        Key = BrnKeys[0]
-        return CombinedData[Key].iloc[0] if len(CombinedData) == 1 else CombinedData[Key]
+    if len(brn_keys) == 1:
+        key = brn_keys[0]
+        return (
+            combined_data[key].iloc[0]
+            if len(combined_data) == 1
+            else combined_data[key]
+        )
     else:
-        return CombinedData[BrnKeys]
+        return combined_data[brn_keys]
 
 
-
-async def GetBrnInfoPSSE(abrnString,  # Requested Info string - Check available strings in brn_info_dict
-                  BranchEntry=1,  # 1 entry for each branch, 2 --> two-way entry (each branch in both directions)
-                  debug_print=False,  # Print debug information
-                  app=None):
+async def get_brn_info_psse(
+    abrn_string,  # Requested Info string - Check available strings in brn_info_dict
+    branch_entry=1,  # 1 entry for each branch, 2 --> two-way entry (each branch in both directions)
+    debug_print=False,  # Print debug information
+    app=None,
+):
     """
     This function returns the requested information about the branch of interest.
     If no branch is specified, it will return the information about all branches.
@@ -211,14 +226,22 @@ async def GetBrnInfoPSSE(abrnString,  # Requested Info string - Check available 
     """
 
     if debug_print:
-        bp(f"[DEBUG] Requested branch information for abrnString: '{abrnString}'",app=app)
+        bp(
+            f"[DEBUG] Requested branch information for abrnString: '{abrn_string}'",
+            app=app,
+        )
         await asyncio.sleep(app.async_print_delay if app else 0)
-        bp(f"[DEBUG] BranchEntry: {BranchEntry}",app=app) #, BranchName: {BranchName}, FromBus: {FromBus}, ToBus: {ToBus}")
+        bp(
+            f"[DEBUG] BranchEntry: {branch_entry}", app=app
+        )  # , BranchName: {BranchName}, FromBus: {FromBus}, ToBus: {ToBus}")
         await asyncio.sleep(app.async_print_delay if app else 0)
 
     # Check if abrnString exists in brn_info_dict
-    if abrnString not in brn_info_dict:
-        bp(f"[ERROR] Invalid abrnString '{abrnString}'. Check brn_info_dict for valid options.",app=app)
+    if abrn_string not in brn_info_dict:
+        bp(
+            f"[ERROR] Invalid abrnString '{abrn_string}'. Check brn_info_dict for valid options.",
+            app=app,
+        )
         await asyncio.sleep(app.async_print_delay if app else 0)
         return None
 
@@ -228,10 +251,10 @@ async def GetBrnInfoPSSE(abrnString,  # Requested Info string - Check available 
 
     # Set up the query parameters
     parameters = {
-        'sid': abrnSID,
-        'flag': abrnFlag,
-        'entry': BranchEntry,
-        'string': [abrnString]
+        "sid": abrnSID,
+        "flag": abrnFlag,
+        "entry": branch_entry,
+        "string": [abrn_string],
     }
 
     # # Filter branches based on provided parameters
@@ -246,30 +269,39 @@ async def GetBrnInfoPSSE(abrnString,  # Requested Info string - Check available 
     #         bp(f"[DEBUG] Filtering branches by FromBus: {FromBus} and ToBus: {ToBus}")
 
     # Fetch the data type for the requested string
-    ierr, dataType = psspy.abrntypes([abrnString])
+    ierr, data_type = psspy.abrntypes([abrn_string])
     if ierr != 0:
-        bp(f"[ERROR] Failed to fetch data type for abrnString '{abrnString}'. PSSE error code: {ierr}",app=app)
+        bp(
+            f"[ERROR] Failed to fetch data type for abrnString '{abrn_string}'. PSSE error code: {ierr}",
+            app=app,
+        )
         await asyncio.sleep(app.async_print_delay if app else 0)
         return None
 
     # Retrieve data based on the type
     try:
-        if dataType[0] == 'I':  # Integer data
+        if data_type[0] == "I":  # Integer data
             ierr, data = psspy.abrnint(**parameters)
-        elif dataType[0] == 'R':  # Real data
+        elif data_type[0] == "R":  # Real data
             ierr, data = psspy.abrnreal(**parameters)
-        elif dataType[0] == 'C':  # Character data
+        elif data_type[0] == "C":  # Character data
             ierr, data = psspy.abrnchar(**parameters)
-        elif dataType[0] == 'X':  # Complex data
+        elif data_type[0] == "X":  # Complex data
             ierr, data = psspy.abrncplx(**parameters)
         else:
-            bp(f"[ERROR] Unsupported data type '{dataType[0]}' for abrnString '{abrnString}'.",app=app)
+            bp(
+                f"[ERROR] Unsupported data type '{data_type[0]}' for abrnString '{abrn_string}'.",
+                app=app,
+            )
             await asyncio.sleep(app.async_print_delay if app else 0)
             return None
 
-        
         # Check if data is a list containing a single nested list
-        if isinstance(data, list) and len(data) == 1 and isinstance(data[0], list):
+        if (
+            isinstance(data, list)
+            and len(data) == 1
+            and isinstance(data[0], list)
+        ):
             data = data[0]  # Flatten the list
 
         # Check if data is a list
@@ -279,27 +311,38 @@ async def GetBrnInfoPSSE(abrnString,  # Requested Info string - Check available 
                 # Strip whitespace from each string in the list
                 data = [item.strip() for item in data]
 
-
         if ierr != 0:
-            bp(f"[ERROR] Failed to retrieve data for abrnString '{abrnString}'. PSSE error code: {ierr}",app=app)
+            bp(
+                f"[ERROR] Failed to retrieve data for abrnString '{abrn_string}'. PSSE error code: {ierr}",
+                app=app,
+            )
             await asyncio.sleep(app.async_print_delay if app else 0)
             return None
 
         if debug_print:
-            bp(f"[DEBUG] Successfully retrieved data for '{abrnString}': {data[0]}",app=app)
+            bp(
+                f"[DEBUG] Successfully retrieved data for '{abrn_string}': {data[0]}",
+                app=app,
+            )
             await asyncio.sleep(app.async_print_delay if app else 0)
         return data
 
     except Exception as e:
-        bp(f"[ERROR] Exception occurred while retrieving data: {e}",app=app)
+        bp(f"[ERROR] Exception occurred while retrieving data: {e}", app=app)
         await asyncio.sleep(app.async_print_delay if app else 0)
         return None
 
-    
 
-
-
-async def BrnTrip(t, bspssepy_brn, BranchID=None, BranchName=None, BranchFromBus=None, BranchToBus=None, debug_print=False,app=None):
+async def brn_trip(
+    t,
+    bspssepy_brn,
+    brn_id=None,
+    brn_name=None,
+    brn_from_bus=None,
+    brn_to_bus=None,
+    debug_print=False,
+    app=None,
+):
     """
     Trips a branch based on its ID, name, or bus connection and updates extended info columns.
 
@@ -325,110 +368,160 @@ async def BrnTrip(t, bspssepy_brn, BranchID=None, BranchName=None, BranchFromBus
     """
     # Initial debug message
     if debug_print:
-        bp(f"[DEBUG] BranchTrip called with inputs:\n"
-              f"  BranchID: {BranchID}\n"
-              f"  BranchName: {BranchName}\n"
-              f"  FromBus: {BranchFromBus}\n"
-              f"  ToBus: {BranchToBus}\n"
-              f"  Simulation Time: {t}s\n",app=app)
+        bp(
+            f"[DEBUG] BranchTrip called with inputs:\n"
+            f"  BranchID: {brn_id}\n"
+            f"  BranchName: {brn_name}\n"
+            f"  FromBus: {brn_from_bus}\n"
+            f"  ToBus: {brn_to_bus}\n"
+            f"  Simulation Time: {t}s\n",
+            app=app,
+        )
         await asyncio.sleep(app.async_print_delay if app else 0)
 
     # Resolve BranchName if only bus info is provided
-    if not BranchName and (BranchFromBus and BranchToBus):
-        BranchName = await get_brn_info(
-            BrnKeys=["BRANCHNAME"],
-            FromBus=BranchFromBus,
-            ToBus=BranchToBus,
+    if not brn_name and (brn_from_bus and brn_to_bus):
+        brn_name = await get_brn_info(
+            brn_keys=["BRANCHNAME"],
+            from_bus=brn_from_bus,
+            to_bus=brn_to_bus,
             bspssepy_brn=bspssepy_brn,
             debug_print=debug_print,
             app=app,
         )
-        if not BranchName:
-            bp(f"[ERROR] Could not identify branch between buses {BranchFromBus} and {BranchToBus}.",app=app)
+        if not brn_name:
+            bp(
+                f"[ERROR] Could not identify branch between buses {brn_from_bus} and {brn_to_bus}.",
+                app=app,
+            )
             await asyncio.sleep(app.async_print_delay if app else 0)
             return None
     # Fetch branch details
-    BranchRow = await get_brn_info(
-        BrnKeys=["FROMNUMBER", "TONUMBER", "ID", "STATUS", "BRANCHNAME"],
-        BranchName=BranchName,
+    brn_row = await get_brn_info(
+        brn_keys=["FROMNUMBER", "TONUMBER", "ID", "STATUS", "BRANCHNAME"],
+        brn_name=brn_name,
         bspssepy_brn=bspssepy_brn,
         debug_print=debug_print,
         app=app,
     )
-    
-    if BranchRow is None or len(BranchRow) == 0:
-        bp(f"[ERROR] Branch not found for ID={BranchID}, Name={BranchName}, "
-              f"FromBus={BranchFromBus}, ToBus={BranchToBus}.",app=app)
+
+    if brn_row is None or len(brn_row) == 0:
+        bp(
+            f"[ERROR] Branch not found for ID={brn_id}, Name={brn_name}, "
+            f"FromBus={brn_from_bus}, ToBus={brn_to_bus}.",
+            app=app,
+        )
         await asyncio.sleep(app.async_print_delay if app else 0)
         return None
 
     # Extract branch information
-    BranchFromBus = BranchRow["FROMNUMBER"].iloc[0]
-    BranchToBus = BranchRow["TONUMBER"].iloc[0]
-    BranchID = BranchRow["ID"].iloc[0]
-    BranchName = BranchRow["BRANCHNAME"].iloc[0]
-    BranchStatus = int(BranchRow["STATUS"].iloc[0])
+    brn_from_bus = brn_row["FROMNUMBER"].iloc[0]
+    brn_to_bus = brn_row["TONUMBER"].iloc[0]
+    brn_id = brn_row["ID"].iloc[0]
+    brn_name = brn_row["BRANCHNAME"].iloc[0]
+    brn_status = int(brn_row["STATUS"].iloc[0])
 
     # Debug message with resolved values
     if debug_print:
-        bp(f"[DEBUG] Resolved branch details:\n"
-              f"  BranchID: {BranchID}\n"
-              f"  BranchName: {BranchName}\n"
-              f"  FromBus: {BranchFromBus}\n"
-              f"  ToBus: {BranchToBus}\n"
-              f"  Status: {'Closed' if BranchStatus == 1 else 'Tripped'}\n",app=app)
+        bp(
+            f"[DEBUG] Resolved branch details:\n"
+            f"  BranchID: {brn_id}\n"
+            f"  BranchName: {brn_name}\n"
+            f"  FromBus: {brn_from_bus}\n"
+            f"  ToBus: {brn_to_bus}\n"
+            f"  Status: {'Closed' if brn_status == 1 else 'Tripped'}\n",
+            app=app,
+        )
         await asyncio.sleep(app.async_print_delay if app else 0)
 
     # Check if the branch is already tripped
-    if BranchStatus != 1:
-        bp(f"[INFO] Branch '{BranchName}' is already tripped.",app=app)
+    if brn_status != 1:
+        bp(f"[INFO] Branch '{brn_name}' is already tripped.", app=app)
         await asyncio.sleep(app.async_print_delay if app else 0)
         return 0
 
     # Attempt to trip the branch
     try:
         if debug_print:
-            bp(f"[DEBUG] Attempting to trip branch '{BranchName}' between buses {BranchFromBus} and {BranchToBus}.",app=app)
+            bp(
+                f"[DEBUG] Attempting to trip branch '{brn_name}' between buses {brn_from_bus} and {brn_to_bus}.",
+                app=app,
+            )
             await asyncio.sleep(app.async_print_delay if app else 0)
 
-        ierr = psspy.dist_branch_trip(BranchFromBus, BranchToBus, BranchID)
+        ierr = psspy.dist_branch_trip(brn_from_bus, brn_to_bus, brn_id)
 
         if ierr != 0:
-            bp(f"[ERROR] Failed to trip branch '{BranchName}'. PSSE error code: {ierr}",app=app)
+            bp(
+                f"[ERROR] Failed to trip branch '{brn_name}'. PSSE error code: {ierr}",
+                app=app,
+            )
             await asyncio.sleep(app.async_print_delay if app else 0)
             return ierr
 
         # Ensure proper matching for FromBus and ToBus in bspssepy_brn
-        FromBusCondition = bspssepy_brn["FROMNUMBER"].apply(str) == str(BranchFromBus)
-        ToBusCondition = bspssepy_brn["TONUMBER"].apply(str) == str(BranchToBus)
-        IDCondition = bspssepy_brn["ID"] == BranchID
+        from_bus_condition = bspssepy_brn["FROMNUMBER"].apply(str) == str(
+            brn_from_bus
+        )
+        to_bus_condition = bspssepy_brn["TONUMBER"].apply(str) == str(
+            brn_to_bus
+        )
+        id_condition = bspssepy_brn["ID"] == brn_id
 
-        NewStatus = await get_brn_info("STATUS", BranchName=BranchName, debug_print=debug_print, app=app)
+        new_status = await get_brn_info(
+            "STATUS", brn_name=brn_name, debug_print=debug_print, app=app
+        )
 
-        if not(bspssepy_brn is None or bspssepy_brn.empty):
+        if not (bspssepy_brn is None or bspssepy_brn.empty):
             # Update the bspssepy_brn DataFrame
             bspssepy_brn.loc[
-                FromBusCondition & ToBusCondition & IDCondition,
-                ["BSPSSEPyStatus", "BSPSSEPyLastAction", "BSPSSEPyLastActionTime", "BSPSSEPySimulationNotes", "STATUS"]
-            ] = ["Tripped", "Trip", t, "Branch successfully tripped.", NewStatus]
+                from_bus_condition & to_bus_condition & id_condition,
+                [
+                    "BSPSSEPyStatus",
+                    "BSPSSEPyLastAction",
+                    "BSPSSEPyLastActionTime",
+                    "BSPSSEPySimulationNotes",
+                    "STATUS",
+                ],
+            ] = [
+                "Tripped",
+                "Trip",
+                t,
+                "Branch successfully tripped.",
+                new_status,
+            ]
 
         if debug_print:
-            bp(f"[SUCCESS] Successfully tripped branch '{BranchName}'. Updated bspssepy_brn DataFrame.",app=app)
+            bp(
+                f"[SUCCESS] Successfully tripped branch '{brn_name}'. Updated bspssepy_brn DataFrame.",
+                app=app,
+            )
             await asyncio.sleep(app.async_print_delay if app else 0)
 
         return ierr
 
     except KeyError as e:
-        bp(f"[ERROR] Missing key during BranchTrip operation: {e}",app=app)
+        bp(f"[ERROR] Missing key during BranchTrip operation: {e}", app=app)
         await asyncio.sleep(app.async_print_delay if app else 0)
         return None
     except Exception as e:
-        bp(f"[ERROR] Unexpected error during BranchTrip: {e}",app=app)
+        bp(f"[ERROR] Unexpected error during BranchTrip: {e}", app=app)
         await asyncio.sleep(app.async_print_delay if app else 0)
         return None
 
 
-async def BrnClose(t, bspssepy_brn=None, bspssepy_bus=None, BranchID=None, BranchName=None, BranchFromBus=None, BranchToBus=None, CalledByGen = False, debug_print=False, app=None):
+async def brn_close(
+    t,
+    bspssepy_brn=None,
+    bspssepy_bus=None,
+    brn_id=None,
+    brn_name=None,
+    brn_from_bus=None,
+    brn_to_bus=None,
+    called_by_gen=False,
+    debug_print=False,
+    app=None,
+):
     """
     Closes a branch based on its ID, name, or bus connection and updates extended info columns.
 
@@ -453,138 +546,223 @@ async def BrnClose(t, bspssepy_brn=None, bspssepy_bus=None, BranchID=None, Branc
             ierr: The status of the action applied (ierr = 0 --> success!).
     """
     if debug_print:
-        bp(f"[DEBUG] BranchClose called with inputs:\n"
-              f"  BranchID: {BranchID}\n"
-              f"  BranchName: {BranchName}\n"
-              f"  FromBus: {BranchFromBus}\n"
-              f"  ToBus: {BranchToBus}\n"
-              f"  Simulation Time: {t}s\n",app=app)
+        bp(
+            f"[DEBUG] BranchClose called with inputs:\n"
+            f"  BranchID: {brn_id}\n"
+            f"  BranchName: {brn_name}\n"
+            f"  FromBus: {brn_from_bus}\n"
+            f"  ToBus: {brn_to_bus}\n"
+            f"  Simulation Time: {t}s\n",
+            app=app,
+        )
         await asyncio.sleep(app.async_print_delay if app else 0)
 
     # Resolve BranchName if only bus info is provided
-    if not BranchName and (BranchFromBus and BranchToBus):
-        BranchName = await get_brn_info(
-            BrnKeys=["BRANCHNAME"],
-            FromBus=BranchFromBus,
-            ToBus=BranchToBus,
+    if not brn_name and (brn_from_bus and brn_to_bus):
+        brn_name = await get_brn_info(
+            brn_keys=["BRANCHNAME"],
+            from_bus=brn_from_bus,
+            to_bus=brn_to_bus,
             bspssepy_brn=bspssepy_brn,
             debug_print=debug_print,
             app=app,
         )
-        if not BranchName:
-            bp(f"[ERROR] Could not identify branch between buses {BranchFromBus} and {BranchToBus}.",app=app)
+        if not brn_name:
+            bp(
+                f"[ERROR] Could not identify branch between buses {brn_from_bus} and {brn_to_bus}.",
+                app=app,
+            )
             await asyncio.sleep(app.async_print_delay if app else 0)
             return None
 
     # Fetch branch details
-    BranchRow = await get_brn_info(
-        BrnKeys=["FROMNUMBER", "TONUMBER", "ID", "STATUS", "BRANCHNAME", "GenControlled"],
-        BranchName=BranchName,
+    brn_row = await get_brn_info(
+        brn_keys=[
+            "FROMNUMBER",
+            "TONUMBER",
+            "ID",
+            "STATUS",
+            "BRANCHNAME",
+            "GenControlled",
+        ],
+        brn_name=brn_name,
         bspssepy_brn=bspssepy_brn,
         debug_print=debug_print,
         app=app,
     )
 
-    if BranchRow is None or len(BranchRow) == 0:
-        bp(f"[ERROR] Branch not found for ID={BranchID}, Name={BranchName}, "
-              f"FromBus={BranchFromBus}, ToBus={BranchToBus}.",app=app)
+    if brn_row is None or len(brn_row) == 0:
+        bp(
+            f"[ERROR] Branch not found for ID={brn_id}, Name={brn_name}, "
+            f"FromBus={brn_from_bus}, ToBus={brn_to_bus}.",
+            app=app,
+        )
         await asyncio.sleep(app.async_print_delay if app else 0)
         return None
 
     # Extract branch information
-    BranchFromBus = int(BranchRow["FROMNUMBER"].iloc[0])
-    BranchToBus = int(BranchRow["TONUMBER"].iloc[0])
-    BranchID = BranchRow["ID"].iloc[0]
-    BranchName = BranchRow["BRANCHNAME"].iloc[0]
-    BranchStatus = int(BranchRow["STATUS"].iloc[0])
-    BrnGenControlled = BranchRow["GenControlled"].values[0]
-
+    brn_from_bus = int(brn_row["FROMNUMBER"].iloc[0])
+    brn_to_bus = int(brn_row["TONUMBER"].iloc[0])
+    brn_id = brn_row["ID"].iloc[0]
+    brn_name = brn_row["BRANCHNAME"].iloc[0]
+    brn_status = int(brn_row["STATUS"].iloc[0])
+    brn_gen_controlled = brn_row["GenControlled"].values[0]
 
     if debug_print:
-        bp(f"[DEBUG] Resolved branch details:\n"
-              f"  BranchID: {BranchID}\n"
-              f"  BranchName: {BranchName}\n"
-              f"  FromBus: {BranchFromBus}\n"
-              f"  ToBus: {BranchToBus}\n"
-              f"  Status: {'Closed' if BranchStatus == 1 else 'Tripped'}\n"
-              f"  GenControlled: {BrnGenControlled}",app=app)
+        bp(
+            f"[DEBUG] Resolved branch details:\n"
+            f"  BranchID: {brn_id}\n"
+            f"  BranchName: {brn_name}\n"
+            f"  FromBus: {brn_from_bus}\n"
+            f"  ToBus: {brn_to_bus}\n"
+            f"  Status: {'Closed' if brn_status == 1 else 'Tripped'}\n"
+            f"  GenControlled: {brn_gen_controlled}",
+            app=app,
+        )
         await asyncio.sleep(app.async_print_delay if app else 0)
 
     # Check if the branch is already closed
-    if BranchStatus == 1:
-        bp(f"[INFO] Branch '{BranchName}' is already closed.",app=app)
+    if brn_status == 1:
+        bp(f"[INFO] Branch '{brn_name}' is already closed.", app=app)
         await asyncio.sleep(app.async_print_delay if app else 0)
         return 0
 
     # Ensure both buses are operational
-    if (CalledByGen & BrnGenControlled) or not BrnGenControlled:
+    if (called_by_gen & brn_gen_controlled) or not brn_gen_controlled:
         try:
-            FromBusTYPE = await get_bus_info(BusKeys="TYPE", bus_num=BranchFromBus, debug_print=debug_print,app=app)
-            ToBusTYPE = await get_bus_info(BusKeys="TYPE", bus_num=BranchToBus, debug_print=debug_print,app=app)
+            from_bus_type = await get_bus_info(
+                bus_keys="TYPE",
+                bus_num=brn_from_bus,
+                debug_print=debug_print,
+                app=app,
+            )
+            to_bus_type = await get_bus_info(
+                bus_keys="TYPE",
+                bus_num=brn_to_bus,
+                debug_print=debug_print,
+                app=app,
+            )
 
-            if FromBusTYPE == 4:  # Tripped
+            if from_bus_type == 4:  # Tripped
                 if debug_print:
-                    bp(f"[DEBUG] FromBus {BranchFromBus} is tripped. Attempting to close it.",app=app)
+                    bp(
+                        f"[DEBUG] FromBus {brn_from_bus} is tripped. Attempting to close it.",
+                        app=app,
+                    )
                     await asyncio.sleep(app.async_print_delay if app else 0)
-                ierr = await BusClose(t, bus_num=BranchFromBus, bspssepy_bus=bspssepy_bus, debug_print=debug_print,app=app)
+                ierr = await bus_close(
+                    t,
+                    bus_num=brn_from_bus,
+                    bspssepy_bus=bspssepy_bus,
+                    debug_print=debug_print,
+                    app=app,
+                )
                 if ierr != 0:
-                    bp(f"[ERROR] Failed to close FromBus {BranchToBus}. Aborting Trn close.",app=app)
+                    bp(
+                        f"[ERROR] Failed to close FromBus {brn_to_bus}. Aborting Trn close.",
+                        app=app,
+                    )
                     await asyncio.sleep(app.async_print_delay if app else 0)
                     return ierr
 
-            if ToBusTYPE == 4:  # Tripped
+            if to_bus_type == 4:  # Tripped
                 if debug_print:
-                    bp(f"[DEBUG] ToBus {BranchToBus} is tripped. Attempting to close it.",app=app)
+                    bp(
+                        f"[DEBUG] ToBus {brn_to_bus} is tripped. Attempting to close it.",
+                        app=app,
+                    )
                     await asyncio.sleep(app.async_print_delay if app else 0)
-                ierr = await BusClose(t, bus_num=BranchToBus, bspssepy_bus = bspssepy_bus, debug_print=debug_print,app=app)
+                ierr = await bus_close(
+                    t,
+                    bus_num=brn_to_bus,
+                    bspssepy_bus=bspssepy_bus,
+                    debug_print=debug_print,
+                    app=app,
+                )
                 if ierr != 0:
-                    bp(f"[ERROR] Failed to close ToBus {BranchToBus}. Aborting Trn close.",app=app)
+                    bp(
+                        f"[ERROR] Failed to close ToBus {brn_to_bus}. Aborting Trn close.",
+                        app=app,
+                    )
                     await asyncio.sleep(app.async_print_delay if app else 0)
                     return ierr
-
 
             if debug_print:
-                bp(f"[DEBUG] Attempting to close branch '{BranchName}' between buses {BranchFromBus} and {BranchToBus}.",app=app)
+                bp(
+                    f"[DEBUG] Attempting to close branch '{brn_name}' between buses {brn_from_bus} and {brn_to_bus}.",
+                    app=app,
+                )
                 await asyncio.sleep(app.async_print_delay if app else 0)
 
-            ierr = psspy.dist_branch_close(BranchFromBus, BranchToBus, BranchID)
+            ierr = psspy.dist_branch_close(brn_from_bus, brn_to_bus, brn_id)
 
             if ierr != 0:
-                bp(f"[ERROR] Failed to close branch '{BranchName}'. PSSE error code: {ierr}",app=app)
+                bp(
+                    f"[ERROR] Failed to close branch '{brn_name}'. PSSE error code: {ierr}",
+                    app=app,
+                )
                 await asyncio.sleep(app.async_print_delay if app else 0)
                 return ierr
 
-            NewStatus = await get_brn_info("STATUS", BranchName=BranchName, debug_print=debug_print,app=app)
-
+            new_status = await get_brn_info(
+                "STATUS",
+                brn_name=brn_name,
+                debug_print=debug_print,
+                app=app,
+            )
 
             # Ensure proper matching for FromBus and ToBus in bspssepy_brn
-            FromBusCondition = bspssepy_brn["FROMNUMBER"].apply(str) == str(BranchFromBus)
-            ToBusCondition = bspssepy_brn["TONUMBER"].apply(str) == str(BranchToBus)
-            IDCondition = bspssepy_brn["ID"] == BranchID
-            
-            if not(bspssepy_brn is None or bspssepy_brn.empty):
+            from_bus_condition = bspssepy_brn["FROMNUMBER"].apply(str) == str(
+                brn_from_bus
+            )
+            to_bus_condition = bspssepy_brn["TONUMBER"].apply(str) == str(
+                brn_to_bus
+            )
+            id_condition = bspssepy_brn["ID"] == brn_id
+
+            if not (bspssepy_brn is None or bspssepy_brn.empty):
                 # Update the bspssepy_brn DataFrame
                 bspssepy_brn.loc[
-                    FromBusCondition & ToBusCondition & IDCondition,
-                    ["BSPSSEPyStatus", "BSPSSEPyLastAction", "BSPSSEPyLastActionTime", "BSPSSEPySimulationNotes", "STATUS"]
-                ] = ["Closed", "Close", t, "Branch successfully closed.", NewStatus]
+                    from_bus_condition & to_bus_condition & id_condition,
+                    [
+                        "BSPSSEPyStatus",
+                        "BSPSSEPyLastAction",
+                        "BSPSSEPyLastActionTime",
+                        "BSPSSEPySimulationNotes",
+                        "STATUS",
+                    ],
+                ] = [
+                    "Closed",
+                    "Close",
+                    t,
+                    "Branch successfully closed.",
+                    new_status,
+                ]
 
             if debug_print:
-                bp(f"[SUCCESS] Successfully closed branch '{BranchName}'. Updated bspssepy_brn DataFrame.",app=app)
+                bp(
+                    f"[SUCCESS] Successfully closed branch '{brn_name}'. Updated bspssepy_brn DataFrame.",
+                    app=app,
+                )
                 await asyncio.sleep(app.async_print_delay if app else 0)
             return ierr
 
-
         except KeyError as e:
-            bp(f"[ERROR] Missing key during BranchClose operation: {e}",app=app)
+            bp(
+                f"[ERROR] Missing key during BranchClose operation: {e}",
+                app=app,
+            )
             await asyncio.sleep(app.async_print_delay if app else 0)
             return None
         except Exception as e:
-            bp(f"[ERROR] Unexpected error during BranchClose: {e}",app=app)
+            bp(f"[ERROR] Unexpected error during BranchClose: {e}", app=app)
             await asyncio.sleep(app.async_print_delay if app else 0)
             return None
-        
+
     else:
-        bp(f"[ERROR] This branch is tied to a generator. Don't attempt to close it manually. It can be controlled through GenEnable function to model generator phases.",app=app)
+        bp(
+            f"[ERROR] This branch is tied to a generator. Don't attempt to close it manually. It can be controlled through GenEnable function to model generator phases.",
+            app=app,
+        )
         await asyncio.sleep(app.async_print_delay if app else 0)
         return -999

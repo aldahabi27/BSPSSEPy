@@ -4,8 +4,8 @@ import psse3601
 import psspy
 from .bspssepy_gen_funs import get_gen_info
 from .bspssepy_channels import (
-    FetchChannelValue,
-    FetchChannelValuesFromOUTFile,
+    fetch_channel_value,
+    fetch_ch_values_from_out_file,
 )
 from fun.bspssepy.app.app_helper_funs import bp
 import asyncio
@@ -13,7 +13,7 @@ from dyntools import CHNF
 
 
 async def fetch_freq_from_out_file(
-    OUTFile, ChannelIndex, debug_print=False, app=None
+    out_file, ch_index, debug_print=False, app=None
 ):
     """
     Fetches frequency data from the .out file for a specific channel.
@@ -30,14 +30,12 @@ async def fetch_freq_from_out_file(
         - This function extracts the entire time-series data for the given channel index.
         - It uses dyntools to read data from the .out file.
     """
-    return await FetchChannelValuesFromOUTFile(
-        OUTFile, ChannelIndex, debug_print, app=app
+    return await fetch_ch_values_from_out_file(
+        out_file, ch_index, debug_print, app=app
     )
 
 
-async def fetch_freq(
-    ChannelIndex, out_file=None, debug_print=False, app=None
-):
+async def fetch_freq(ch_index, out_file=None, debug_print=False, app=None):
     """
     Attempts to fetch frequency data using psspy.chnval. If it fails, falls back to dyntools.
 
@@ -53,9 +51,7 @@ async def fetch_freq(
         - This function first tries to fetch the data using psspy.chnval for real-time values.
         - If psspy.chnval fails, it retrieves the most recent value from the .out file.
     """
-    return await FetchChannelValue(
-        ChannelIndex, out_file, debug_print, app=app
-    )
+    return await fetch_channel_value(ch_index, out_file, debug_print, app=app)
 
 
 async def agc_control(
@@ -255,7 +251,7 @@ async def agc_control(
         if eff_agc_alpha > 0:
             curr_setpoint = await get_gen_info(
                 "PGEN",
-                GenName=gen_row["MCNAME"],
+                gen_name=gen_row["MCNAME"],
                 debug_print=debug_print,
                 app=app,
             )

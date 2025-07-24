@@ -4,7 +4,7 @@ import pandas as pd
 
 # pyright: reportMissingImports=false
 import psspy  # noqa: F401 pylint: disable=import-error
-from .bspssepy_channels import FetchChannelValue
+from .bspssepy_channels import fetch_channel_value
 
 
 async def bspssepy_meas_update(
@@ -65,7 +65,7 @@ async def bspssepy_meas_update(
         soc_ch = ibr_row["SOCChannel"]
 
         p_elec = (
-            await FetchChannelValue(
+            await fetch_channel_value(
                 p_ch,
                 debug_print=debug_print,
                 app=app,
@@ -74,7 +74,7 @@ async def bspssepy_meas_update(
         )
 
         q_elec = (
-            await FetchChannelValue(
+            await fetch_channel_value(
                 q_ch,
                 debug_print=debug_print,
                 app=app,
@@ -82,7 +82,7 @@ async def bspssepy_meas_update(
             * s_base
         )
         soc = (
-            await FetchChannelValue(
+            await fetch_channel_value(
                 soc_ch,
                 debug_print=debug_print,
                 app=app,
@@ -144,7 +144,7 @@ async def bspssepy_meas_update(
         freq_ch = gen_row["FChannel"]
 
         p_elec = (
-            await FetchChannelValue(
+            await fetch_channel_value(
                 pe_ch,
                 debug_print=debug_print,
                 app=app,
@@ -152,7 +152,7 @@ async def bspssepy_meas_update(
             * s_base
         )
         p_mech = (
-            await FetchChannelValue(
+            await fetch_channel_value(
                 pm_ch,
                 debug_print=debug_print,
                 app=app,
@@ -161,7 +161,7 @@ async def bspssepy_meas_update(
         )
 
         q_elec = (
-            await FetchChannelValue(
+            await fetch_channel_value(
                 qe_ch,
                 debug_print=debug_print,
                 app=app,
@@ -170,7 +170,7 @@ async def bspssepy_meas_update(
         )
 
         g_ref = (
-            await FetchChannelValue(
+            await fetch_channel_value(
                 gref_ch,
                 debug_print=debug_print,
                 app=app,
@@ -178,14 +178,14 @@ async def bspssepy_meas_update(
             * gen_base
         )
 
-        v_ref = await FetchChannelValue(
+        v_ref = await fetch_channel_value(
             vref_ch,
             debug_print=debug_print,
             app=app,
         )
 
         freq = (
-            await FetchChannelValue(
+            await fetch_channel_value(
                 freq_ch,
                 debug_print=debug_print,
                 app=app,

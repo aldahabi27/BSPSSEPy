@@ -82,11 +82,11 @@ class BSPSSEPyApp(App[None]):  # Inheriting from the Textual App class
         self.async_print_delay = 0.02
         self.dummy_run = False
         # pylint: disable=import-outside-toplevel
-        from fun.bspssepy.meta import VER_NUM, BUILD_NUM
+        from fun.bspssepy.meta import ver_num, build_num
 
         # Setting the title and subtitle of the application
         self.title = "BSPSSEPy Application"
-        self.sub_title = f"Version {VER_NUM} - Build {BUILD_NUM}"
+        self.sub_title = f"Version {ver_num} - Build {build_num}"
 
         # top bar elements
 
@@ -463,7 +463,7 @@ class BSPSSEPyApp(App[None]):  # Inheriting from the Textual App class
                 )
 
                 self.bspssepy_worker = self.run_worker(
-                    update_bspssepy_app_gui(app=self, ResetTables=True)
+                    update_bspssepy_app_gui(app=self, reset_tables=True)
                 )
 
             else:

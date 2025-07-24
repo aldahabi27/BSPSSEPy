@@ -75,11 +75,11 @@ identification_type_mapping = {
 # argument name within each function
 id_type_mapping = {
     "NAME": {
-        "GEN": "GenName",
-        "TRN": "TrnName",
-        "BRN": "BranchName",
-        "LOAD": "LOADNAME",
-        "BUS": "Bus",
+        "GEN": "gen_name",
+        "TRN": "trn_name",
+        "BRN": "brn_name",
+        "LOAD": "load_name",
+        "BUS": "bus",
         "IBR": "ibr_name",
     },
     # "ID": {
@@ -90,7 +90,7 @@ id_type_mapping = {
     # "BUS":"ID",
     # },
     "NUMBER": {
-        "BUS": "Bus",
+        "BUS": "bus",
     },
 }
 bspssepy_df_arg_mapping = {

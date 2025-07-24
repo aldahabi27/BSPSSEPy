@@ -313,26 +313,26 @@ async def get_app_dfs(
 
     from fun.bspssepy.sim.bspssepy_bus_funs import get_bus_info
 
-    BusDFtemp = await get_bus_info(
+    bus_df_temp = await get_bus_info(
         ["NUMBER", "NAME", "TYPE"], debug_print=debug_print, app=app
     )
-    BusStatus = await get_bus_info(
+    bus_status = await get_bus_info(
         ["BSPSSEPyStatus"],
         bspssepy_bus=bspssepy_bus,
         debug_print=debug_print,
         app=app,
     )
 
-    BusDF = pd.DataFrame(
+    bus_df = pd.DataFrame(
         {
-            "Bus #": BusDFtemp["NUMBER"],
-            "Bus Name": BusDFtemp["NAME"],
-            "Type": BusDFtemp["TYPE"],
-            "Status": BusStatus,
+            "Bus #": bus_df_temp["NUMBER"],
+            "Bus Name": bus_df_temp["NAME"],
+            "Type": bus_df_temp["TYPE"],
+            "Status": bus_status,
         }
     )
 
-    BrnDF = pd.DataFrame(
+    brn_df = pd.DataFrame(
         {
             "Branch Name": bspssepy_brn["BRANCHNAME"],
             "From Bus #": bspssepy_brn["FROMNUMBER"],
@@ -343,7 +343,7 @@ async def get_app_dfs(
         }
     )
 
-    TrnDF = pd.DataFrame(
+    trn_df = pd.DataFrame(
         {
             "Trans. Name": bspssepy_trn["XFRNAME"],
             "From Bus #": bspssepy_trn["FROMNUMBER"],
@@ -356,23 +356,25 @@ async def get_app_dfs(
 
     ibr_df = bspssepy_ibr
 
-    DataFrames = {
+    df = {
         "Progress": progress_df,
         "AGC": agc_df,
         "Generator": GenDF,
         "load": load_df,
-        "Bus": BusDF,
-        "Branch": BrnDF,
-        "Transformer": TrnDF,
+        "Bus": bus_df,
+        "Branch": brn_df,
+        "Transformer": trn_df,
         "IBR": ibr_df,
     }
 
-    return DataFrames
+    return df
 
 
-async def update_bspssepy_app_gui(app: App, ResetTables: bool | None = False):
+async def update_bspssepy_app_gui(
+    app: App, reset_tables: bool | None = False
+):
 
-    if ResetTables:
+    if reset_tables:
         app.progress_table.clear(columns=True)
         app.agc_table.clear(columns=True)
         app.gen_table.clear(columns=True)
@@ -392,10 +394,10 @@ async def update_bspssepy_app_gui(app: App, ResetTables: bool | None = False):
         app.ibr_table.loading = True
         await asyncio.sleep(0)
 
-    DataFrames = await get_app_dfs(app=app)
+    df = await get_app_dfs(app=app)
 
     # Apply only the changed values instead of resetting everything
-    UpdateGUITables(app, DataFrames)
+    update_gui_tables(app, df)
     # app.refresh()
     # await asyncio.sleep(0)
 
@@ -475,7 +477,7 @@ async def update_bspssepy_app_gui(app: App, ResetTables: bool | None = False):
 #     app.trn_table_col = ["Trans. Name", "Bus #", "Bus Name", "Status"]
 
 
-def GetDataFramesFromGUITables(app: App) -> dict:
+def get_df_from_gui_tables(app: App) -> dict:
     """
     Extracts current data from the GUI tables and returns them as pandas DataFrames.
 
@@ -487,7 +489,7 @@ def GetDataFramesFromGUITables(app: App) -> dict:
     """
     debug_print = app.debug_checkbox.value
 
-    Tables = {
+    tables = {
         "Progress": app.progress_table,
         "AGC": app.agc_table,
         "Generator": app.gen_table,
@@ -498,31 +500,29 @@ def GetDataFramesFromGUITables(app: App) -> dict:
         "IBR": app.ibr_table,
     }
 
-    GUIDataFrames = {}
+    gui_df = {}
 
-    for TableName, Table in Tables.items():
-        if Table:
-            ColumnNames = [col.label.plain for col in Table.columns.values()]
+    for table_name, table in tables.items():
+        if table:
+            col_names = [col.label.plain for col in table.columns.values()]
 
             # ✅ Extract row data using `get_row(row_key)`
-            RowData = []
-            for row_key in Table.rows.keys():  # Iterate over row keys
-                row_cells = Table.get_row(
+            row_data = []
+            for row_key in table.rows.keys():  # Iterate over row keys
+                row_cells = table.get_row(
                     row_key
                 )  # Fetch the row's cell data
-                RowData.append([cell for cell in row_cells])  # Extract text
+                row_data.append([cell for cell in row_cells])  # Extract text
 
             # ✅ Handle case where table is empty
-            if (not ColumnNames or not RowData) and debug_print:
-                bp(f"[DEBUG] Table '{TableName}' is empty.", app=app)
+            if (not col_names or not row_data) and debug_print:
+                bp(f"[DEBUG] Table '{table_name}' is empty.", app=app)
 
-            GUIDataFrames[TableName] = pd.DataFrame(
-                RowData, columns=ColumnNames
-            )
-    return GUIDataFrames
+            gui_df[table_name] = pd.DataFrame(row_data, columns=col_names)
+    return gui_df
 
 
-def CompareDataFrames(df1: pd.DataFrame, df2: pd.DataFrame) -> dict:
+def compare_df(df1: pd.DataFrame, df2: pd.DataFrame) -> dict:
     """
     Compares two DataFrames and returns a dictionary of changes.
 
@@ -556,7 +556,7 @@ def CompareDataFrames(df1: pd.DataFrame, df2: pd.DataFrame) -> dict:
     return {"changes": changes, "reset_required": False}
 
 
-def UpdateGUITables(app: App, DataFrames: dict):
+def update_gui_tables(app: App, df: dict):
     """
     Updates GUI tables by comparing current GUI data with new DataFrames and applying only changes.
     If a table is initially empty, has different dimensions, or different columns, it gets fully reset.
@@ -568,9 +568,9 @@ def UpdateGUITables(app: App, DataFrames: dict):
 
     debug_print = app.debug_checkbox.value
 
-    CurrentGUIData = GetDataFramesFromGUITables(app)
+    current_gui_df = get_df_from_gui_tables(app)
 
-    Tables = {
+    tables = {
         "Progress": app.progress_table,
         "AGC": app.agc_table,
         "Generator": app.gen_table,
@@ -581,18 +581,18 @@ def UpdateGUITables(app: App, DataFrames: dict):
         "IBR": app.ibr_table,
     }
 
-    for TableName, NewDF in DataFrames.items():
-        if TableName in CurrentGUIData:
+    for table_name, new_df in df.items():
+        if table_name in current_gui_df:
 
-            CurrentDF = CurrentGUIData[TableName]
-            ComparisonResult = CompareDataFrames(CurrentDF, NewDF)
+            current_df = current_gui_df[table_name]
+            comparison_result = compare_df(current_df, new_df)
 
-            Table: DataTable = Tables[TableName]
+            table: DataTable = tables[table_name]
 
             # Get row and column mappings from keys
-            RowKeys = list(Table.rows.keys())  # Extract row keys
-            ColKeys = {
-                col.label.plain: col.key for col in Table.columns.values()
+            row_keys = list(table.rows.keys())  # Extract row keys
+            col_keys = {
+                col.label.plain: col.key for col in table.columns.values()
             }  # Map column names to keys
 
             # if TableName == "Transformer":
@@ -604,21 +604,21 @@ def UpdateGUITables(app: App, DataFrames: dict):
             #             f"ColKeys: {ColKeys}\n"
             #             )
 
-            if ComparisonResult["reset_required"]:
+            if comparison_result["reset_required"]:
                 # Reset table if needed
                 if debug_print:
                     bp(
-                        f"[INFO] Resetting table {TableName} due to column or shape mismatch.",
+                        f"[INFO] Resetting table {table_name} due to column or shape mismatch.",
                         app=app,
                     )
-                Table.clear(columns=True)
+                table.clear(columns=True)
 
                 # Add new columns
-                for col in NewDF.columns:
-                    Table.add_column(col, width=None)
+                for col in new_df.columns:
+                    table.add_column(col, width=None)
                 # Add new rows
-                for _, row in NewDF.iterrows():
-                    Table.add_row(
+                for _, row in new_df.iterrows():
+                    table.add_row(
                         *[Text(str(cell), justify="center") for cell in row]
                     )
 
@@ -630,20 +630,20 @@ def UpdateGUITables(app: App, DataFrames: dict):
                     col_name,
                     old_value,
                     new_value,
-                ) in ComparisonResult["changes"]:
-                    if row_idx < len(RowKeys) and col_name in ColKeys:
-                        row_key = RowKeys[row_idx]  # Get actual RowKey
-                        col_key = ColKeys[col_name]  # Get actual ColumnKey
+                ) in comparison_result["changes"]:
+                    if row_idx < len(row_keys) and col_name in col_keys:
+                        row_key = row_keys[row_idx]  # Get actual RowKey
+                        col_key = col_keys[col_name]  # Get actual ColumnKey
 
                         # Measure the new content width
-                        NewText = Text(str(new_value), justify="center")
-                        NewContentWidth = len(
+                        new_text = Text(str(new_value), justify="center")
+                        new_content_width = len(
                             str(new_value)
                         )  # Estimate content width
-                        CurrentColumn = Table.columns[col_key]
+                        current_col = table.columns[col_key]
 
                         # Check if new content exceeds column width
-                        if NewContentWidth > CurrentColumn.width:
+                        if new_content_width > current_col.width:
                             # Rebuild the entire table with adjusted column widths
                             if debug_print:
                                 bp(
@@ -652,29 +652,29 @@ def UpdateGUITables(app: App, DataFrames: dict):
                                 )
 
                             # Clear & re-add table with resized columns
-                            Columns = list(NewDF.columns)
-                            Table.clear(columns=True)
+                            columns = list(new_df.columns)
+                            table.clear(columns=True)
 
                             # Rebuild columns with increased width
-                            for col in Columns:
+                            for col in columns:
                                 # Find max width between content and column name
-                                MaxContentWidth = max(
-                                    len(str(val)) for val in NewDF[col]
+                                max_content_width = max(
+                                    len(str(val)) for val in new_df[col]
                                 )  # Find max content width
-                                ColumnNameWidth = len(
+                                col_name_width = len(
                                     str(col)
                                 )  # Get column name width
-                                FinalWidth = (
-                                    max(MaxContentWidth, ColumnNameWidth) + 0
+                                final_width = (
+                                    max(max_content_width, col_name_width) + 0
                                 )  # Ensure padding
 
-                                Table.add_column(
-                                    col, width=FinalWidth
+                                table.add_column(
+                                    col, width=final_width
                                 )  # Add column with adjusted width
 
                             # Re-add rows with updated content
-                            for _, row in NewDF.iterrows():
-                                Table.add_row(
+                            for _, row in new_df.iterrows():
+                                table.add_row(
                                     *[
                                         Text(str(cell), justify="center")
                                         for cell in row
@@ -702,23 +702,27 @@ def UpdateGUITables(app: App, DataFrames: dict):
                         # Table.scroll_x = CurrentScrollX
                         # Table.scroll_y = CurrentScrollY
 
-                        CurrentScrollX = Table.scroll_x
-                        CurrentScrollY = Table.scroll_y
+                        current_scroll_x = table.scroll_x
+                        current_scroll_y = table.scroll_y
 
                         # Update the cell
-                        Table.update_cell(row_key, col_key, NewText)
+                        table.update_cell(row_key, col_key, new_text)
 
                         # bp(f"moving cursor to row: {row_idx} on Table: {TableName}")
 
                         # Use call_later to move the cursor after the update
-                        app.call_later(lambda: Table.move_cursor(row=row_idx))
+                        app.call_later(lambda: table.move_cursor(row=row_idx))
 
                         # Restore scroll position after the cursor move
                         app.call_later(
-                            lambda: setattr(Table, "scroll_x", CurrentScrollX)
+                            lambda: setattr(
+                                table, "scroll_x", current_scroll_x
+                            )
                         )
                         app.call_later(
-                            lambda: setattr(Table, "scroll_y", CurrentScrollY)
+                            lambda: setattr(
+                                table, "scroll_y", current_scroll_y
+                            )
                         )
 
             # Force table refresh
@@ -729,9 +733,9 @@ def UpdateGUITables(app: App, DataFrames: dict):
     # app.refresh()
 
 
-async def BSPSSEPyAppResetTables(
+async def bspssepy_app_reset_tables(
     app: App,  # The Textual app instance needed for UI updates
-    UseconfigOnly: bool = False,  # Flag to determine if only configuration-based columns should be used
+    use_config_only: bool = False,  # Flag to determine if only configuration-based columns should be used
 ) -> None:
     """
     Initializes and resets all BSPSSEPyApp tables.
@@ -757,7 +761,7 @@ async def BSPSSEPyAppResetTables(
         - Debug information is logged via `bp` when `app.debug_checkbox.value` is `True`.
     """
 
-    from fun.bspssepy.sim.bspssepy_channels import FetchChannelValue
+    from fun.bspssepy.sim.bspssepy_channels import fetch_channel_value
 
     if app is None:
         # bp("[ERROR] App instance is missing.", app=app)
@@ -781,17 +785,17 @@ async def BSPSSEPyAppResetTables(
         bp("[DEBUG] Resetting all BSPSSEPyApp tables...", app=app)
 
     # Check if the simulation has started (i.e., if `app.bspssepy` exists)
-    simulationStarted = hasattr(app, "bspssepy") and app.bspssepy is not None
+    sim_started = hasattr(app, "bspssepy") and app.bspssepy is not None
 
     # If the simulation has not started, use empty DataFrames
-    if not simulationStarted:
+    if not sim_started:
         bp(
             "[INFO] No active simulation detected. Initializing tables with empty DataFrames.",
             app=app,
         )
 
     # Retrieve or initialize DataFrames
-    if simulationStarted:
+    if sim_started:
         # Define the progress_df DataFrame with mapped columns
         progress_df = pd.DataFrame(
             {
@@ -836,7 +840,7 @@ async def BSPSSEPyAppResetTables(
         gref_values = [round(val, round_digit) for val in gref_values]
         vref_values = [round(val, round_digit) for val in vref_values]
 
-        GenDF = pd.DataFrame(
+        gen_df = pd.DataFrame(
             {
                 "Gen Name": bspssepy_gen["MCNAME"],
                 "Bus #": bspssepy_gen["NUMBER"],
@@ -892,26 +896,26 @@ async def BSPSSEPyAppResetTables(
 
         from fun.bspssepy.sim.bspssepy_bus_funs import get_bus_info
 
-        BusDFtemp = await get_bus_info(
+        bus_df_temp = await get_bus_info(
             ["NUMBER", "NAME", "TYPE"], debug_print=debug_print, app=app
         )
-        BusStatus = await get_bus_info(
+        bus_status = await get_bus_info(
             ["BSPSSEPyStatus"],
             bspssepy_bus=bspssepy_bus,
             debug_print=debug_print,
             app=app,
         )
 
-        BusDF = pd.DataFrame(
+        bus_df = pd.DataFrame(
             {
-                "Bus #": BusDFtemp["NUMBER"],
-                "Bus Name": BusDFtemp["NAME"],
-                "Type": BusDFtemp["TYPE"],
-                "Status": BusStatus,
+                "Bus #": bus_df_temp["NUMBER"],
+                "Bus Name": bus_df_temp["NAME"],
+                "Type": bus_df_temp["TYPE"],
+                "Status": bus_status,
             }
         )
 
-        BrnDF = pd.DataFrame(
+        brn_df = pd.DataFrame(
             {
                 "Branch Name": bspssepy_brn["BRANCHNAME"],
                 "From Bus #": bspssepy_brn["FROMNUMBER"],
@@ -922,7 +926,7 @@ async def BSPSSEPyAppResetTables(
             }
         )
 
-        TrnDF = pd.DataFrame(
+        trn_df = pd.DataFrame(
             {
                 "Trans. Name": bspssepy_trn["XFRNAME"],
                 "From Bus #": bspssepy_trn["FROMNUMBER"],
@@ -939,26 +943,26 @@ async def BSPSSEPyAppResetTables(
     else:
         progress_df = pd.DataFrame()
         agc_df = pd.DataFrame()
-        GenDF = pd.DataFrame()
+        gen_df = pd.DataFrame()
         load_df = pd.DataFrame()
-        BusDF = pd.DataFrame()
-        BrnDF = pd.DataFrame()
-        TrnDF = pd.DataFrame()
+        bus_df = pd.DataFrame()
+        brn_df = pd.DataFrame()
+        trn_df = pd.DataFrame()
         ibr_df = pd.DataFrame()
 
-    DataFrames = {
+    df = {
         "Progress": progress_df,
         "AGC": agc_df,
-        "Generator": GenDF,
+        "Generator": gen_df,
         "load": load_df,
-        "Bus": BusDF,
-        "Branch": BrnDF,
-        "Transformer": TrnDF,
+        "Bus": bus_df,
+        "Branch": brn_df,
+        "Transformer": trn_df,
         "IBR": ibr_df,
     }
 
     # Dictionary to map table names, column structures, and app table objects
-    Tables = {
+    tables = {
         "Progress": {
             "columns": [
                 "Progress",
@@ -1050,15 +1054,15 @@ async def BSPSSEPyAppResetTables(
     }
 
     # Loop through all tables and reset them dynamically
-    for TableName, TableInfo in Tables.items():
-        bp(f"[INFO] Resetting {TableName} table...", app=app)
+    for table_name, table_info in tables.items():
+        bp(f"[INFO] Resetting {table_name} table...", app=app)
 
-        BSPSSEPyAppResetTable(
-            BSPSSEPyDataFrame=DataFrames[TableName],
-            TableCol=TableInfo["columns"],
+        bspssepy_app_reset_table(
+            bspssepy_df=df[table_name],
+            table_col=table_info["columns"],
             app=app,
-            appTable=TableInfo["AppTable"],
-            UseconfigOnly=UseconfigOnly,
+            appTable=table_info["AppTable"],
+            use_config_only=use_config_only,
         )
         # await asyncio.sleep(app.async_print_delay if app else 0)
 
@@ -1071,14 +1075,14 @@ async def BSPSSEPyAppResetTables(
         # await asyncio.sleep(app.async_print_delay if app else 0)
 
 
-def BSPSSEPyAppResetTable(
-    BSPSSEPyDataFrame: pd.DataFrame,  # DataFrame containing the source data for the table
-    TableCol: list[
+def bspssepy_app_reset_table(
+    bspssepy_df: pd.DataFrame,  # DataFrame containing the source data for the table
+    table_col: list[
         str
     ],  # List of column names to be displayed in the table (can include computed columns)
     app: App,  # The Textual app instance (needed for UI updates)
     appTable: DataTable,  # The specific table widget in the GUI to be updated (e.g., app.MyTable)
-    UseconfigOnly: (
+    use_config_only: (
         bool | None
     ) = False,  # Flag to determine if only configuration-based columns should be used
 ) -> None:
@@ -1107,7 +1111,7 @@ def BSPSSEPyAppResetTable(
         bp("[ERROR] App instance or table reference is missing.", app=app)
         return
 
-    if BSPSSEPyDataFrame is None or TableCol is None:
+    if bspssepy_df is None or table_col is None:
         bp("[ERROR] DataFrame or TableCol list is missing.", app=app)
         return
 
@@ -1117,39 +1121,39 @@ def BSPSSEPyAppResetTable(
     # Debugging information
     if app.debug_checkbox.value:
         bp(
-            f"[DEBUG] Resetting table {appTable.id} with columns: {TableCol}",
+            f"[DEBUG] Resetting table {appTable.id} with columns: {table_col}",
             app=app,
         )
 
     # Add columns to the table
-    for Column in TableCol:
+    for col in table_col:
         appTable.add_column(
-            Column
+            col
         )  # No need to set justify here, we do it per cell
     # Debugging information
     if app.debug_checkbox.value:
         bp(
-            f"[DEBUG] Added columns: {TableCol} (content will be centered)",
+            f"[DEBUG] Added columns: {table_col} (content will be centered)",
             app=app,
         )
 
     # Populate the table with rows from the DataFrame
-    for _, Row in BSPSSEPyDataFrame.iterrows():
-        RowData = []
+    for _, row in bspssepy_df.iterrows():
+        row_data = []
 
-        for Column in TableCol:
-            if Column in BSPSSEPyDataFrame.columns:
-                cell_value = Row[Column]  # Get the original value
+        for col in table_col:
+            if col in bspssepy_df.columns:
+                cell_value = row[col]  # Get the original value
             else:
                 cell_value = (
                     ""  # Default empty value for unknown computed columns
                 )
 
             # Convert value to `Text` object with center alignment
-            RowData.append(Text(str(cell_value), justify="center"))
+            row_data.append(Text(str(cell_value), justify="center"))
 
         # Add the row to the table
-        appTable.add_row(*RowData)
+        appTable.add_row(*row_data)
     # Force a UI refresh to reflect changes
     app.call_later(appTable.refresh)
     # app.refresh()
@@ -1183,25 +1187,25 @@ async def fetch_gen_ch_val(bspssepy_gen, debug_print, app):
     """
 
     async def fetch_row_channels(row):
-        from fun.bspssepy.sim.bspssepy_channels import FetchChannelValue
+        from fun.bspssepy.sim.bspssepy_channels import fetch_channel_value
 
         """
         Fetches channel values for a single generator row asynchronously.
         """
         return (
-            await FetchChannelValue(
+            await fetch_channel_value(
                 int(row["PELECChannel"]), debug_print=debug_print, app=app
             ),
-            await FetchChannelValue(
+            await fetch_channel_value(
                 int(row["PMECHChannel"]), debug_print=debug_print, app=app
             ),
-            await FetchChannelValue(
+            await fetch_channel_value(
                 int(row["QELECChannel"]), debug_print=debug_print, app=app
             ),
-            await FetchChannelValue(
+            await fetch_channel_value(
                 int(row["GREFChannel"]), debug_print=debug_print, app=app
             ),
-            await FetchChannelValue(
+            await fetch_channel_value(
                 int(row["VREFChannel"]), debug_print=debug_print, app=app
             ),
         )
@@ -1225,8 +1229,8 @@ async def fetch_gen_ch_val(bspssepy_gen, debug_print, app):
     )
 
 
-def ProgressBarUpdate(
-    ProgressBar, CurrentTime, TotalTime, App=None, label=None
+def progress_bar_update(
+    progress_bar, current_time, total_time, App=None, label=None
 ):
     """
     Updates the progress bar based on the current simulation time.
@@ -1240,29 +1244,29 @@ def ProgressBarUpdate(
     """
 
     # Ensure TotalTime is greater than 0 to avoid division errors
-    if TotalTime <= 0:
+    if total_time <= 0:
         return
 
     # Calculate progress percentage
-    ProgressPercentage = min(
-        (CurrentTime / TotalTime) * 100, 100
+    progress_percentage = min(
+        (current_time / total_time) * 100, 100
     )  # Cap at 100%
 
-    ProgressBar.update(
-        total=100, progress=ProgressPercentage
+    progress_bar.update(
+        total=100, progress=progress_percentage
     )  # Update the progress bar
 
     # Format the time display with hours, minutes, and seconds
-    hours = CurrentTime // 3600
-    minutes = (CurrentTime % 3600) // 60
-    seconds = CurrentTime % 60
+    hours = current_time // 3600
+    minutes = (current_time % 3600) // 60
+    seconds = current_time % 60
 
     if hours > 0:
-        TimeDisplay = f"t = {int(hours)}h {int(minutes)}m {int(seconds)}s"
+        time_display = f"t = {int(hours)}h {int(minutes)}m {int(seconds)}s"
     elif minutes > 0:
-        TimeDisplay = f"t = {int(minutes)}m {int(seconds)}s"
+        time_display = f"t = {int(minutes)}m {int(seconds)}s"
     else:
-        TimeDisplay = f"t = {int(seconds)}s"
+        time_display = f"t = {int(seconds)}s"
 
     # Format the time display
     # TimeDisplay = f"t = {int(CurrentTime)}s" if CurrentTime < 60 else f"t = {int(CurrentTime//60)}m {int(CurrentTime%60)}s"
@@ -1273,11 +1277,11 @@ def ProgressBarUpdate(
 
     if label:
         App.call_later(
-            label.update, TimeDisplay
+            label.update, time_display
         )  # ✅ Properly schedules label update
 
 
-def add_sav_files_to_tree(ParentNode, FolderPath):
+def add_sav_files_to_tree(parent_node, folder_path):
     """
     Recursively scans the given folder and adds .sav files as leaves
     and subfolders as expandable nodes in the tree.
@@ -1288,15 +1292,15 @@ def add_sav_files_to_tree(ParentNode, FolderPath):
     """
     try:
         # Get a sorted list of all items (files & directories) in the folder
-        for Entry in sorted(
-            os.scandir(FolderPath), key=lambda E: E.name.lower()
+        for entry in sorted(
+            os.scandir(folder_path), key=lambda E: E.name.lower()
         ):
-            if Entry.is_dir():
+            if entry.is_dir():
                 # If it's a folder, add it as a node and recurse into it
-                FolderNode = ParentNode.add(Entry.name, expand=False)
-                add_sav_files_to_tree(FolderNode, Entry.path)
-            elif Entry.is_file() and Entry.name.endswith(".sav"):
+                folder_node = parent_node.add(entry.name, expand=False)
+                add_sav_files_to_tree(folder_node, entry.path)
+            elif entry.is_file() and entry.name.endswith(".sav"):
                 # If it's a .sav file, add it as a leaf
-                ParentNode.add_leaf(Entry.name)
+                parent_node.add_leaf(entry.name)
     except PermissionError:
         pass  # If permission is denied, just skip that folder

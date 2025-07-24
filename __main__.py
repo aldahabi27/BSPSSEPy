@@ -42,16 +42,16 @@ REQUIRED_LIBRARIES = [
 
 
 def ensure_dependencies():
-    """ Check if required libraries are installed, and install them if not. """
+    """Check if required libraries are installed, and install them if not."""
     for lib in REQUIRED_LIBRARIES:
         lib_name, _, lib_version = lib.partition("==")
         try:
             # Try to import the library
             globals()[lib_name] = __import__(lib_name)
             if lib_version:
-                installed_version = (
-                    pkg_resources.get_distribution(lib_name).version
-                )
+                installed_version = pkg_resources.get_distribution(
+                    lib_name
+                ).version
                 if installed_version != lib_version:
                     raise ImportError(
                         f"{lib_name} version {lib_version} is required, "
@@ -70,12 +70,12 @@ def ensure_dependencies():
                 # Install the missing or correct version of the library
                 subprocess.check_call(
                     [sys.executable, "-m", "pip", "install", lib]
-                    )
+                )
                 # Try importing again after installation
                 globals()[lib_name] = __import__(lib_name)
-                installed_version = (
-                    pkg_resources.get_distribution(lib_name).version
-                )
+                installed_version = pkg_resources.get_distribution(
+                    lib_name
+                ).version
                 if lib_version and installed_version != lib_version:
                     raise ImportError(
                         f"{lib_name} version {lib_version} is required, "
@@ -84,7 +84,9 @@ def ensure_dependencies():
                 print(f"{lib} installed successfully ✔")
             except Exception as e:
                 print(f"Failed to install {lib}. Error: {e}")
-                print("Don't run Cell 1. Missing library cannot be installed.")
+                print(
+                    "Don't run Cell 1. Missing library cannot be installed."
+                )
                 # Stop execution
                 raise SystemExit(
                     f"Aborting execution due to missing library: {lib}"
@@ -92,14 +94,15 @@ def ensure_dependencies():
 
 
 def display_banner():
-    """ Display the welcome banner for the application. """
+    """Display the welcome banner for the application."""
     # pylint: disable=import-outside-toplevel
-    from fun.bspssepy.meta import VER_NUM, current_timestamp
+    from fun.bspssepy.meta import ver_num, current_timestamp
+
     current_date = current_timestamp()
     print("===========================================================")
     print("              Welcome to BSPSSEPy Application              ")
     print("===========================================================")
-    print(f"Version: {VER_NUM}")
+    print(f"Version: {ver_num}")
     print("Last Updated: 20 May 2025")
     print(f"Current Date and Time: {current_date}")
     print("-----------------------------------------------------------")
@@ -111,7 +114,7 @@ def display_banner():
 
 
 def main():
-    """ Main function to run the BSPSSEPy application. """
+    """Main function to run the BSPSSEPy application."""
     display_banner()
     print("Verifying that needed libraries are installed.")
     ensure_dependencies()
@@ -119,6 +122,7 @@ def main():
 
     # pylint: disable=import-outside-toplevel
     from fun.bspssepy.app.app import launch_app
+
     launch_app()
 
 

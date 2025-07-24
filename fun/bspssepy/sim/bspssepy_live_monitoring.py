@@ -66,7 +66,7 @@ from rich.align import Align
 import time
 
 
-def CreateHeaderSection(SimTime, ProgressValue):
+def create_header_section(SimTime, ProgressValue):
     """
     Creates the top section of the dashboard, including:
     - Left (2/3 width): Program info (Name, Case Name, Version, Date/Time)
@@ -102,25 +102,25 @@ def CreateHeaderSection(SimTime, ProgressValue):
     return LeftPanel, RightPanel
 
 
-def create_main_dashboard(SimTime, ProgressValue):
+def create_main_dashboard(sim_time, progress_val):
     """
     Assembles the entire dashboard layout inside a bordered box.
     - Uses `rich.layout.Layout` for precise control.
     - Contains a header and three tables.
     """
-    LayoutMain = Layout()
+    layout_main = Layout()
 
     # Top Section: Header with 2/3 and 1/3 Split
-    LeftHeader, RightHeader = CreateHeaderSection(SimTime, ProgressValue)
-    HeaderLayout = Layout(name="Header", size=5)
-    HeaderLayout.split_row(
-        Layout(LeftHeader, ratio=2),  # 2/3 width
-        Layout(RightHeader, ratio=1),  # 1/3 width
+    left_header, right_header = create_header_section(sim_time, progress_val)
+    header_layout = Layout(name="Header", size=5)
+    header_layout.split_row(
+        Layout(left_header, ratio=2),  # 2/3 width
+        Layout(right_header, ratio=1),  # 1/3 width
     )
 
     # Placeholder for Tables (will replace later)
-    TablesLayout = Layout(name="Tables")
-    TablesLayout.split_row(
+    tables_layout = Layout(name="Tables")
+    tables_layout.split_row(
         Layout(
             Panel(
                 "Control Sequence Table",
@@ -148,35 +148,35 @@ def create_main_dashboard(SimTime, ProgressValue):
     )
 
     # Combine Everything into a Bordered Box
-    LayoutMain.split_column(HeaderLayout, TablesLayout)
+    layout_main.split_column(header_layout, tables_layout)
 
     return Panel(
-        LayoutMain,
+        layout_main,
         title="[bold magenta]BSPSSEPy Live Dashboard[/bold magenta]",
         border_style="bold magenta",
     )
 
 
 # Initialize Console
-ConsoleMain = Console()
+console_main = Console()
 
 try:
     for i in range(10):
         time.sleep(1)
-        SimTime = i * 5
-        ProgressPercent = (i / 10) * 100
+        sim_time = i * 5
+        progress_percent = (i / 10) * 100
 
-        ConsoleMain.clear()
+        console_main.clear()
 
         # Debug Step: Capture the output
-        DashboardPanel = create_main_dashboard(SimTime, ProgressPercent)
+        dashboard_panel = create_main_dashboard(sim_time, progress_percent)
 
         # print("=== DEBUG: Dashboard Output ===")
         # print(DashboardPanel)  # Shows raw panel object (before rendering)
         # print("==============================")
 
         # Now try printing the panel (where the error happens)
-        ConsoleMain.print(DashboardPanel)
+        console_main.print(dashboard_panel)
 
 except Exception as e:
     print("\n[ERROR] Issue in Rich Markup Formatting!")
@@ -184,7 +184,7 @@ except Exception as e:
     print(f"Error Message: {e}")
 
 
-def BSPSSEPyLiveMonitor(iterations=None):
+def bspssepy_live_monitor(iterations=None):
     """
     Live Monitoring Console for BSPSSEPy: Displays real-time Generator, Bus, and load status in a table format.
 

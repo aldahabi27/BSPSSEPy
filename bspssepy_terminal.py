@@ -87,7 +87,7 @@ try:
         myBSPSSEPy.config.debug_print
     )  # Set debug print based on configuration
 
-    asyncio.run(myBSPSSEPy.sim.SetBlackStart())
+    asyncio.run(myBSPSSEPy.sim.set_black_start())
     myBSPSSEPy.sim.print_all_t_flag = True
     asyncio.run(myBSPSSEPy.sim.Run())
     myBSPSSEPy.plot(debug_print=DebugPrint)

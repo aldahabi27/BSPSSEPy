@@ -30,7 +30,7 @@ from fun.bspssepy.bspssepy_dict import *
 from fun.bspssepy.bspssepy_funs_dict import *
 from .bspssepy_agc import *
 from .bspssepy_channels import get_avg_freq
-from fun.bspssepy.app.app_helper_funs import bp, ProgressBarUpdate
+from fun.bspssepy.app.app_helper_funs import bp, progress_bar_update
 import asyncio
 
 
@@ -60,7 +60,7 @@ class sim:
     async def sim_init(
         self,
         config: config | None = None,
-        PSSE=None,
+        psse=None,
         debug_print=None,
         app=None,
     ):
@@ -89,7 +89,7 @@ class sim:
         # ==========================
         #  Assign Configuration and Debug Mode
         # ==========================
-        self.PSSE = PSSE
+        self.psse = psse
         self.config = config
 
         # Flag used for debugging purposes
@@ -322,7 +322,7 @@ class sim:
         # ==========================
         # Get data from PSSE for basic branch information
         bspssepy_brn = await get_brn_info(
-            BrnKeys=[
+            brn_keys=[
                 "ID",
                 "BRANCHNAME",
                 "FROMNUMBER",
@@ -368,7 +368,7 @@ class sim:
         # ==========================
         # Retrieve necessary bus information from PSSE
         bspssepy_bus = await get_bus_info(
-            BusKeys=["NUMBER", "NAME", "TYPE"],
+            bus_keys=["NUMBER", "NAME", "TYPE"],
             debug_print=self.debug_print,
             app=app,
         )
@@ -454,8 +454,8 @@ class sim:
         #  Retrieve and Initialize Transformer Information
         # ==========================
         # Get data from PSSE for basic Two-Winding Transformer Information
-        bspssepy_trn = await GetTrnInfo(
-            TrnKeys=[
+        bspssepy_trn = await get_trn_info(
+            trn_keys=[
                 "ID",
                 "XFRNAME",
                 "FROMNUMBER",
@@ -544,7 +544,7 @@ class sim:
         #  Retrieve and Initialize Generator Information
         # ==========================
         bspssepy_gen = await get_gen_info(
-            GenKeys=[
+            gen_keys=[
                 "ID",
                 "MCNAME",
                 "NAME",
@@ -575,19 +575,17 @@ class sim:
         bspssepy_gen = bspssepy_gen[bspssepy_gen["WMOD"] == 0]
 
         # Extend generator data with additional modeling details
-        self.bspssepy_gen, self.bspssepy_load = (
-            await ExtendBSPSSEPyGenDataFrame(
-                bspssepy_gen=bspssepy_gen,
-                bspssepy_bus=self.bspssepy_bus,
-                ConfigTable=self.config.gen_config,
-                SimConfig=self.config,
-                bspssepy_load=self.bspssepy_load,
-                bspssepy_trn=self.bspssepy_trn,
-                bspssepy_brn=self.bspssepy_brn,
-                config=self.config,
-                debug_print=self.debug_print,
-                app=app,
-            )
+        self.bspssepy_gen, self.bspssepy_load = await extend_gen_data(
+            bspssepy_gen=bspssepy_gen,
+            bspssepy_bus=self.bspssepy_bus,
+            config_table=self.config.gen_config,
+            sim_config=self.config,
+            bspssepy_load=self.bspssepy_load,
+            bspssepy_trn=self.bspssepy_trn,
+            bspssepy_brn=self.bspssepy_brn,
+            config=self.config,
+            debug_print=self.debug_print,
+            app=app,
         )
 
         if self.debug_print:
@@ -708,7 +706,7 @@ class sim:
         )
         await asyncio.sleep(app.async_print_delay if app else 0)
 
-    async def SetBlackStart(self, app=None):
+    async def set_black_start(self, app=None):
         """
         Configures the system for a black-start scenario by disabling all
         loads, tripping all branches and two-winding transformers, and
@@ -755,24 +753,24 @@ class sim:
         # ==========================
         bp("Tripping all branches...", app=app)
         await asyncio.sleep(app.async_print_delay if app else 0)
-        for BranchRowIndex, BranchrowDF in self.bspssepy_brn.iterrows():
-            BranchName = BranchrowDF["BRANCHNAME"]
+        for brn_row_index, brn_row in self.bspssepy_brn.iterrows():
+            brn_name = brn_row["BRANCHNAME"]
             if self.debug_print:
                 bp(
-                    f"[DEBUG] Attempting to trip branch: {BranchName}",
+                    f"[DEBUG] Attempting to trip branch: {brn_name}",
                     app=app,
                 )
                 await asyncio.sleep(app.async_print_delay if app else 0)
-            await BrnTrip(
+            await brn_trip(
                 t=0,
                 bspssepy_brn=self.bspssepy_brn,
-                BranchName=BranchName,
+                brn_name=brn_name,
                 debug_print=self.debug_print,
                 app=app,
             )
             if self.debug_print:
                 bp(
-                    f"[DEBUG] Successfully tripped branch: {BranchName}",
+                    f"[DEBUG] Successfully tripped branch: {brn_name}",
                     app=app,
                 )
                 await asyncio.sleep(app.async_print_delay if app else 0)
@@ -782,24 +780,24 @@ class sim:
         # ==========================
         bp("Tripping all two-winding transformers...", app=app)
         await asyncio.sleep(app.async_print_delay if app else 0)
-        for TrnRowIndex, TrnrowDF in self.bspssepy_trn.iterrows():
-            TrnName = TrnrowDF["XFRNAME"]
+        for trn_row_index, trn_row in self.bspssepy_trn.iterrows():
+            trn_name = trn_row["XFRNAME"]
             if self.debug_print:
                 bp(
-                    f"[DEBUG] Attempting to trip two-winding transformer: {TrnName}",
+                    f"[DEBUG] Attempting to trip two-winding transformer: {trn_name}",
                     app=app,
                 )
                 await asyncio.sleep(app.async_print_delay if app else 0)
-            await TrnTrip(
+            await trn_trip(
                 t=0,
                 bspssepy_trn=self.bspssepy_trn,
-                TrnName=TrnName,
+                trn_name=trn_name,
                 debug_print=self.debug_print,
                 app=app,
             )
             if self.debug_print:
                 bp(
-                    f"[DEBUG] Successfully tripped two-winding transformer: {TrnName}",
+                    f"[DEBUG] Successfully tripped two-winding transformer: {trn_name}",
                     app=app,
                 )
                 await asyncio.sleep(app.async_print_delay if app else 0)
@@ -809,20 +807,26 @@ class sim:
         # ==========================
         bp("Disabling all loads...", app=app)
         await asyncio.sleep(app.async_print_delay if app else 0)
-        for LoadRowIndex, LoadrowDF in self.bspssepy_load.iterrows():
-            LOADNAME = LoadrowDF["LOADNAME"]
+        for load_row_index, load_row in self.bspssepy_load.iterrows():
+            load_name = load_row["LOADNAME"]
             if self.debug_print:
-                bp(f"[DEBUG] Attempting to disable load: {LOADNAME}", app=app)
+                bp(
+                    f"[DEBUG] Attempting to disable load: {load_name}",
+                    app=app,
+                )
                 await asyncio.sleep(app.async_print_delay if app else 0)
-            await LoadDisable(
+            await load_disable(
                 t=0,
                 bspssepy_load=self.bspssepy_load,
-                LOADNAME=LOADNAME,
+                load_name=load_name,
                 debug_print=self.debug_print,
                 app=app,
             )
             if self.debug_print:
-                bp(f"[DEBUG] Successfully disabled load: {LOADNAME}", app=app)
+                bp(
+                    f"[DEBUG] Successfully disabled load: {load_name}",
+                    app=app,
+                )
                 await asyncio.sleep(app.async_print_delay if app else 0)
 
         # ierr = await ibr_disable(
@@ -953,7 +957,7 @@ class sim:
 
             current_sim_time >= self.config.bspssepy_hard_time_limit * 60
             if app:
-                ProgressBarUpdate(
+                progress_bar_update(
                     app.top_bar_progress_bar,
                     current_sim_time,
                     self.config.bspssepy_hard_time_limit * 60,

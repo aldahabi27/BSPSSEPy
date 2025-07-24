@@ -35,7 +35,7 @@ class BSPSSEPy:
     async def bspssepy_init(
         self,
         case_name=None,
-        Ver=None,
+        ver=None,
         config_path=None,
         debug_print=None,
         app=None,
@@ -55,7 +55,7 @@ class BSPSSEPy:
         self.config = config()
         await self.config.config_init(
             case_name=case_name,
-            ver=Ver,
+            ver=ver,
             config_path=config_path,
             debug_print=debug_print,
             app=app,
@@ -87,7 +87,7 @@ class BSPSSEPy:
         self.sim = sim()
         await self.sim.sim_init(
             config=self.config,
-            PSSE=self.psse,
+            psse=self.psse,
             debug_print=debug_print,
             app=app,
         )

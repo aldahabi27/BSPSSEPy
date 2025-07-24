@@ -1,9 +1,10 @@
 """This script contains metadata for the bspssepy package."""
+
 # bspssepy/meta.py
 from datetime import datetime
 
-VER_NUM = "0.5"
-BUILD_NUM = 1
+ver_num = "0.5"
+build_num = 10
 
 
 def current_timestamp():

@@ -7,8 +7,8 @@ from __future__ import annotations
 import psspy  # noqa: F401 pylint: disable=import-error
 from textual.app import App
 from fun.bspssepy.app.app_helper_funs import (
-    ProgressBarUpdate,
-    BSPSSEPyAppResetTables,
+    progress_bar_update,
+    bspssepy_app_reset_tables,
 )
 from fun.bspssepy.app.bspssepy_print import (
     append_to_details_text_area,
@@ -76,13 +76,13 @@ async def run_simulation(app: App, dummy_run: bool | None = False):
             await app.bspssepy.bspssepy_init(
                 config_path=app.config_path, app=app
             )
-            await BSPSSEPyAppResetTables(app)
+            await bspssepy_app_reset_tables(app)
 
             if app.debug_checkbox.value:
                 bp("[DEBUG] BSPSSEPy initialized successfully.", app=app)
                 await asyncio.sleep(app.async_print_delay if app else 0)
 
-            await app.bspssepy.sim.SetBlackStart(app=app)
+            await app.bspssepy.sim.set_black_start(app=app)
             await app.bspssepy.sim.Run(app=app)
 
             app.bspssepy.plot(debug_print=app.debug_checkbox.value, app=app)

@@ -249,7 +249,7 @@ async def ibr_enable(
         )
 
     curr_status = await get_gen_info(
-        "STATUS", GenName=ibr_name, debug_print=debug_print, app=app
+        "STATUS", gen_name=ibr_name, debug_print=debug_print, app=app
     )
 
     if curr_status != 0:
@@ -286,7 +286,7 @@ async def ibr_enable(
         )
 
     new_status = await get_gen_info(
-        "STATUS", GenName=ibr_name, debug_print=debug_print, app=app
+        "STATUS", gen_name=ibr_name, debug_print=debug_print, app=app
     )
 
     # here
@@ -350,9 +350,9 @@ async def ibr_enable(
     ierr = psspy.change_pref(ibr_bus_num, ibr_id, ibr_p_set_point_pu)
 
     # Enable ibr_bus
-    from fun.bspssepy.sim.bspssepy_bus_funs import BusClose
+    from fun.bspssepy.sim.bspssepy_bus_funs import bus_close
 
-    await BusClose(
+    await bus_close(
         t=t,
         bspssepy_bus=bspssepy_bus,
         bus_num=ibr_bus_num,
@@ -414,7 +414,7 @@ async def ibr_disable(
         )
 
     curr_status = await get_gen_info(
-        "STATUS", GenName=ibr_name, debug_print=debug_print, app=app
+        "STATUS", gen_name=ibr_name, debug_print=debug_print, app=app
     )
 
     if curr_status != 1:
@@ -450,7 +450,7 @@ async def ibr_disable(
         )
 
     new_status = await get_gen_info(
-        "STATUS", GenName=ibr_name, debug_print=debug_print, app=app
+        "STATUS", gen_name=ibr_name, debug_print=debug_print, app=app
     )
     # here
     if new_status != 0:

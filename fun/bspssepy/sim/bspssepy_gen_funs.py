@@ -24,17 +24,17 @@ import psspy  # noqa: F401 pylint: disable=import-error
 import pandas as pd
 from fun.bspssepy.config.config import config
 from fun.bspssepy.bspssepy_dict import *
-from .bspssepy_channels import FetchChannelValue
+from .bspssepy_channels import fetch_channel_value
 from fun.bspssepy.app.app_helper_funs import bp
 import asyncio
 
 
 async def get_gen_info(
-    GenKeys,  # The key(s) for the required information of the generator(s)
+    gen_keys,  # The key(s) for the required information of the generator(s)
     # Generator Name (optional) --> could be a list
-    GenName=None,
+    gen_name=None,
     # Bus name or number where the generator(s) are (optional)
-    Bus=None,
+    bus=None,
     # bspssepy_gen DataFrame containing BSPSSEPy extra information associated with the generators (optional)
     bspssepy_gen=None,
     debug_print=False,  # Enable detailed debug output
@@ -68,113 +68,113 @@ async def get_gen_info(
     # Debug logging
     if debug_print:
         bp(
-            f"[DEBUG] Retrieving generator info for GenKeys: {GenKeys}, GenName: {GenName}, Bus: {Bus}",
+            f"[DEBUG] Retrieving generator info for GenKeys: {gen_keys}, GenName: {gen_name}, Bus: {bus}",
             app=app,
         )
         await asyncio.sleep(app.async_print_delay if app else 0)
 
     # Ensure BrnKeys is a list
-    if isinstance(GenKeys, str):
-        GenKeys = [GenKeys]
+    if isinstance(gen_keys, str):
+        gen_keys = [gen_keys]
         # Normalize strings to remove extra spaces
-        GenKeys = [key.strip() for key in GenKeys]
+        gen_keys = [key.strip() for key in gen_keys]
 
     # Ensure GenName is a list
-    if GenName is not None and isinstance(GenName, str):
-        GenName = [GenName]
+    if gen_name is not None and isinstance(gen_name, str):
+        gen_name = [gen_name]
         # Normalize strings to remove extra spaces
-        GenName = [gn.strip() for gn in GenName]
-        if len(GenName) == 1:
-            GenName = GenName[0]
+        gen_name = [gn.strip() for gn in gen_name]
+        if len(gen_name) == 1:
+            gen_name = gen_name[0]
 
     # Normalize strings to remove extra spaces
-    if isinstance(Bus, str) and Bus:
-        Bus = Bus.strip()
-        BusKey = "NAME"
-    elif Bus:
-        BusKey = "NUMBER"
+    if isinstance(bus, str) and bus:
+        bus = bus.strip()
+        bus_key = "NAME"
+    elif bus:
+        bus_key = "NUMBER"
     else:
-        BusKey = None
+        bus_key = None
 
-    ValidPSSEKeys = gen_info_dict.keys()
-    ValidBSPSSEPyKeys = [] if bspssepy_gen is None else bspssepy_gen.columns
+    valid_psse_keys = gen_info_dict.keys()
+    valid_bspssepy_keys = [] if bspssepy_gen is None else bspssepy_gen.columns
 
     # Add PSSE Keys needed for basic branch operations
-    _GenKeys = ["ID", "MCNAME", "NAME", "NUMBER"]
-    _GenKeysPSSE = list(_GenKeys)
-    for key in GenKeys:
-        if key in ValidPSSEKeys and key not in _GenKeysPSSE:
-            _GenKeysPSSE.append(key)
+    _gen_keys = ["ID", "MCNAME", "NAME", "NUMBER"]
+    _gen_keys_psse = list(_gen_keys)
+    for key in gen_keys:
+        if key in valid_psse_keys and key not in _gen_keys_psse:
+            _gen_keys_psse.append(key)
 
     if debug_print:
-        bp(f"[DEBUG] Fetching PSSE data for keys: {_GenKeysPSSE}", app=app)
+        bp(f"[DEBUG] Fetching PSSE data for keys: {_gen_keys_psse}", app=app)
         await asyncio.sleep(app.async_print_delay if app else 0)
 
     # Ensure no duplicate columns are fetched from bspssepy_gen if it is provided
     if bspssepy_gen is not None and not bspssepy_gen.empty:
         # Remove overlapping keys from the dataframe search
-        ValidBSPSSEPyKeys = [
-            key for key in ValidBSPSSEPyKeys if key not in _GenKeysPSSE
+        valid_bspssepy_keys = [
+            key for key in valid_bspssepy_keys if key not in _gen_keys_psse
         ]
 
     if debug_print:
         bp(
-            f"[DEBUG] Adjusted BSPSSEPy keys to fetch: {ValidBSPSSEPyKeys}",
+            f"[DEBUG] Adjusted BSPSSEPy keys to fetch: {valid_bspssepy_keys}",
             app=app,
         )
         await asyncio.sleep(app.async_print_delay if app else 0)
 
     # Fetch PSSE data for the required keys
-    PSSEData = {}
-    for PSSEKey in _GenKeysPSSE:
-        PSSEData[PSSEKey] = await GetGenInfoPSSE(
-            PSSEKey, debug_print=debug_print, app=app
+    psse_data = {}
+    for psse_key in _gen_keys_psse:
+        psse_data[psse_key] = await gen_gen_info_psse(
+            psse_key, debug_print=debug_print, app=app
         )
 
     # Combine PSSEData and bspssepy_gen (if proivded) into a single DataFrame
     if bspssepy_gen is not None and not bspssepy_gen.empty:
-        ValidBSPSSEPyGen = bspssepy_gen[ValidBSPSSEPyKeys]
-        PSSEDataDF = pd.DataFrame(PSSEData)
-        CombinedData = pd.concat([PSSEDataDF, ValidBSPSSEPyGen], axis=1)
+        valid_bspssepy_gen = bspssepy_gen[valid_bspssepy_keys]
+        psse_data = pd.DataFrame(psse_data)
+        combined_data = pd.concat([psse_data, valid_bspssepy_gen], axis=1)
     else:
-        CombinedData = pd.DataFrame(PSSEData)
+        combined_data = pd.DataFrame(psse_data)
 
     if debug_print:
-        bp(f"[DEBUG] Combined Data:\n{CombinedData}", app=app)
+        bp(f"[DEBUG] Combined Data:\n{combined_data}", app=app)
         await asyncio.sleep(app.async_print_delay if app else 0)
 
     # Filter CombinedData based on GenName or Bus
 
-    if GenName:
-        CombinedData = CombinedData[
-            CombinedData["MCNAME"].str.strip() == GenName
+    if gen_name:
+        combined_data = combined_data[
+            combined_data["MCNAME"].str.strip() == gen_name
         ]
-    elif BusKey:
-        if BusKey == "NAME":
-            CombinedData = CombinedData[
-                CombinedData[BusKey].str.strip() == Bus
+    elif bus_key:
+        if bus_key == "NAME":
+            combined_data = combined_data[
+                combined_data[bus_key].str.strip() == bus
             ]
         else:
-            CombinedData = CombinedData[CombinedData[BusKey] == Bus]
+            combined_data = combined_data[combined_data[bus_key] == bus]
 
     if debug_print:
-        bp(f"[DEBUG] Filtered Data: \n {CombinedData}", app=app)
+        bp(f"[DEBUG] Filtered Data: \n {combined_data}", app=app)
         await asyncio.sleep(app.async_print_delay if app else 0)
 
     # Handle cases based on the number of GenKeys
-    if len(GenKeys) == 1:
-        Key = GenKeys[0]
+    if len(gen_keys) == 1:
+        key = gen_keys[0]
         return (
-            CombinedData[Key].iloc[0]
-            if len(CombinedData) == 1
-            else CombinedData[Key]
+            combined_data[key].iloc[0]
+            if len(combined_data) == 1
+            else combined_data[key]
         )
     else:
-        return CombinedData[GenKeys]
+        return combined_data[gen_keys]
 
 
-async def GetGenInfoPSSE(
-    amachstring,  # Requested info string - check available strings in gen_info_dict
+async def gen_gen_info_psse(
+    amach_string,  # Requested info string - check available strings in gen_info_dict
     debug_print=False,  # Print debug information
     app=None,
 ):
@@ -195,37 +195,37 @@ async def GetGenInfoPSSE(
     """
 
     # 1 --> only in service machines at in-service plants (code 2 or 3), 2 --> all machines at in-service plants (type 2 or 3), 3--> in-service machines at all buses (all types including 1 and 4), 4 --> all machines)
-    amachFlag = 4
+    amach_flag = 4
 
-    amachSID = -1  # treating the whole network as one system
+    amach_sid = -1  # treating the whole network as one system
 
     if debug_print:
         bp(
-            f"[DEBUG] Requested generator information for amachstring: '{amachstring}'",
+            f"[DEBUG] Requested generator information for amachstring: '{amach_string}'",
             app=app,
         )
         await asyncio.sleep(app.async_print_delay if app else 0)
 
     # check if amachstring exists in gen_info_dict
-    if amachstring not in gen_info_dict:
+    if amach_string not in gen_info_dict:
         bp(
-            f"[ERROR] Invalid amachstring '{amachstring}'. Check gen_info_dict for valid options!",
+            f"[ERROR] Invalid amachstring '{amach_string}'. Check gen_info_dict for valid options!",
             app=app,
         )
         await asyncio.sleep(app.async_print_delay if app else 0)
         return None
 
     parameters = {
-        "sid": amachSID,
-        "flag": amachFlag,
-        "string": [amachstring],
+        "sid": amach_sid,
+        "flag": amach_flag,
+        "string": [amach_string],
     }
 
     # Fetch the datatype for teh requested string
-    ierr, dataType = psspy.amachtypes([amachstring])
+    ierr, data_type = psspy.amachtypes([amach_string])
     if ierr != 0:
         bp(
-            f"[ERROR] Failed to fetch data type for amachstring '{amachstring}'. PSSE error code: {ierr}",
+            f"[ERROR] Failed to fetch data type for amachstring '{amach_string}'. PSSE error code: {ierr}",
             app=app,
         )
         await asyncio.sleep(app.async_print_delay if app else 0)
@@ -233,17 +233,17 @@ async def GetGenInfoPSSE(
 
     # Retrieve data based on the type
     try:
-        if dataType[0] == "I":  # Integer data
+        if data_type[0] == "I":  # Integer data
             ierr, data = psspy.amachint(**parameters)
-        elif dataType[0] == "R":  # Real data
+        elif data_type[0] == "R":  # Real data
             ierr, data = psspy.amachreal(**parameters)
-        elif dataType[0] == "C":  # Character data
+        elif data_type[0] == "C":  # Character data
             ierr, data = psspy.amachchar(**parameters)
-        elif dataType[0] == "X":  # Complex data
+        elif data_type[0] == "X":  # Complex data
             ierr, data = psspy.amachcplx(**parameters)
         else:
             bp(
-                f"[ERROR] Unsupported data type '{dataType[0]}' for amachstring '{amachstring}'.",
+                f"[ERROR] Unsupported data type '{data_type[0]}' for amachstring '{amach_string}'.",
                 app=app,
             )
             await asyncio.sleep(app.async_print_delay if app else 0)
@@ -266,7 +266,7 @@ async def GetGenInfoPSSE(
 
         if ierr != 0:
             bp(
-                f"[ERROR] Failed to retrieve data for amachstring '{amachstring}'. PSSE error code: {ierr}",
+                f"[ERROR] Failed to retrieve data for amachstring '{amach_string}'. PSSE error code: {ierr}",
                 app=app,
             )
             await asyncio.sleep(app.async_print_delay if app else 0)
@@ -274,7 +274,7 @@ async def GetGenInfoPSSE(
 
         if debug_print:
             bp(
-                f"[DEBUG] Successfully retrieved data for '{amachstring}': {data}",
+                f"[DEBUG] Successfully retrieved data for '{amach_string}': {data}",
                 app=app,
             )
             await asyncio.sleep(app.async_print_delay if app else 0)
@@ -286,10 +286,10 @@ async def GetGenInfoPSSE(
         return None
 
 
-async def ExtendBSPSSEPyGenDataFrame(
+async def extend_gen_data(
     bspssepy_gen,
-    ConfigTable,
-    SimConfig: config,
+    config_table,
+    sim_config: config,
     bspssepy_trn,
     bspssepy_bus,
     bspssepy_brn,
@@ -299,7 +299,7 @@ async def ExtendBSPSSEPyGenDataFrame(
     app=None,
 ):
 
-    from .bspssepy_load_funs import NewLoad
+    from .bspssepy_load_funs import new_load
 
     """
     Modify the given dataframe by adding columns related to generator phases and states
@@ -329,36 +329,36 @@ async def ExtendBSPSSEPyGenDataFrame(
     bp("Extending bspssepy_gen Dataframe...", app=app)
     await asyncio.sleep(app.async_print_delay if app else 0)
 
-    BSPSSEPyStatus = 0  # 0: OFF, 1: Cranking, 2: Ramp-up, 3: Ready/active
-    GenLoadName = "Default"  # Default --> load name is "L[Gen Name]"
-    GenCrankingTime = 0.0  # TBD
-    GenRampRate = 0.0  # TBD
-    BSPSSEPyGenType = "NBS"  # NBS or BS, or IBR
+    bspssepy_status = 0  # 0: OFF, 1: Cranking, 2: Ramp-up, 3: Ready/active
+    gen_load_name = "Default"  # Default --> load name is "L[Gen Name]"
+    gen_cranking_time = 0.0  # TBD
+    gen_ramp_rate = 0.0  # TBD
+    bspssepy_gen_type = "NBS"  # NBS or BS, or IBR
     # Type of IBR (e.g., BESS, Wind, Solar) - only used for IBRs
     ibr_type = "N/A"
-    GenCrankingLoadPowerArray = [1.0, 1.0, 0.0, 0.0, 0.0, 0.0]
-    AGCAlpha = 0.0
-    LoadDampConstant = 0.0
-    EffectiveSpeedDroop = 0.05
-    BiasScaling = 1.0
-    POPF = 0
-    QOPF = 0
+    gen_cranking_load_power_array = [1.0, 1.0, 0.0, 0.0, 0.0, 0.0]
+    agc_alpha = 0.0
+    load_damp_constant = 0.0
+    eff_speed_droop = 0.05
+    bias_scaling = 1.0
+    p_opf = 0
+    q_opf = 0
 
     # Add new columns if they don't already exist
-    NewColumns = {
-        "BSPSSEPyStatus": BSPSSEPyStatus,
-        "GenLoadName": GenLoadName,
-        "GenCrankingTime": GenCrankingTime,
-        "GenRampRate": GenRampRate,
-        "BSPSSEPyGenType": BSPSSEPyGenType,
+    new_col = {
+        "BSPSSEPyStatus": bspssepy_status,
+        "GenLoadName": gen_load_name,
+        "GenCrankingTime": gen_cranking_time,
+        "GenRampRate": gen_ramp_rate,
+        "BSPSSEPyGenType": bspssepy_gen_type,
         # Type of IBR (e.g., BESS, Wind, Solar) - only used for IBRs
         "IBRType": ibr_type,
-        "GenCrankingLoadPowerArray": GenCrankingLoadPowerArray,
-        "AGCAlpha": AGCAlpha,
-        "LoadDampConstant": LoadDampConstant,  # D
-        "EffectiveSpeedDroop": EffectiveSpeedDroop,  # R
+        "GenCrankingLoadPowerArray": gen_cranking_load_power_array,
+        "AGCAlpha": agc_alpha,
+        "LoadDampConstant": load_damp_constant,  # D
+        "EffectiveSpeedDroop": eff_speed_droop,  # R
         # Bias Scaling (Effective Bias = Bias * Bias Scaling)
-        "BiasScaling": BiasScaling,
+        "BiasScaling": bias_scaling,
         "EffectiveBias": 0.0,  # Effective Bias (updated by the simulation)
         "GenTrnBrnName": "",
         "POPF": 0.0,
@@ -367,63 +367,63 @@ async def ExtendBSPSSEPyGenDataFrame(
     }
 
     # Add new columns if they don't already exist
-    for Col, DefaultValue in NewColumns.items():
-        if Col not in bspssepy_gen.columns:
+    for col, default_val in new_col.items():
+        if col not in bspssepy_gen.columns:
             if isinstance(
-                DefaultValue, list
+                default_val, list
             ):  # For list values, use object dtype
-                bspssepy_gen[Col] = pd.Series(
-                    [DefaultValue] * len(bspssepy_gen), dtype="object"
+                bspssepy_gen[col] = pd.Series(
+                    [default_val] * len(bspssepy_gen), dtype="object"
                 )
             else:
-                bspssepy_gen[Col] = DefaultValue
+                bspssepy_gen[col] = default_val
 
             if debug_print:
                 bp(
-                    f"[DEBUG] Added column '{Col}' with default value: {DefaultValue}",
+                    f"[DEBUG] Added column '{col}' with default value: {default_val}",
                     app=app,
                 )
                 await asyncio.sleep(app.async_print_delay if app else 0)
 
-    for config in ConfigTable:
-        GenName = config.get("Generator Name")
+    for config in config_table:
+        gen_name = config.get("Generator Name")
         # gen_id = config.get("Generator ID")
-        BusName = config.get("Bus Name")
+        bus_name = config.get("Bus Name")
 
         if debug_print:
             bp(
-                f"[DEBUG] Processing configuration for Generator Name: {GenName}, Bus Name: {BusName}",
+                f"[DEBUG] Processing configuration for Generator Name: {gen_name}, Bus Name: {bus_name}",
                 app=app,
             )
             await asyncio.sleep(app.async_print_delay if app else 0)
 
         # Locate the generator based on GenName or BusName
-        GeneratorIndices = None
-        if GenName:
-            GeneratorIndices = bspssepy_gen[
-                bspssepy_gen["MCNAME"] == GenName
+        gen_indicies = None
+        if gen_name:
+            gen_indicies = bspssepy_gen[
+                bspssepy_gen["MCNAME"] == gen_name
             ].index
             if debug_print:
                 bp(
-                    f"[DEBUG] Located generator index by Name ({GenName}): {list(GeneratorIndices)}",
+                    f"[DEBUG] Located generator index by Name ({gen_name}): {list(gen_indicies)}",
                     app=app,
                 )
                 await asyncio.sleep(app.async_print_delay if app else 0)
-        elif BusName:
-            GeneratorIndices = bspssepy_gen[
-                bspssepy_gen["NAME"] == BusName
+        elif bus_name:
+            gen_indicies = bspssepy_gen[
+                bspssepy_gen["NAME"] == bus_name
             ].index
             if debug_print:
                 bp(
-                    f"[DEBUG] Located generator index by Bus Name ({BusName}): {list(GeneratorIndices)}",
+                    f"[DEBUG] Located generator index by Bus Name ({bus_name}): {list(gen_indicies)}",
                     app=app,
                 )
                 await asyncio.sleep(app.async_print_delay if app else 0)
 
         # If no matching generator is found, skip
-        if GeneratorIndices is None or GeneratorIndices.empty:
+        if gen_indicies is None or gen_indicies.empty:
             bp(
-                f"Warning: No matching generator found for '{GenName or BusName}'. Skipping.",
+                f"Warning: No matching generator found for '{gen_name or bus_name}'. Skipping.",
                 app=app,
             )
             await asyncio.sleep(app.async_print_delay if app else 0)
@@ -431,36 +431,34 @@ async def ExtendBSPSSEPyGenDataFrame(
 
         if debug_print:
             bp(
-                f"[DEBUG] Generator index to update: {list(GeneratorIndices)}",
+                f"[DEBUG] Generator index to update: {list(gen_indicies)}",
                 app=app,
             )
             await asyncio.sleep(app.async_print_delay if app else 0)
 
         # Extract configuration values or use defaults
-        BSPSSEPyGenType = config.get("Generator Type", BSPSSEPyGenType)
-        BSPSSEPyStatus = (
+        bspssepy_gen_type = config.get("Generator Type", bspssepy_gen_type)
+        bspssepy_status = (
             3
-            if BSPSSEPyGenType == "BS"
-            else config.get("Status", BSPSSEPyStatus)
+            if bspssepy_gen_type == "BS"
+            else config.get("Status", bspssepy_status)
         )
-        GenLoadName = config.get("load Name", GenLoadName)
-        GenCrankingTime = config.get("Cranking Time", GenCrankingTime)
-        GenRampRate = config.get("Ramp Rate", GenRampRate)
-        GenCrankingLoadPowerArray = config.get(
-            "Cranking load Array", GenCrankingLoadPowerArray
+        gen_load_name = config.get("load Name", gen_load_name)
+        gen_cranking_time = config.get("Cranking Time", gen_cranking_time)
+        gen_ramp_rate = config.get("Ramp Rate", gen_ramp_rate)
+        gen_cranking_load_power_array = config.get(
+            "Cranking load Array", gen_cranking_load_power_array
         )
-        AGCAlpha = config.get("AGC Participation Factor", AGCAlpha)
-        LoadDampConstant = config.get(
-            "load Damping Constant", LoadDampConstant
+        agc_alpha = config.get("AGC Participation Factor", agc_alpha)
+        load_damp_constant = config.get(
+            "load Damping Constant", load_damp_constant
         )
-        EffectiveSpeedDroop = config.get(
-            "Effective Speed Droop", EffectiveSpeedDroop
-        )
-        BiasScaling = config.get("Bias Scaling", BiasScaling)
-        POPF = config.get("POPF", POPF)
-        QOPF = config.get("QOPF", QOPF)
-        UseGenRampRate = config.get("UseGenRampRate", False)
-        LoadEnabledResponse = config.get("Load Enabled Response", False)
+        eff_speed_droop = config.get("Effective Speed Droop", eff_speed_droop)
+        bias_scaling = config.get("Bias Scaling", bias_scaling)
+        p_opf = config.get("POPF", p_opf)
+        q_opf = config.get("QOPF", q_opf)
+        use_gen_ramo_rate = config.get("UseGenRampRate", False)
+        load_enabled_response = config.get("Load Enabled Response", False)
         LERPF = config.get("LERPF", -1)
         H = config.get("Inertia Constant", 1.0)
 
@@ -478,36 +476,39 @@ async def ExtendBSPSSEPyGenDataFrame(
         # await asyncio.sleep(app.async_print_delay if app else 0)
 
         if debug_print:
-            bp(f"[DEBUG] Extracted config Values for '{GenName}':", app=app)
+            bp(f"[DEBUG] Extracted config Values for '{gen_name}':", app=app)
             await asyncio.sleep(app.async_print_delay if app else 0)
             bp(
-                f"        Status: {BSPSSEPyStatus} (0: OFF, 1: Cranking, 2: Ramp-up, 3: Ready/active)",
+                f"        Status: {bspssepy_status} (0: OFF, 1: Cranking, 2: Ramp-up, 3: Ready/active)",
                 app=app,
             )
             await asyncio.sleep(app.async_print_delay if app else 0)
-            bp(f"        load Name: {GenLoadName}", app=app)
+            bp(f"        load Name: {gen_load_name}", app=app)
             await asyncio.sleep(app.async_print_delay if app else 0)
-            bp(f"        Cranking Time: {GenCrankingTime}", app=app)
+            bp(f"        Cranking Time: {gen_cranking_time}", app=app)
             await asyncio.sleep(app.async_print_delay if app else 0)
-            bp(f"        Ramp Rate: {GenRampRate}", app=app)
+            bp(f"        Ramp Rate: {gen_ramp_rate}", app=app)
             await asyncio.sleep(app.async_print_delay if app else 0)
-            bp(f"        Generator Type: {BSPSSEPyGenType}", app=app)
+            bp(f"        Generator Type: {bspssepy_gen_type}", app=app)
             await asyncio.sleep(app.async_print_delay if app else 0)
             bp(
-                f"        Cranking load Array: {GenCrankingLoadPowerArray}",
+                f"        Cranking load Array: {gen_cranking_load_power_array}",
                 app=app,
             )
             await asyncio.sleep(app.async_print_delay if app else 0)
-            bp(f"        AGC Participation Factor: {AGCAlpha}", app=app)
-            await asyncio.sleep(app.async_print_delay if app else 0)
-            bp(f"        load Damping Constant: {LoadDampConstant}", app=app)
-            await asyncio.sleep(app.async_print_delay if app else 0)
-            bp(f"        Effective Speed Droop: {EffectiveSpeedDroop}")
-            await asyncio.sleep(app.async_print_delay if app else 0)
-            bp(f"        Bias Scaling: {BiasScaling}", app=app)
+            bp(f"        AGC Participation Factor: {agc_alpha}", app=app)
             await asyncio.sleep(app.async_print_delay if app else 0)
             bp(
-                f"        Effective Bias: {BiasScaling * (1/EffectiveSpeedDroop + LoadDampConstant)}",
+                f"        load Damping Constant: {load_damp_constant}",
+                app=app,
+            )
+            await asyncio.sleep(app.async_print_delay if app else 0)
+            bp(f"        Effective Speed Droop: {eff_speed_droop}")
+            await asyncio.sleep(app.async_print_delay if app else 0)
+            bp(f"        Bias Scaling: {bias_scaling}", app=app)
+            await asyncio.sleep(app.async_print_delay if app else 0)
+            bp(
+                f"        Effective Bias: {bias_scaling * (1/eff_speed_droop + load_damp_constant)}",
                 app=app,
             )
             await asyncio.sleep(app.async_print_delay if app else 0)
@@ -524,24 +525,24 @@ async def ExtendBSPSSEPyGenDataFrame(
         #     Gref = 0
         #     Vref = 0
 
-        Updates = {
-            "BSPSSEPyStatus": BSPSSEPyStatus,
-            "GenLoadName": GenLoadName,
-            "GenCrankingTime": GenCrankingTime,
-            "GenRampRate": GenRampRate,
-            "BSPSSEPyGenType": BSPSSEPyGenType,
-            "GenCrankingLoadPowerArray": GenCrankingLoadPowerArray,
-            "AGCAlpha": AGCAlpha,
-            "LoadDampConstant": LoadDampConstant,  # D
-            "EffectiveSpeedDroop": EffectiveSpeedDroop,  # R
+        updates = {
+            "BSPSSEPyStatus": bspssepy_status,
+            "GenLoadName": gen_load_name,
+            "GenCrankingTime": gen_cranking_time,
+            "GenRampRate": gen_ramp_rate,
+            "BSPSSEPyGenType": bspssepy_gen_type,
+            "GenCrankingLoadPowerArray": gen_cranking_load_power_array,
+            "AGCAlpha": agc_alpha,
+            "LoadDampConstant": load_damp_constant,  # D
+            "EffectiveSpeedDroop": eff_speed_droop,  # R
             # Bias Scaling (Effective Bias = Bias * Bias Scaling)
-            "BiasScaling": BiasScaling,
-            "EffectiveBias": BiasScaling
-            * ((1 / EffectiveSpeedDroop) + LoadDampConstant),
-            "POPF": POPF,
-            "QOPF": QOPF,
-            "UseGenRampRate": UseGenRampRate,
-            "LoadEnabledResponse": LoadEnabledResponse,
+            "BiasScaling": bias_scaling,
+            "EffectiveBias": bias_scaling
+            * ((1 / eff_speed_droop) + load_damp_constant),
+            "POPF": p_opf,
+            "QOPF": q_opf,
+            "UseGenRampRate": use_gen_ramo_rate,
+            "LoadEnabledResponse": load_enabled_response,
             "LERPF": LERPF,
             "H": H,  # Inertia constant in seconds (H)
         }
@@ -562,32 +563,32 @@ async def ExtendBSPSSEPyGenDataFrame(
         # }
 
         # Update the generator(s) in the DataFrame
-        for Col, Value in Updates.items():
+        for col, val in updates.items():
             if debug_print:
                 bp(
-                    f"[DEBUG] Updating column '{Col}' with value: {Value}",
+                    f"[DEBUG] Updating column '{col}' with value: {val}",
                     app=app,
                 )
                 await asyncio.sleep(app.async_print_delay if app else 0)
 
             if (
-                Col == "GenCrankingLoadPowerArray"
+                col == "GenCrankingLoadPowerArray"
             ):  # Special handling for lists
-                for idx in GeneratorIndices:  # Assign each list individually
-                    bspssepy_gen.at[idx, Col] = Value
+                for idx in gen_indicies:  # Assign each list individually
+                    bspssepy_gen.at[idx, col] = val
                     if debug_print:
                         bp(
-                            f"[DEBUG] Updated '{Col}' at index {idx} with list value: {Value}",
+                            f"[DEBUG] Updated '{col}' at index {idx} with list value: {val}",
                             app=app,
                         )
                         await asyncio.sleep(
                             app.async_print_delay if app else 0
                         )
             else:
-                bspssepy_gen.loc[GeneratorIndices, Col] = Value
+                bspssepy_gen.loc[gen_indicies, col] = val
                 if debug_print:
                     bp(
-                        f"[DEBUG] Updated '{Col}' for generator(s) at indices {list(GeneratorIndices)} with value: {Value}",
+                        f"[DEBUG] Updated '{col}' for generator(s) at indices {list(gen_indicies)} with value: {val}",
                         app=app,
                     )
                     await asyncio.sleep(app.async_print_delay if app else 0)
@@ -639,16 +640,16 @@ async def ExtendBSPSSEPyGenDataFrame(
     )
     await asyncio.sleep(app.async_print_delay if app else 0)
     # Loop through generators and process them based on their type
-    for GeneratorRowIndex, gen_row in bspssepy_gen.iterrows():
-        GeneratorType = gen_row.get("BSPSSEPyGenType", "")
-        GenName = gen_row["MCNAME"]
+    for gen_row_index, gen_row in bspssepy_gen.iterrows():
+        gen_type = gen_row.get("BSPSSEPyGenType", "")
+        gen_name = gen_row["MCNAME"]
 
         # Call the GetGeneratorConnectionPoint function
-        ConnectionPoint = await GetGeneratorConnectionPoint(
+        connection_point = await get_gen_connection_point(
             t=0,
             bspssepy_gen=bspssepy_gen,
             bspssepy_bus=bspssepy_bus,
-            GenName=GenName,
+            gen_name=gen_name,
             bspssepy_trn=bspssepy_trn,
             bspssepy_brn=bspssepy_brn,
             debug_print=debug_print,
@@ -656,9 +657,9 @@ async def ExtendBSPSSEPyGenDataFrame(
         )
 
         # Add the connection point details to the Updates dictionary if found
-        if not (ConnectionPoint):
+        if not (connection_point):
             bp(
-                f"[ERROR] Could not find a connection point for generator {GenName}.",
+                f"[ERROR] Could not find a connection point for generator {gen_name}.",
                 app=app,
             )
             await asyncio.sleep(app.async_print_delay if app else 0)
@@ -679,9 +680,9 @@ async def ExtendBSPSSEPyGenDataFrame(
         ]
 
         # Use a list comprehension to extract values from ConnectionPoint
-        gen_row[keys] = [ConnectionPoint[key] for key in keys]
-        bspssepy_gen.loc[GeneratorRowIndex, keys] = [
-            ConnectionPoint[key] for key in keys
+        gen_row[keys] = [connection_point[key] for key in keys]
+        bspssepy_gen.loc[gen_row_index, keys] = [
+            connection_point[key] for key in keys
         ]
 
         # Map the desired keys in gen_row to the corresponding keys in ConnectionPoint
@@ -728,56 +729,56 @@ async def ExtendBSPSSEPyGenDataFrame(
                 )
                 await asyncio.sleep(app.async_print_delay if app else 0)
             else:
-                bspssepy_gen.at[GeneratorRowIndex, key + "Channel"] = (
-                    SimConfig.current_channel_index
+                bspssepy_gen.at[gen_row_index, key + "Channel"] = (
+                    sim_config.current_channel_index
                 )
                 if debug_print:
                     bp(
-                        f"[DEBUG] Successfully added channel for Gen: {gen_row['MCNAME']} to monitor {key} with channel index {SimConfig.current_channel_index}",
+                        f"[DEBUG] Successfully added channel for Gen: {gen_row['MCNAME']} to monitor {key} with channel index {sim_config.current_channel_index}",
                         app=app,
                     )
                     await asyncio.sleep(app.async_print_delay if app else 0)
-                SimConfig.current_channel_index += (
+                sim_config.current_channel_index += (
                     1  # Increament Channel index
                 )
 
         # Check if generator is a black-start generator
-        if GeneratorType.lower() in [
+        if gen_type.lower() in [
             "blackstart",
             "black-start",
             "black start",
             "bs",
         ]:
-            bp(f"Skipping black-start generator: {GenName}", app=app)
+            bp(f"Skipping black-start generator: {gen_name}", app=app)
             await asyncio.sleep(app.async_print_delay if app else 0)
             continue
 
         bus_num = gen_row["NUMBER"]
-        BusName = gen_row["NAME"]
+        bus_name = gen_row["NAME"]
 
-        LoadBusNumber = (
+        load_bus_num = (
             gen_row["ConnectionElementFromBus"]
             if (bus_num == gen_row["ConnectionElementToBus"])
             else gen_row["ConnectionElementToBus"]
         )
         from .bspssepy_bus_funs import get_bus_info
 
-        LoadBusName = await get_bus_info(
-            "NAME", Bus=LoadBusNumber, debug_print=debug_print, app=app
+        load_bus_name = await get_bus_info(
+            "NAME", bus=load_bus_num, debug_print=debug_print, app=app
         )
 
-        LOADNAME = gen_row["GenLoadName"]
-        if LOADNAME == "" or LOADNAME is None:
-            LOADNAME = f"CL{GenName}"
+        load_name = gen_row["GenLoadName"]
+        if load_name == "" or load_name is None:
+            load_name = f"CL{gen_name}"
 
         bp(
-            f"Adding custom load for Genrator: {GenName} at bus {LoadBusName}(#{LoadBusNumber}), with loadname {LOADNAME}",
+            f"Adding custom load for Genrator: {gen_name} at bus {load_bus_name}(#{load_bus_num}), with loadname {load_name}",
             app=app,
         )
         await asyncio.sleep(app.async_print_delay if app else 0)
 
         # Prepare power array for the new load
-        CrankingLoadArray = gen_row.get("GenCrankingLoadPowerArray", "")
+        cranking_load_array = gen_row.get("GenCrankingLoadPowerArray", "")
         # [
         #     gen_row.get("Active Power Output (Pgen) MW", None),
         #     gen_row.get("Reactive Power Output (Qgen) MVar", None),
@@ -790,14 +791,14 @@ async def ExtendBSPSSEPyGenDataFrame(
 
         # Add a custom load at the generator's bus location
         # bp(f"Adding custom load for non-black-start generator: {GenName}")
-        bspssepy_load, ierr = await NewLoad(
-            LOADNAME=LOADNAME,
+        bspssepy_load, ierr = await new_load(
+            load_name=load_name,
             bspssepy_load=bspssepy_load,
-            BusName=LoadBusName,
-            bus_num=LoadBusNumber,
-            ElementName=GenName,
-            ElementType="Gen",
-            PowerArray=CrankingLoadArray,
+            bus_name=load_bus_name,
+            bus_num=load_bus_num,
+            element_name=gen_name,
+            element_type="Gen",
+            power_array=cranking_load_array,
             t=0,
             debug_print=debug_print,
             app=app,
@@ -811,10 +812,10 @@ async def ExtendBSPSSEPyGenDataFrame(
     return bspssepy_gen, bspssepy_load
 
 
-async def GetGeneratorConnectionPoint(
+async def get_gen_connection_point(
     t,
     bspssepy_gen,
-    GenName,
+    gen_name,
     bspssepy_bus,
     bspssepy_trn,
     bspssepy_brn,
@@ -849,88 +850,93 @@ async def GetGeneratorConnectionPoint(
 
     if debug_print:
         bp(
-            f"[DEBUG] Running GetGeneratorConnectionPoint for {GenName}.",
+            f"[DEBUG] Running GetGeneratorConnectionPoint for {gen_name}.",
             app=app,
         )
         await asyncio.sleep(app.async_print_delay if app else 0)
 
     # Get generator information
     try:
-        GenRow = bspssepy_gen.loc[bspssepy_gen["MCNAME"] == GenName].iloc[0]
+        gen_row = bspssepy_gen.loc[bspssepy_gen["MCNAME"] == gen_name].iloc[0]
     except IndexError:
-        bp(f"[ERROR] Generator {GenName} not found in bspssepy_gen.", app=app)
+        bp(
+            f"[ERROR] Generator {gen_name} not found in bspssepy_gen.",
+            app=app,
+        )
         await asyncio.sleep(app.async_print_delay if app else 0)
         return None
 
-    GenBus = GenRow["NAME"]
+    gen_bus = gen_row["NAME"]
 
     # Setting GenBus as swing for all Gens
-    from .bspssepy_bus_funs import ChangeBusType
+    from .bspssepy_bus_funs import change_bus_type
 
     # ierr = ChangeBusType(t = t, NewBusType=3, bspssepy_bus=bspssepy_bus, Bus=GenBus, debug_print=debug_print)
 
     # Identify the main connection device (transformer or branch)
-    TransformerRow = bspssepy_trn[
-        (bspssepy_trn["FROMNAME"] == GenBus)
-        | (bspssepy_trn["TONAME"] == GenBus)
+    trn_row = bspssepy_trn[
+        (bspssepy_trn["FROMNAME"] == gen_bus)
+        | (bspssepy_trn["TONAME"] == gen_bus)
     ]
-    BranchRow = bspssepy_brn[
-        (bspssepy_brn["FROMNAME"] == GenBus)
-        | (bspssepy_brn["TONAME"] == GenBus)
+    brn_row = bspssepy_brn[
+        (bspssepy_brn["FROMNAME"] == gen_bus)
+        | (bspssepy_brn["TONAME"] == gen_bus)
     ]
 
     # Check if a transformer is connected
-    if not TransformerRow.empty:
-        MainConnectionType = device_type_mapping["t"]
-        MainConnectionRow = TransformerRow.iloc[0]
-        DeviceName = MainConnectionRow["XFRNAME"]
-        if GenRow["BSPSSEPyGenType"] != "BS":
+    if not trn_row.empty:
+        main_connection_type = device_type_mapping["t"]
+        main_connection_row = trn_row.iloc[0]
+        device_name = main_connection_row["XFRNAME"]
+        if gen_row["BSPSSEPyGenType"] != "BS":
             bspssepy_trn.loc[
-                bspssepy_trn.index == MainConnectionRow.name, "GenControlled"
+                bspssepy_trn.index == main_connection_row.name,
+                "GenControlled",
             ] = True
-    elif not BranchRow.empty:
-        MainConnectionType = device_type_mapping["branch"]
-        MainConnectionRow = BranchRow.iloc[0]
-        DeviceName = MainConnectionRow["BRANCHNAME"]
-        if GenRow["BSPSSEPyGenType"] != "BS":
+    elif not brn_row.empty:
+        main_connection_type = device_type_mapping["branch"]
+        main_connection_row = brn_row.iloc[0]
+        device_name = main_connection_row["BRANCHNAME"]
+        if gen_row["BSPSSEPyGenType"] != "BS":
             bspssepy_brn.loc[
-                bspssepy_brn.index == MainConnectionRow.name, "GenControlled"
+                bspssepy_brn.index == main_connection_row.name,
+                "GenControlled",
             ] = True
     else:
         bp(
-            f"[ERROR] No connection device found for generator {GenName} at Bus {GenBus}.",
+            f"[ERROR] No connection device found for generator {gen_name} at Bus {gen_bus}.",
             app=app,
         )
         await asyncio.sleep(app.async_print_delay if app else 0)
         return None
 
     # Extract connection details
-    FromBus = MainConnectionRow["FROMNUMBER"]
-    ToBus = MainConnectionRow["TONUMBER"]
-    DeviceID = MainConnectionRow["ID"]
+    from_bus = main_connection_row["FROMNUMBER"]
+    to_bus = main_connection_row["TONUMBER"]
+    device_id = main_connection_row["ID"]
 
     if debug_print:
         bp(
-            f"[DEBUG] Connection Point for {GenName}: {MainConnectionType} from Bus {FromBus} to Bus {ToBus}.",
+            f"[DEBUG] Connection Point for {gen_name}: {main_connection_type} from Bus {from_bus} to Bus {to_bus}.",
             app=app,
         )
         await asyncio.sleep(app.async_print_delay if app else 0)
 
     return {
-        "ConnectionType": MainConnectionType,
-        "ConnectionElementFromBus": FromBus,
-        "ConnectionElementToBus": ToBus,
-        "ConnectionElementID": DeviceID,
-        "ConnectionElementName": DeviceName,
-        "Row": MainConnectionRow,
+        "ConnectionType": main_connection_type,
+        "ConnectionElementFromBus": from_bus,
+        "ConnectionElementToBus": to_bus,
+        "ConnectionElementID": device_id,
+        "ConnectionElementName": device_name,
+        "Row": main_connection_row,
     }
 
 
-async def GenEnable(
+async def gen_enable(
     bspssepy_gen,
     t,
     action,
-    GenName,
+    gen_name,
     bspssepy_trn,
     bspssepy_brn,
     bspssepy_load,
@@ -962,7 +968,7 @@ async def GenEnable(
         await asyncio.sleep(app.async_print_delay if app else 0)
 
     # get Gen row from bspssepy_gen
-    BSPSSEPyGenRow = bspssepy_gen.loc[
+    gen_row = bspssepy_gen.loc[
         bspssepy_gen["MCNAME"] == action["ElementIDValue"]
     ].copy()
 
@@ -973,16 +979,16 @@ async def GenEnable(
     # To turn on this generator, we need to check at which phase it is currently!
     # 0: OFF, 1: Cranking, 2: Ramp-up, 3: Ready/active
     # Check if the generator is off --> To enter cranking phase
-    if BSPSSEPyGenRow["BSPSSEPyStatus"].values[0] == 0:
+    if gen_row["BSPSSEPyStatus"].values[0] == 0:
         # So the generator is off, let's prepare it to "crank".
 
         # ▂▃▄▅▆▇█▓▒░ Cranking (0 → 1) ░▒▓█▇▆▅▄▃▂
 
         # First check that there is an energized line or transformer at the generator bus!
-        GenBusName = BSPSSEPyGenRow["NAME"].values[0]
+        gen_bus_name = gen_row["NAME"].values[0]
         if debug_print:
             bp(
-                f"[DEBUG] Checking if the generator is energized correctly by examining bus:{GenBusName}",
+                f"[DEBUG] Checking if the generator is energized correctly by examining bus:{gen_bus_name}",
                 app=app,
             )
             await asyncio.sleep(app.async_print_delay if app else 0)
@@ -990,18 +996,18 @@ async def GenEnable(
         if any(
             brn["BSPSSEPyStatus"] == "Closed"
             for _, brn in bspssepy_brn[
-                (bspssepy_brn["FROMNAME"] == GenBusName)
-                | (bspssepy_brn["TONAME"] == GenBusName)
+                (bspssepy_brn["FROMNAME"] == gen_bus_name)
+                | (bspssepy_brn["TONAME"] == gen_bus_name)
             ].iterrows()
         ) or any(
             trn["BSPSSEPyStatus"] == "Closed"
             for _, trn in bspssepy_trn[
-                (bspssepy_trn["FROMNAME"] == GenBusName)
-                | (bspssepy_trn["TONAME"] == GenBusName)
+                (bspssepy_trn["FROMNAME"] == gen_bus_name)
+                | (bspssepy_trn["TONAME"] == gen_bus_name)
             ].iterrows()
         ):
             bp(
-                f"[ERROR] Cannot Enter Cranking phase as GenBusName: {GenBusName} is energized. With this, the generator is already connected! Check the recovery plan to energize the 'far' bus first and crank the Genload before energizing the transformer/line connected to the generator! The program will exit.",
+                f"[ERROR] Cannot Enter Cranking phase as GenBusName: {gen_bus_name} is energized. With this, the generator is already connected! Check the recovery plan to energize the 'far' bus first and crank the Genload before energizing the transformer/line connected to the generator! The program will exit.",
                 app=app,
             )
             await asyncio.sleep(app.async_print_delay if app else 0)
@@ -1018,22 +1024,22 @@ async def GenEnable(
         # return UpdatedActionStatus
 
         # The generator is energized properly, let's start the cranking process!
-        GenLoadName = BSPSSEPyGenRow["GenLoadName"].values[0]
+        gen_load_name = gen_row["GenLoadName"].values[0]
 
         if debug_print:
             bp(
-                f"[DEBUG] Generator is about to crank. Attempting to enable the associated load: {GenLoadName}",
+                f"[DEBUG] Generator is about to crank. Attempting to enable the associated load: {gen_load_name}",
                 app=app,
             )
             await asyncio.sleep(app.async_print_delay if app else 0)
 
-        from .bspssepy_load_funs import LoadEnable, LoadDisable
+        from .bspssepy_load_funs import load_enable, load_disable
 
         # Enable GenLoad to start cranking and set the generator output power to zero
-        ierr = await LoadEnable(
+        ierr = await load_enable(
             t=t,
             bspssepy_load=bspssepy_load,
-            LOADNAME=GenLoadName,
+            load_name=gen_load_name,
             debug_print=debug_print,
             app=app,
             bspssepy_agc=bspssepy_agc,
@@ -1042,43 +1048,41 @@ async def GenEnable(
 
         if ierr != 0:
             bp(
-                f"[ERROR] Could not enable GenLoad:{GenLoadName}. Generator did not start the cranking phase.",
+                f"[ERROR] Could not enable GenLoad:{gen_load_name}. Generator did not start the cranking phase.",
                 app=app,
             )
             await asyncio.sleep(app.async_print_delay if app else 0)
-            UpdatedActionStatus = 0
-            return UpdatedActionStatus
+            updated_action_status = 0
+            return updated_action_status
 
         if debug_print:
             bp(
-                f"[DEBUG] GenLoad:{GenLoadName} was enabled successfully. Recording Cranking Start Time in bspssepy_gen dataframe",
+                f"[DEBUG] GenLoad:{gen_load_name} was enabled successfully. Recording Cranking Start Time in bspssepy_gen dataframe",
                 app=app,
             )
             await asyncio.sleep(app.async_print_delay if app else 0)
 
         # 0: OFF, 1: Cranking, 2: Ramp-up, 3: Ready/active
-        BSPSSEPyGenRow["BSPSSEPyStatus"] = 1
-        BSPSSEPyGenRow["BSPSSEPyLastAction"] = "Crank"
-        BSPSSEPyGenRow["BSPSSEPyLastActionTime"] = t
-        BSPSSEPyGenRow["BSPSSEPySimulationNotes"] = (
+        gen_row["BSPSSEPyStatus"] = 1
+        gen_row["BSPSSEPyLastAction"] = "Crank"
+        gen_row["BSPSSEPyLastActionTime"] = t
+        gen_row["BSPSSEPySimulationNotes"] = (
             f"Successfully entered cranking phase at t = {t}"
         )
 
         # Write the row back to the DataFrame
-        bspssepy_gen.loc[bspssepy_gen["MCNAME"] == GenName, :] = (
-            BSPSSEPyGenRow
-        )
+        bspssepy_gen.loc[bspssepy_gen["MCNAME"] == gen_name, :] = gen_row
 
-        bp(f"Generator '{GenName}' started cranking phase.", app=app)
+        bp(f"Generator '{gen_name}' started cranking phase.", app=app)
         await asyncio.sleep(app.async_print_delay if app else 0)
 
-        UpdatedActionStatus = (
+        updated_action_status = (
             1  # 0: Not started, 1: In progress, 2: Completed
         )
-        return UpdatedActionStatus
+        return updated_action_status
 
     # Check if the generator is Cranking --> To enter Ramp-up phase
-    elif BSPSSEPyGenRow["BSPSSEPyStatus"].values[0] == 1:
+    elif gen_row["BSPSSEPyStatus"].values[0] == 1:
 
         # ▂▃▄▅▆▇█▓▒░ Ramp-up (1 → 2) ░▒▓█▇▆▅▄▃▂
         # So the generator is cranking. Check if cranking should stop and start ramping up the generator.
@@ -1086,72 +1090,72 @@ async def GenEnable(
         # Check if Cranking time is met!
         if (
             t
-            < BSPSSEPyGenRow["GenCrankingTime"].values[0] * 60
-            + BSPSSEPyGenRow["BSPSSEPyLastActionTime"].values[0]
+            < gen_row["GenCrankingTime"].values[0] * 60
+            + gen_row["BSPSSEPyLastActionTime"].values[0]
         ):
             if debug_print:
                 bp(
-                    f"[DEBUG] Gen {GenName} is still cranking. (Cranking ends at t = {BSPSSEPyGenRow['GenCrankingTime'].values[0]*60 + BSPSSEPyGenRow['BSPSSEPyLastActionTime'].values[0]} - remaining {BSPSSEPyGenRow['GenCrankingTime'].values[0]*60 + BSPSSEPyGenRow['BSPSSEPyLastActionTime'].values[0] - t}s)",
+                    f"[DEBUG] Gen {gen_name} is still cranking. (Cranking ends at t = {gen_row['GenCrankingTime'].values[0]*60 + gen_row['BSPSSEPyLastActionTime'].values[0]} - remaining {gen_row['GenCrankingTime'].values[0]*60 + gen_row['BSPSSEPyLastActionTime'].values[0] - t}s)",
                     app=app,
                 )
                 await asyncio.sleep(app.async_print_delay if app else 0)
-            UpdatedActionStatus = 1
-            return UpdatedActionStatus
+            updated_action_status = 1
+            return updated_action_status
         else:
             bp(
-                f"Generator: '{GenName}' cranking time met. Disabling the associated load. ",
+                f"Generator: '{gen_name}' cranking time met. Disabling the associated load. ",
                 app=app,
             )
             await asyncio.sleep(app.async_print_delay if app else 0)
 
             # Cranking finished! Let's disable the GenLoad
-            GenLoadName = BSPSSEPyGenRow["GenLoadName"].values[0]
+            gen_load_name = gen_row["GenLoadName"].values[0]
 
             if debug_print:
                 bp(
-                    f"[DEBUG] Attempting to disable the associated load: {GenLoadName}",
+                    f"[DEBUG] Attempting to disable the associated load: {gen_load_name}",
                     app=app,
                 )
                 await asyncio.sleep(app.async_print_delay if app else 0)
 
-            from .bspssepy_load_funs import LoadDisable
+            from .bspssepy_load_funs import load_disable
 
             # Enable GenLoad to start cranking and set the generator output power to zero
-            ierr = await LoadDisable(
+            ierr = await load_disable(
                 t=t,
                 bspssepy_load=bspssepy_load,
-                LOADNAME=GenLoadName,
+                load_name=gen_load_name,
                 debug_print=debug_print,
                 app=app,
             )
 
             if ierr != 0:
                 bp(
-                    f"[ERROR] Could not disable GenLoad:{GenLoadName}. Generator did not stop the cranking phase.",
+                    f"[ERROR] Could not disable GenLoad:{gen_load_name}. Generator did not stop the cranking phase.",
                     app=app,
                 )
                 await asyncio.sleep(app.async_print_delay if app else 0)
-                UpdatedActionStatus = 1
-                return UpdatedActionStatus
+                updated_action_status = 1
+                return updated_action_status
 
             if debug_print:
                 bp(
-                    f"[DEBUG] GenLoad:{GenLoadName} was disabled successfully. Energizing the connection element (TRN or BRN) to start the Ramp-up phase.",
+                    f"[DEBUG] GenLoad:{gen_load_name} was disabled successfully. Energizing the connection element (TRN or BRN) to start the Ramp-up phase.",
                     app=app,
                 )
                 await asyncio.sleep(app.async_print_delay if app else 0)
 
-            ElementName = BSPSSEPyGenRow["ConnectionElementName"].values[0]
+            element_name = gen_row["ConnectionElementName"].values[0]
 
-            if BSPSSEPyGenRow["ConnectionType"].values[0] == "TRN":
-                from .bspssepy_trn_funs import TrnClose
+            if gen_row["ConnectionType"].values[0] == "TRN":
+                from .bspssepy_trn_funs import trn_close
 
-                ierr = await TrnClose(
+                ierr = await trn_close(
                     t=t,
-                    TrnName=ElementName,
+                    trn_name=element_name,
                     bspssepy_trn=bspssepy_trn,
                     bspssepy_bus=bspssepy_bus,
-                    CalledByGen=True,
+                    called_by_gen=True,
                     debug_print=debug_print,
                     app=app,
                 )
@@ -1178,15 +1182,15 @@ async def GenEnable(
                     else:
                         SystemExit(1)
 
-            elif BSPSSEPyGenRow["ConnectionType"].values[0] == "BRN":
-                from .bspssepy_brn_funs import BrnClose
+            elif gen_row["ConnectionType"].values[0] == "BRN":
+                from .bspssepy_brn_funs import brn_close
 
-                ierr = await BrnClose(
+                ierr = await brn_close(
                     t=t,
-                    BranchName=ElementName,
+                    brn_name=element_name,
                     bspssepy_brn=bspssepy_brn,
                     bspssepy_bus=bspssepy_bus,
-                    CalledByGen=True,
+                    called_by_gen=True,
                     debug_print=debug_print,
                     app=app,
                 )
@@ -1225,8 +1229,8 @@ async def GenEnable(
                     SystemExit(1)
 
             # GenG = await FetchChannelValue(int(BSPSSEPyGenRow["GREFChannel"].values[0]), debug_print=debug_print,app=app)
-            GenV = await FetchChannelValue(
-                int(BSPSSEPyGenRow["VREFChannel"].values[0]),
+            gen_v = await fetch_channel_value(
+                int(gen_row["VREFChannel"].values[0]),
                 debug_print=debug_print,
                 app=app,
             )
@@ -1236,18 +1240,18 @@ async def GenEnable(
             # bp(f"GenG: {GenG}, GenV: {GenV}, GenP: {GenP}, GenQ: {GenQ}, GenPm: {GenPm}",app=app)
             # await asyncio.sleep(app.async_print_delay if app else 0)
 
-            GenBusNum = BSPSSEPyGenRow["NUMBER"].values[0]
-            GenID = BSPSSEPyGenRow["ID"].values[0]
+            gen_bus_num = gen_row["NUMBER"].values[0]
+            gen_id = gen_row["ID"].values[0]
 
             # Get the base MVA of the generator
-            ierr, gen_mva_base = psspy.macdat(GenBusNum, GenID, "MBASE")
+            ierr, gen_mva_base = psspy.macdat(gen_bus_num, gen_id, "MBASE")
 
             # Set the generator output real power to zero
-            ierr = psspy.change_gref(GenBusNum, GenID, 0 / gen_mva_base)
+            ierr = psspy.change_gref(gen_bus_num, gen_id, 0 / gen_mva_base)
 
             if ierr != 0:
                 bp(
-                    f"[ERROR] Error occured when setting generator: {GenName} output real power to zero. System will exit.",
+                    f"[ERROR] Error occured when setting generator: {gen_name} output real power to zero. System will exit.",
                     app=app,
                 )
                 await asyncio.sleep(app.async_print_delay if app else 0)
@@ -1258,16 +1262,16 @@ async def GenEnable(
 
             if debug_print:
                 bp(
-                    f"[DEBUG] Successfully set generator: {GenName} output real power to zero.",
+                    f"[DEBUG] Successfully set generator: {gen_name} output real power to zero.",
                     app=app,
                 )
                 await asyncio.sleep(app.async_print_delay if app else 0)
 
             # Set the generator output reactive power to zero (we set Vref to Vref channel value -- no change in Q of teh generator is needed then)
-            ierr = psspy.change_vref(GenBusNum, GenID, GenV)
+            ierr = psspy.change_vref(gen_bus_num, gen_id, gen_v)
             if ierr != 0:
                 bp(
-                    f"[ERROR] Error occured when setting generator: {GenName} output reactive power to zero. System will exit.",
+                    f"[ERROR] Error occured when setting generator: {gen_name} output reactive power to zero. System will exit.",
                     app=app,
                 )
                 await asyncio.sleep(app.async_print_delay if app else 0)
@@ -1278,30 +1282,28 @@ async def GenEnable(
 
             if debug_print:
                 bp(
-                    f"[DEBUG] Successfully set generator: {GenName} output reactive power to zero.",
+                    f"[DEBUG] Successfully set generator: {gen_name} output reactive power to zero.",
                     app=app,
                 )
                 await asyncio.sleep(app.async_print_delay if app else 0)
 
-            BSPSSEPyGenRow["BSPSSEPyStatus"] = 2
-            BSPSSEPyGenRow["BSPSSEPyLastAction"] = "Ramp-Up"
-            BSPSSEPyGenRow["BSPSSEPyLastActionTime"] = t
-            BSPSSEPyGenRow["BSPSSEPySimulationNotes"] = (
+            gen_row["BSPSSEPyStatus"] = 2
+            gen_row["BSPSSEPyLastAction"] = "Ramp-Up"
+            gen_row["BSPSSEPyLastActionTime"] = t
+            gen_row["BSPSSEPySimulationNotes"] = (
                 f"Successfully entered Ramping-up phase at t = {t}"
             )
 
             # Write the row back to the DataFrame
-            bspssepy_gen.loc[bspssepy_gen["MCNAME"] == GenName, :] = (
-                BSPSSEPyGenRow
-            )
+            bspssepy_gen.loc[bspssepy_gen["MCNAME"] == gen_name, :] = gen_row
 
-            bp(f"Generator '{GenName}' started Ramping-Up phase.", app=app)
+            bp(f"Generator '{gen_name}' started Ramping-Up phase.", app=app)
             await asyncio.sleep(app.async_print_delay if app else 0)
 
-            UpdatedActionStatus = 1
-            return UpdatedActionStatus
+            updated_action_status = 1
+            return updated_action_status
 
-    elif BSPSSEPyGenRow["BSPSSEPyStatus"].values[0] == 2:
+    elif gen_row["BSPSSEPyStatus"].values[0] == 2:
 
         # ▂▃▄▅▆▇█▓▒░ In-service (2 → 3) ░▒▓█▇▆▅▄▃▂
         # So the generator is Ramping-Up. Check if ramping-up should stop and start In-Service Phase of the generator.
@@ -1310,70 +1312,68 @@ async def GenEnable(
         # When the generator is at around that value, the ramp-up phase will be considered complete.
 
         # Check if the generator is supposed to use the explicit ramp-rate defiend in bspssepy_gen or this will be embedded in the generator model (i.e. IEEEG1 model for example has its own ramp-rate model inside it)
-        GenBusNum = BSPSSEPyGenRow["NUMBER"].values[0]
-        GenID = BSPSSEPyGenRow["ID"].values[0]
-        ierr, gen_mva_base = psspy.macdat(GenBusNum, GenID, "MBASE")
-        GenPOPF = BSPSSEPyGenRow["POPF"].values[0]
-        GenPOPFpu = GenPOPF / gen_mva_base
+        gen_bus_num = gen_row["NUMBER"].values[0]
+        gen_id = gen_row["ID"].values[0]
+        ierr, gen_mva_base = psspy.macdat(gen_bus_num, gen_id, "MBASE")
+        gen_p_opf = gen_row["POPF"].values[0]
+        gen_p_opf_pu = gen_p_opf / gen_mva_base
         # Check if the generator is at the target power level
-        GenP = (
-            await FetchChannelValue(
-                int(BSPSSEPyGenRow["PELECChannel"].values[0]),
+        gen_p = (
+            await fetch_channel_value(
+                int(gen_row["PELECChannel"].values[0]),
                 debug_print=debug_print,
                 app=app,
             )
             * gen_mva_base
         )
 
-        if GenPOPF == 0:
+        if gen_p_opf == 0:
             # Ramp-up is provided by the plan - exit the ramp-up phase!
             bp(
-                f"Generator: '{GenName}' ramp-up phase is skipped (provided by the plan). Setting the generator to In-service phase.",
+                f"Generator: '{gen_name}' ramp-up phase is skipped (provided by the plan). Setting the generator to In-service phase.",
                 app=app,
             )
             await asyncio.sleep(app.async_print_delay if app else 0)
 
-            BSPSSEPyGenRow["BSPSSEPyStatus"] = 3
-            BSPSSEPyGenRow["BSPSSEPyLastAction"] = "In-service"
-            BSPSSEPyGenRow["BSPSSEPyLastActionTime"] = t
-            BSPSSEPyGenRow["BSPSSEPySimulationNotes"] = (
+            gen_row["BSPSSEPyStatus"] = 3
+            gen_row["BSPSSEPyLastAction"] = "In-service"
+            gen_row["BSPSSEPyLastActionTime"] = t
+            gen_row["BSPSSEPySimulationNotes"] = (
                 f"Successfully entered In-service phase at t = {t}"
             )
 
             # Write the row back to the DataFrame
-            bspssepy_gen.loc[bspssepy_gen["MCNAME"] == GenName, :] = (
-                BSPSSEPyGenRow
-            )
+            bspssepy_gen.loc[bspssepy_gen["MCNAME"] == gen_name, :] = gen_row
 
-            bp(f"Generator '{GenName}' started In-service phase.", app=app)
+            bp(f"Generator '{gen_name}' started In-service phase.", app=app)
             await asyncio.sleep(app.async_print_delay if app else 0)
-            UpdatedActionStatus = 2
-            return UpdatedActionStatus
+            updated_action_status = 2
+            return updated_action_status
 
-        UseGenRampRate = BSPSSEPyGenRow["UseGenRampRate"].values[0]
+        use_gen_ramp_rate = gen_row["UseGenRampRate"].values[0]
         if (
-            UseGenRampRate
+            use_gen_ramp_rate
         ):  # will use the explicit ramp-rate defined in bspssepy_gen
             if debug_print:
                 bp(
-                    f"[DEBUG] Using explicit ramp-rate for generator: {GenName} - Ramp Rate: {BSPSSEPyGenRow['GenRampRate'].values[0]} MW/min",
+                    f"[DEBUG] Using explicit ramp-rate for generator: {gen_name} - Ramp Rate: {gen_row['GenRampRate'].values[0]} MW/min",
                     app=app,
                 )
                 await asyncio.sleep(app.async_print_delay if app else 0)
             # convert the ramp rate to MW/sec
-            GenRampRateSec = BSPSSEPyGenRow["GenRampRate"].values[0] / 60
+            gen_ramp_rate_per_sec = gen_row["GenRampRate"].values[0] / 60
 
-            if GenP > GenPOPF:
-                GenRampRateSec = -GenRampRateSec
+            if gen_p > gen_p_opf:
+                gen_ramp_rate_per_sec = -gen_ramp_rate_per_sec
 
             # we use psspy.increment_gref function to increase/adjust generator output power gradually.
             ierr = psspy.increment_gref(
-                GenBusNum, GenID, GenRampRateSec / gen_mva_base
+                gen_bus_num, gen_id, gen_ramp_rate_per_sec / gen_mva_base
             )  # Apply increment
 
             if ierr != 0:
                 bp(
-                    f"[ERROR] Updating setpoint for Generator {GenName} (ID = {GenID}) at Bus {GenBusNum}, ierr={ierr}",
+                    f"[ERROR] Updating setpoint for Generator {gen_name} (ID = {gen_id}) at Bus {gen_bus_num}, ierr={ierr}",
                     app=app,
                 )
                 await asyncio.sleep(app.async_print_delay if app else 0)
@@ -1399,16 +1399,16 @@ async def GenEnable(
         else:
             if debug_print:
                 bp(
-                    f"[DEBUG] Using generator model ramp-rate for generator: {GenName} - Target Power: {GenPOPF} MW",
+                    f"[DEBUG] Using generator model ramp-rate for generator: {gen_name} - Target Power: {gen_p_opf} MW",
                     app=app,
                 )
                 await asyncio.sleep(app.async_print_delay if app else 0)
             # we use psspy.increment_gref function to increase/adjust generator output power gradually.
             # Apply the target output power
-            ierr = psspy.increment_gref(GenBusNum, GenID, GenPOPFpu)
+            ierr = psspy.increment_gref(gen_bus_num, gen_id, gen_p_opf_pu)
             if ierr != 0:
                 bp(
-                    f"[ERROR] Updating setpoint for Generator {GenName} (ID = {GenID}) at Bus {GenBusNum}, ierr={ierr}",
+                    f"[ERROR] Updating setpoint for Generator {gen_name} (ID = {gen_id}) at Bus {gen_bus_num}, ierr={ierr}",
                     app=app,
                 )
                 await asyncio.sleep(app.async_print_delay if app else 0)
@@ -1416,40 +1416,40 @@ async def GenEnable(
                     raise Exception("Error in GenEnable function!")
                 else:
                     SystemExit(0)
-            UpdatedActionStatus = 2
-            return UpdatedActionStatus
+            updated_action_status = 2
+            return updated_action_status
 
         # # Check if the generator is at the target power level
         # GenP = FetchChannelValue(int(BSPSSEPyGenRow["PELECChannel"].values[0]), debug_print=debug_print) * gen_mva_base
 
         if debug_print:
             bp(
-                f"[DEBUG] Generator: {GenName} - Current Power: {GenP}, Target Power: {GenPOPF} MW",
+                f"[DEBUG] Generator: {gen_name} - Current Power: {gen_p}, Target Power: {gen_p_opf} MW",
                 app=app,
             )
             await asyncio.sleep(app.async_print_delay if app else 0)
 
         # If generator output power is within 1% of the target power, we consider the ramp-up phase to be complete, and we provide the generator with the reference value for Gref
-        if abs(GenPOPF - GenP) / GenPOPF <= 0.01:
-            if UseGenRampRate:
-                if abs(GenPOPF - GenP) > GenRampRateSec:
+        if abs(gen_p_opf - gen_p) / gen_p_opf <= 0.01:
+            if use_gen_ramp_rate:
+                if abs(gen_p_opf - gen_p) > gen_ramp_rate_per_sec:
                     if debug_print:
                         bp(
-                            f"[DEBUG] Generator: {GenName} is still ramping up. (Current Power: {GenP}, Target Power: {GenPOPF} MW)",
+                            f"[DEBUG] Generator: {gen_name} is still ramping up. (Current Power: {gen_p}, Target Power: {gen_p_opf} MW)",
                             app=app,
                         )
                         await asyncio.sleep(
                             app.async_print_delay if app else 0
                         )
-                    UpdatedActionStatus = 1
-                    return UpdatedActionStatus
+                    updated_action_status = 1
+                    return updated_action_status
 
             # Set the generator output real power to zero
-            ierr = psspy.change_gref(GenBusNum, GenID, GenPOPFpu)
+            ierr = psspy.change_gref(gen_bus_num, gen_id, gen_p_opf_pu)
 
             if ierr != 0:
                 bp(
-                    f"[ERROR] Error occured when setting generator: {GenName} output real power to GenPOPF: {GenPOPF}.System will exit.",
+                    f"[ERROR] Error occured when setting generator: {gen_name} output real power to GenPOPF: {gen_p_opf}.System will exit.",
                     app=app,
                 )
                 await asyncio.sleep(app.async_print_delay if app else 0)
@@ -1460,38 +1460,36 @@ async def GenEnable(
 
             if debug_print:
                 bp(
-                    f"[DEBUG] Successfully set generator: {GenName} output real power to GenPOPF: {GenPOPF}.",
+                    f"[DEBUG] Successfully set generator: {gen_name} output real power to GenPOPF: {gen_p_opf}.",
                     app=app,
                 )
                 await asyncio.sleep(app.async_print_delay if app else 0)
 
             bp(
-                f"Generator: '{GenName}' ramp-up phase completed. Setting the generator to In-service phase.",
+                f"Generator: '{gen_name}' ramp-up phase completed. Setting the generator to In-service phase.",
                 app=app,
             )
             await asyncio.sleep(app.async_print_delay if app else 0)
 
-            BSPSSEPyGenRow["BSPSSEPyStatus"] = 3
-            BSPSSEPyGenRow["BSPSSEPyLastAction"] = "In-service"
-            BSPSSEPyGenRow["BSPSSEPyLastActionTime"] = t
-            BSPSSEPyGenRow["BSPSSEPySimulationNotes"] = (
+            gen_row["BSPSSEPyStatus"] = 3
+            gen_row["BSPSSEPyLastAction"] = "In-service"
+            gen_row["BSPSSEPyLastActionTime"] = t
+            gen_row["BSPSSEPySimulationNotes"] = (
                 f"Successfully entered In-service phase at t = {t}"
             )
 
             # Write the row back to the DataFrame
-            bspssepy_gen.loc[bspssepy_gen["MCNAME"] == GenName, :] = (
-                BSPSSEPyGenRow
-            )
+            bspssepy_gen.loc[bspssepy_gen["MCNAME"] == gen_name, :] = gen_row
 
-            bp(f"Generator '{GenName}' started In-service phase.", app=app)
+            bp(f"Generator '{gen_name}' started In-service phase.", app=app)
             await asyncio.sleep(app.async_print_delay if app else 0)
-            UpdatedActionStatus = 2
-            return UpdatedActionStatus
+            updated_action_status = 2
+            return updated_action_status
 
         else:
             if debug_print:
                 bp(
-                    f"[DEBUG] Generator: {GenName} is still ramping up. (Current Power: {GenP}, Target Power: {GenPOPF} MW)",
+                    f"[DEBUG] Generator: {gen_name} is still ramping up. (Current Power: {gen_p}, Target Power: {gen_p_opf} MW)",
                     app=app,
                 )
                 await asyncio.sleep(app.async_print_delay if app else 0)
@@ -1505,13 +1503,13 @@ async def GenEnable(
                 GetGenInfo("QGEN")
             """
 
-            UpdatedActionStatus = 1
-            return UpdatedActionStatus
+            updated_action_status = 1
+            return updated_action_status
 
 
-async def GenDisable(
+async def gen_disable(
     t,
-    GenName,
+    gen_name,
     bspssepy_gen,
     bspssepy_bus,
     bspssepy_trn,
@@ -1551,13 +1549,13 @@ async def GenDisable(
         bp(
             f"[DEBUG] GenDisable called with inputs:\n"
             f"  t = {t}"
-            f"  GenName: {GenName}",  # f"  bspssepy_gen: {bspssepy_gen}"
+            f"  GenName: {gen_name}",  # f"  bspssepy_gen: {bspssepy_gen}"
             app=app,
         )
         await asyncio.sleep(app.async_print_delay if app else 0)
 
     # Fetch Generator details
-    GenRow = await get_gen_info(
+    gen_row = await get_gen_info(
         [
             "NAME",
             "MCNAME",
@@ -1568,125 +1566,125 @@ async def GenDisable(
             "ConnectionElementName",
             "BSPSSEPyStatus",
         ],
-        GenName=GenName,
+        gen_name=gen_name,
         bspssepy_gen=bspssepy_gen,
         debug_print=debug_print,
         app=app,
     )
 
-    if GenRow is None or len(GenRow) == 0:
-        bp(f"[ERROR] Generator not found for GenName = {GenName}", app=app)
+    if gen_row is None or len(gen_row) == 0:
+        bp(f"[ERROR] Generator not found for GenName = {gen_name}", app=app)
         await asyncio.sleep(app.async_print_delay if app else 0)
         return None
 
-    GenBusName = GenRow["NAME"].values[0]
-    GenID = GenRow["ID"].values[0]
-    GenBusNum = GenRow["NUMBER"].values[0]
-    GenStatus = GenRow["STATUS"].values[0]
-    GenBSPSSEPyStatus = GenRow["BSPSSEPyStatus"].values[0]
-    GenConType = GenRow["ConnectionType"].values[0]
-    GenConElementName = GenRow["ConnectionElementName"].values[0]
+    gen_bus_name = gen_row["NAME"].values[0]
+    gen_id = gen_row["ID"].values[0]
+    gen_bus_num = gen_row["NUMBER"].values[0]
+    gen_status = gen_row["STATUS"].values[0]
+    gen_bspssepy_status = gen_row["BSPSSEPyStatus"].values[0]
+    gen_con_type = gen_row["ConnectionType"].values[0]
+    gen_con_element_name = gen_row["ConnectionElementName"].values[0]
 
     if debug_print:
         bp(
-            f"[DEBUG] Determining the connection point element (TRN or BRN) for Gen {GenName}",
+            f"[DEBUG] Determining the connection point element (TRN or BRN) for Gen {gen_name}",
             app=app,
         )
         await asyncio.sleep(app.async_print_delay if app else 0)
-    if GenConType == "TRN":
+    if gen_con_type == "TRN":
         bp(
-            f"Checking the status of the transformer connecting {GenName} to the grid:{GenConType} - {GenConElementName}",
+            f"Checking the status of the transformer connecting {gen_name} to the grid:{gen_con_type} - {gen_con_element_name}",
             app=app,
         )
         await asyncio.sleep(app.async_print_delay if app else 0)
-        from .bspssepy_trn_funs import GetTrnInfo, TrnTrip
+        from .bspssepy_trn_funs import get_trn_info, trn_trip
 
-        ElementStatus = await GetTrnInfo(
+        element_status = await get_trn_info(
             "STATUS",
-            TrnName=GenConElementName,
+            trn_name=gen_con_element_name,
             debug_print=debug_print,
             app=app,
         )
-        if ElementStatus != 0:
+        if element_status != 0:
             if debug_print:
                 bp(
-                    f"[DEBUG] The two-winding transformer: {GenConElementName} status is {ElementStatus}",
+                    f"[DEBUG] The two-winding transformer: {gen_con_element_name} status is {element_status}",
                     app=app,
                 )
                 await asyncio.sleep(app.async_print_delay if app else 0)
 
             bp(
-                f"Tripping the transformer connecting {GenName} --> {GenConType} - {GenConElementName}",
+                f"Tripping the transformer connecting {gen_name} --> {gen_con_type} - {gen_con_element_name}",
                 app=app,
             )
             await asyncio.sleep(app.async_print_delay if app else 0)
 
-            await TrnTrip(
+            await trn_trip(
                 t=t,
                 bspssepy_trn=bspssepy_trn,
-                TrnName=GenConElementName,
+                trn_name=gen_con_element_name,
                 debug_print=debug_print,
                 app=app,
             )
 
             if debug_print:
                 bp(
-                    f"[DEBUG] Successfully tripped two-winding transformer: {GenConElementName}",
+                    f"[DEBUG] Successfully tripped two-winding transformer: {gen_con_element_name}",
                     app=app,
                 )
                 await asyncio.sleep(app.async_print_delay if app else 0)
         else:
             bp(
-                f"The transformer connecting the generator is tripped already ({GenName} --> {GenConType} - {GenConElementName})",
+                f"The transformer connecting the generator is tripped already ({gen_name} --> {gen_con_type} - {gen_con_element_name})",
                 app=app,
             )
             await asyncio.sleep(app.async_print_delay if app else 0)
 
-    elif GenRow["ConnectionType"].values[0] == "BRN":
+    elif gen_row["ConnectionType"].values[0] == "BRN":
         bp(
-            f"Checking the status of the branch connecting {GenName} to the grid:{GenConType} - {GenConElementName}",
+            f"Checking the status of the branch connecting {gen_name} to the grid:{gen_con_type} - {gen_con_element_name}",
             app=app,
         )
         await asyncio.sleep(app.async_print_delay if app else 0)
-        from .bspssepy_brn_funs import get_brn_info, BrnTrip
+        from .bspssepy_brn_funs import get_brn_info, brn_trip
 
-        ElementStatus = await get_brn_info(
+        element_status = await get_brn_info(
             "STATUS",
-            BranchName=GenConElementName,
+            brn_name=gen_con_element_name,
             debug_print=debug_print,
             app=app,
         )
-        if ElementStatus != 0:
+        if element_status != 0:
             if debug_print:
                 bp(
-                    f"[DEBUG] The branch: {GenConElementName} status is {ElementStatus}",
+                    f"[DEBUG] The branch: {gen_con_element_name} status is {element_status}",
                     app=app,
                 )
                 await asyncio.sleep(app.async_print_delay if app else 0)
 
             bp(
-                f"Tripping the branch connecting {GenName} --> {GenConType} - {GenConElementName}",
+                f"Tripping the branch connecting {gen_name} --> {gen_con_type} - {gen_con_element_name}",
                 app=app,
             )
             await asyncio.sleep(app.async_print_delay if app else 0)
 
-            await BrnTrip(
+            await brn_trip(
                 t=t,
                 bspssepy_brn=bspssepy_brn,
-                BranchName=GenConElementName,
+                brn_name=gen_con_element_name,
                 debug_print=debug_print,
                 app=app,
             )
 
             if debug_print:
                 bp(
-                    f"[DEBUG] Successfully tripped Branch: {GenConElementName}",
+                    f"[DEBUG] Successfully tripped Branch: {gen_con_element_name}",
                     app=app,
                 )
                 await asyncio.sleep(app.async_print_delay if app else 0)
         else:
             bp(
-                f"The branch connecting the generator is tripped already ({GenName} --> {GenConType} - {GenConElementName})",
+                f"The branch connecting the generator is tripped already ({gen_name} --> {gen_con_type} - {gen_con_element_name})",
                 app=app,
             )
             await asyncio.sleep(app.async_print_delay if app else 0)
@@ -1710,19 +1708,19 @@ async def GenDisable(
     #     bp(f"[INFO] Generator '{GenName} at Bus '{GenBusNum}' is already disabled.")
     #     return 0
 
-    from .bspssepy_bus_funs import ChangeBusType
+    from .bspssepy_bus_funs import change_bus_type
 
-    ierr = await ChangeBusType(
+    ierr = await change_bus_type(
         t=t,
-        NewBusType=3,
+        new_bus_type=3,
         bspssepy_bus=bspssepy_bus,
-        Bus=GenBusName,
+        bus=gen_bus_name,
         debug_print=debug_print,
         app=app,
     )
     if ierr != 0:
         bp(
-            f"[ERROR] Could not set the bus of Gen {GenName} (Bus {GenBusName}) to type 3 (swing), program will exit.",
+            f"[ERROR] Could not set the bus of Gen {gen_name} (Bus {gen_bus_name}) to type 3 (swing), program will exit.",
             app=app,
         )
         await asyncio.sleep(app.async_print_delay if app else 0)
@@ -1733,15 +1731,15 @@ async def GenDisable(
 
     # Updating bspssepy_gen to reflect that the generator is not connected
     if not (bspssepy_gen is None or bspssepy_gen.empty):
-        GenUpdatedStatus = await get_gen_info(
-            "STATUS", GenName=GenName, debug_print=debug_print, app=app
+        gen_updated_status = await get_gen_info(
+            "STATUS", gen_name=gen_name, debug_print=debug_print, app=app
         )
 
         # Update the bspssepy_gen DataFrame
         bspssepy_gen.loc[
-            (bspssepy_gen["MCNAME"].apply(str) == str(GenName))
-            & (bspssepy_gen["ID"].apply(str) == str(GenID))
-            & (bspssepy_gen["NUMBER"].apply(str) == str(GenBusNum)),
+            (bspssepy_gen["MCNAME"].apply(str) == str(gen_name))
+            & (bspssepy_gen["ID"].apply(str) == str(gen_id))
+            & (bspssepy_gen["NUMBER"].apply(str) == str(gen_bus_num)),
             [
                 "BSPSSEPyStatus",
                 "BSPSSEPyLastAction",
@@ -1754,15 +1752,15 @@ async def GenDisable(
             "Disable",
             t,
             "Generator Successfully Disabled.",
-            GenUpdatedStatus,
+            gen_updated_status,
         ]
 
 
-async def GenUpdate(
+async def gen_update(
     bspssepy_gen,
     t,
     action,
-    GenName,
+    gen_name,
     bspssepy_trn,
     bspssepy_brn,
     bspssepy_load,
@@ -1793,18 +1791,18 @@ async def GenUpdate(
         )
         await asyncio.sleep(app.async_print_delay if app else 0)
 
-    Values: dict = config.bspssepy_sequence.at[
+    values: dict = config.bspssepy_sequence.at[
         action["BSPSSEPySequenceRowIndex"], "Values"
     ]
     # bp(f"Values Type = {type(Values)}"
     #         f"Values Content:\n{Values}")
     # await asyncio.sleep(app.async_print_delay if app else 0)
 
-    GenPSetPoint = Values["P"] if "P" in Values else None
-    GenQSetPoint = Values["Q"] if "Q" in Values else None
+    gen_p_setpoint = values["P"] if "P" in values else None
+    gen_q_setpoint = values["Q"] if "Q" in values else None
 
     # get Gen row from bspssepy_gen
-    BSPSSEPyGenRow = bspssepy_gen.loc[
+    gen_row = bspssepy_gen.loc[
         bspssepy_gen["MCNAME"] == action["ElementIDValue"]
     ].copy()
 
@@ -1813,45 +1811,45 @@ async def GenUpdate(
     default_int, default_real, default_char = bspssepy_default_vars_fun()
 
     # Check if the generator is supposed to use the explicit ramp-rate defiend in bspssepy_gen or this will be embedded in the generator model (i.e. IEEEG1 model for example has its own ramp-rate model inside it)
-    GenBusNum = BSPSSEPyGenRow["NUMBER"].values[0]
-    GenID = BSPSSEPyGenRow["ID"].values[0]
-    ierr, gen_mva_base = psspy.macdat(GenBusNum, GenID, "MBASE")
+    gen_bus_num = gen_row["NUMBER"].values[0]
+    gen_id = gen_row["ID"].values[0]
+    ierr, gen_mva_base = psspy.macdat(gen_bus_num, gen_id, "MBASE")
     # GenTargetPower = BSPSSEPyGenRow["POPF"].values[0]
-    GenPSetPointpu = GenPSetPoint / gen_mva_base
+    gen_p_setpoint_pu = gen_p_setpoint / gen_mva_base
     # Check if the generator is at the target power level
-    GenP = (
-        await FetchChannelValue(
-            int(BSPSSEPyGenRow["PELECChannel"].values[0]),
+    gen_p = (
+        await fetch_channel_value(
+            int(gen_row["PELECChannel"].values[0]),
             debug_print=debug_print,
             app=app,
         )
         * gen_mva_base
     )
 
-    UseGenRampRate = BSPSSEPyGenRow["UseGenRampRate"].values[0]
+    use_gen_ramp_rate = gen_row["UseGenRampRate"].values[0]
     if (
-        UseGenRampRate
+        use_gen_ramp_rate
     ):  # will use the explicit ramp-rate defined in bspssepy_gen
         if debug_print:
             bp(
-                f"[DEBUG] Using explicit ramp-rate for generator: {GenName} - Ramp Rate: {BSPSSEPyGenRow['GenRampRate'].values[0]} MW/min",
+                f"[DEBUG] Using explicit ramp-rate for generator: {gen_name} - Ramp Rate: {gen_row['GenRampRate'].values[0]} MW/min",
                 app=app,
             )
             await asyncio.sleep(app.async_print_delay if app else 0)
         # convert the ramp rate to MW/sec
-        GenRampRateSec = BSPSSEPyGenRow["GenRampRate"].values[0] / 60
+        gen_ramp_rate_per_sec = gen_row["GenRampRate"].values[0] / 60
 
-        if GenP > GenPSetPoint:
-            GenRampRateSec = -GenRampRateSec
+        if gen_p > gen_p_setpoint:
+            gen_ramp_rate_per_sec = -gen_ramp_rate_per_sec
 
         # we use psspy.increment_gref function to increase/adjust generator output power gradually.
         ierr = psspy.increment_gref(
-            GenBusNum, GenID, GenRampRateSec / gen_mva_base
+            gen_bus_num, gen_id, gen_ramp_rate_per_sec / gen_mva_base
         )  # Apply increment
 
         if ierr != 0:
             bp(
-                f"[ERROR] Updating setpoint for Generator {GenName} (ID = {GenID}) at Bus {GenBusNum}, ierr={ierr}",
+                f"[ERROR] Updating setpoint for Generator {gen_name} (ID = {gen_id}) at Bus {gen_bus_num}, ierr={ierr}",
                 app=app,
             )
             await asyncio.sleep(app.async_print_delay if app else 0)
@@ -1877,16 +1875,16 @@ async def GenUpdate(
     else:
         if debug_print:
             bp(
-                f"[DEBUG] Using generator model ramp-rate for generator: {GenName} - Target Power: {GenPSetPoint} MW",
+                f"[DEBUG] Using generator model ramp-rate for generator: {gen_name} - Target Power: {gen_p_setpoint} MW",
                 app=app,
             )
             await asyncio.sleep(app.async_print_delay if app else 0)
         # we use psspy.increment_gref function to increase/adjust generator output power gradually.
         # Apply the target output power
-        ierr = psspy.change_gref(GenBusNum, GenID, GenPSetPointpu)
+        ierr = psspy.change_gref(gen_bus_num, gen_id, gen_p_setpoint_pu)
         if ierr != 0:
             bp(
-                f"[ERROR] Updating setpoint for Generator {GenName} (ID = {GenID}) at Bus {GenBusNum}, ierr={ierr}",
+                f"[ERROR] Updating setpoint for Generator {gen_name} (ID = {gen_id}) at Bus {gen_bus_num}, ierr={ierr}",
                 app=app,
             )
             await asyncio.sleep(app.async_print_delay if app else 0)
@@ -1894,37 +1892,37 @@ async def GenUpdate(
                 raise Exception("Error in GenUpdate function!")
             else:
                 SystemExit(0)
-        UpdatedActionStatus = 2
+        updated_action_status = 2
 
     # # Check if the generator is at the target power level
     # GenP = FetchChannelValue(int(BSPSSEPyGenRow["PELECChannel"].values[0]), debug_print=debug_print) * gen_mva_base
 
     if debug_print:
         bp(
-            f"[DEBUG] Generator: {GenName} - Current Power: {GenP}, Target Power: {GenPSetPoint} MW",
+            f"[DEBUG] Generator: {gen_name} - Current Power: {gen_p}, Target Power: {gen_p_setpoint} MW",
             app=app,
         )
         await asyncio.sleep(app.async_print_delay if app else 0)
 
     # If generator output power is within 1% of the target power, we consider the ramp-up phase to be complete, and we provide the generator with the reference value for Gref
-    if abs(GenPSetPoint - GenP) / GenPSetPoint <= 0.01:
-        if UseGenRampRate:
-            if abs(GenPSetPoint - GenP) > GenRampRateSec:
+    if abs(gen_p_setpoint - gen_p) / gen_p_setpoint <= 0.01:
+        if use_gen_ramp_rate:
+            if abs(gen_p_setpoint - gen_p) > gen_ramp_rate_per_sec:
                 if debug_print:
                     bp(
-                        f"[DEBUG] Generator: {GenName} is still ramping up. (Current Power: {GenP}, Target Power: {GenPSetPoint} MW)",
+                        f"[DEBUG] Generator: {gen_name} is still ramping up. (Current Power: {gen_p}, Target Power: {gen_p_setpoint} MW)",
                         app=app,
                     )
                     await asyncio.sleep(app.async_print_delay if app else 0)
-                UpdatedActionStatus = 1
-                return UpdatedActionStatus
+                updated_action_status = 1
+                return updated_action_status
 
         # Set the generator output real power to
-        ierr = psspy.change_gref(GenBusNum, GenID, GenPSetPointpu)
+        ierr = psspy.change_gref(gen_bus_num, gen_id, gen_p_setpoint_pu)
 
         if ierr != 0:
             bp(
-                f"[ERROR] Error occured when setting generator: {GenName} output real power to GenPSetPoint: {GenPSetPoint}.System will exit.",
+                f"[ERROR] Error occured when setting generator: {gen_name} output real power to GenPSetPoint: {gen_p_setpoint}.System will exit.",
                 app=app,
             )
             await asyncio.sleep(app.async_print_delay if app else 0)
@@ -1935,26 +1933,24 @@ async def GenUpdate(
 
         if debug_print:
             bp(
-                f"[DEBUG] Successfully set generator: {GenName} output real power to GenPSetPoint: {GenPSetPoint}.",
+                f"[DEBUG] Successfully set generator: {gen_name} output real power to GenPSetPoint: {gen_p_setpoint}.",
                 app=app,
             )
             await asyncio.sleep(app.async_print_delay if app else 0)
 
-        bp(f"Generator: '{GenName}' Set-point updated.", app=app)
+        bp(f"Generator: '{gen_name}' Set-point updated.", app=app)
         await asyncio.sleep(app.async_print_delay if app else 0)
 
-        BSPSSEPyGenRow["BSPSSEPyStatus"] = 3
-        BSPSSEPyGenRow["BSPSSEPyLastAction"] = "Update Set-point"
-        BSPSSEPyGenRow["BSPSSEPyLastActionTime"] = t
-        BSPSSEPyGenRow["BSPSSEPySimulationNotes"] = (
-            f"Updated Set-point to {GenPSetPoint}"
+        gen_row["BSPSSEPyStatus"] = 3
+        gen_row["BSPSSEPyLastAction"] = "Update Set-point"
+        gen_row["BSPSSEPyLastActionTime"] = t
+        gen_row["BSPSSEPySimulationNotes"] = (
+            f"Updated Set-point to {gen_p_setpoint}"
         )
 
         # Write the row back to the DataFrame
-        bspssepy_gen.loc[bspssepy_gen["MCNAME"] == GenName, :] = (
-            BSPSSEPyGenRow
-        )
-        UpdatedActionStatus = 2
+        bspssepy_gen.loc[bspssepy_gen["MCNAME"] == gen_name, :] = gen_row
+        updated_action_status = 2
 
         # else:
         #     if debug_print:
@@ -1971,4 +1967,4 @@ async def GenUpdate(
         """
 
         # UpdatedActionStatus = 1
-    return UpdatedActionStatus
+    return updated_action_status
