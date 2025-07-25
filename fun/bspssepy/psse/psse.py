@@ -36,7 +36,7 @@ class psse:
 
         pass
 
-    async def PSSEInit(self, config: config, debug_print=None, app=None):
+    async def psse_init(self, config: config, debug_print=None, app=None):
         """
         Initializes the PSSE simulation environment and loads necessary files.
 

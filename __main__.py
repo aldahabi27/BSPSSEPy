@@ -1,8 +1,6 @@
 """
 Entry point for BSPSSEPy Application
 Run this with: python -m bspssepy
-
-
 """
 
 from __future__ import annotations
@@ -12,7 +10,7 @@ import sys
 import pkg_resources
 
 
-REQUIRED_LIBRARIES = [
+required_libraries = [
     "psse3601",
     "psspy",
     "dyntools",
@@ -43,7 +41,7 @@ REQUIRED_LIBRARIES = [
 
 def ensure_dependencies():
     """Check if required libraries are installed, and install them if not."""
-    for lib in REQUIRED_LIBRARIES:
+    for lib in required_libraries:
         lib_name, _, lib_version = lib.partition("==")
         try:
             # Try to import the library

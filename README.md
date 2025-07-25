@@ -1,7 +1,7 @@
 # Welcome to the BSPSSEPy Program
 
 **Version:** 0.5-dev  
-**Last Updated:** 20 May 2025  
+**Last Updated:** 24 Jul 2025  
 **Developed by:** Ilyas Farhat  
 **Contact:** ilyas.farhat@outlook.com  
 **Copyright (c) 2024–2025**, Ilyas Farhat  
@@ -19,11 +19,17 @@ BSPSSEPy Application is a Black-Start simulation tool based on PSSE Power Simula
 
 ---
 
+## Goals in Version 0.6 [not started]
+
+- Generating new documentation following the new structure
+
+---
+
 ## ~~Changes~~ Goals in Version 0.5
 
 - Rewriting the whole application code following PEP 8 standard [in progress].
 - Grouping Measurements in one main function group for all elements [in progress].
-- Generating new documentation following the new structure [not started].
+- ~~Generating new documentation following the new structure~~ [not started -> moved to Version 0.6].
 - Extending the functionality to include BESS modeling and control [Completed !].
 - Fixing minor GUI glitches and upgrading the dependencies if needed [not started].
 

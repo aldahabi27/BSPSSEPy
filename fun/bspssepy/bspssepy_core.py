@@ -72,7 +72,7 @@ class BSPSSEPy:
 
         # Initialize PSSE module
         self.psse = psse()
-        await self.psse.PSSEInit(config=self.config, app=app)
+        await self.psse.psse_init(config=self.config, app=app)
 
         if debug_print:
             bp(

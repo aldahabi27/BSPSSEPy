@@ -10,35 +10,43 @@
 # ===========================================================
 
 import pandas as pd
-from fun.bspssepy.bspssepy_dict import *
-from fun.bspssepy.app.app_helper_funs import bp
 import asyncio
 import ast  # Used to safely parse dictionary strings
+from fun.bspssepy.bspssepy_dict import (
+    device_type_mapping,
+    action_type_mapping,
+    identification_type_mapping,
+)
+from fun.bspssepy.app.app_helper_funs import bp
 
 
-async def bspssepy_control_seq_table(CSVFile, debug_print=False, app=None):
+async def bspssepy_control_seq_table(csv_file, debug_print=False, app=None):
     """
-    load and process the BSPSSEPy Control Plan CSV file, enforcing `Values` as a dictionary.
+    load and process the BSPSSEPy Control Plan CSV file, enforcing `Values` as
+    a dictionary.
 
     Parameters:
-        CSVFile (Path): The path to the Control Plan CSV file.
-        debug_print (bool): Enables debug messages.
+        CSVFile (Path): The path to the Control Plan CSV file. debug_print
+        (bool): Enables debug messages.
 
     Returns:
-        pd.DataFrame: A structured DataFrame containing the processed control plan.
+        pd.DataFrame: A structured DataFrame containing the processed control
+        plan.
     """
 
     # Check if CSV file exists
-    if not CSVFile.exists():
+    if not csv_file.exists():
         bp(
-            "[ERROR] Control Plan CSV file missing. Generating a template file.",
+            "[ERROR] Control Plan CSV file missing. Generating a "
+            "template file.",
             app=app,
         )
         await asyncio.sleep(app.async_print_delay if app else 0)
 
         # Define the required columns
         columns = [
-            "UID",  # Unique ID for the action - best thing to set this as row index
+            # Unique ID for the action - best thing to set this as row index
+            "UID",
             "Device Type",
             "Identification Type",
             "Identification Value",
@@ -49,27 +57,29 @@ async def bspssepy_control_seq_table(CSVFile, debug_print=False, app=None):
         ]
 
         # Create an empty DataFrame and save as CSV template
-        pd.DataFrame(columns=columns).to_csv(CSVFile, index=False)
+        pd.DataFrame(columns=columns).to_csv(csv_file, index=False)
 
         if debug_print:
             bp(
-                f"[DEBUG] No control plan found. A template file has been generated at '{CSVFile}'.",
+                f"[DEBUG] No control plan found. A template file has "
+                f"been generated at '{csv_file}'.",
                 app=app,
             )
             await asyncio.sleep(app.async_print_delay if app else 0)
         raise SystemExit(
-            f"CSV file created: {CSVFile.name}. Please configure the control plan and restart."
+            f"CSV file created: {csv_file.name}. Please configure the "
+            f"control plan and restart."
         )
 
     # load CSV
     if debug_print:
-        bp(f"[DEBUG] Loading Control Plan CSV file: {CSVFile}", app=app)
+        bp(f"[DEBUG] Loading Control Plan CSV file: {csv_file}", app=app)
         await asyncio.sleep(app.async_print_delay if app else 0)
 
     # Read CSV with dtype as string (for consistency)
     # bspssepy_sequence = pd.read_csv(CSVFile, dtype=str)
     bspssepy_sequence = pd.read_csv(
-        CSVFile,
+        csv_file,
         dtype=str,
         keep_default_na=False,  # Prevent automatic NaN conversion
         na_values=[""],  # Ensure empty cells are treated as empty strings
@@ -86,14 +96,15 @@ async def bspssepy_control_seq_table(CSVFile, debug_print=False, app=None):
         "Values",
     }
 
-    missing_columns = required_columns - set(bspssepy_sequence.columns)
+    # missing_columns = required_columns - set(bspssepy_sequence.columns)
 
-    # if missing_columns:
-    #     raise ValueError(f"[ERROR] Missing columns in CSV: {missing_columns}")
+    # if missing_columns: raise ValueError(f"[ERROR] Missing columns in CSV:
+    #     {missing_columns}")
 
     if debug_print:
         bp(
-            f"[DEBUG] CSV file '{CSVFile.name}' loaded successfully. Processing entries...",
+            f"[DEBUG] CSV file '{csv_file.name}' loaded successfully. "
+            "Processing entries...",
             app=app,
         )
         await asyncio.sleep(app.async_print_delay if app else 0)
@@ -116,7 +127,8 @@ async def bspssepy_control_seq_table(CSVFile, debug_print=False, app=None):
                 pd.isna(row["Values"]) or str(row["Values"]).strip() == ""
             ):
                 bp(
-                    f"[WARNING] Action at row {index} is 'UPDATE' but has no 'Values' specified in Control Plan CSV file.",
+                    f"[WARNING] Action at row {index} is 'UPDATE' but "
+                    "has no 'Values' specified in Control Plan CSV file.",
                     app=app,
                 )
                 await asyncio.sleep(app.async_print_delay if app else 0)
@@ -127,7 +139,8 @@ async def bspssepy_control_seq_table(CSVFile, debug_print=False, app=None):
     if "UID" not in set(bspssepy_sequence.columns):
         bspssepy_sequence["UID"] = range(1, len(bspssepy_sequence) + 1)
 
-    # Process each row to standardize mappings and force `Values` to be a dictionary
+    # Process each row to standardize mappings and force `Values` to be a
+    # dictionary
     for index, row in bspssepy_sequence.iterrows():
         # Standardize column values (case insensitive mapping)
         row["Device Type"] = device_type_mapping.get(
@@ -144,23 +157,23 @@ async def bspssepy_control_seq_table(CSVFile, debug_print=False, app=None):
         )
 
         # Standardize 'Device Type'
-        deviceType = (
+        device_type = (
             str(row["Device Type"]).strip().lower()
         )  # Convert to lowercase
         row["Device Type"] = device_type_mapping.get(
-            deviceType, row["Device Type"]
+            device_type, row["Device Type"]
         )  # Default to original if not found
 
         # Identification Type (map to standard name, case insensitive)
-        identificationType = str(row["Identification Type"]).strip().lower()
+        id_type = str(row["Identification Type"]).strip().lower()
         row["Identification Type"] = identification_type_mapping.get(
-            identificationType, row["Identification Type"]
+            id_type, row["Identification Type"]
         )
 
         # Action Type (map to standard action, case insensitive)
-        actionType = str(row["Action Type"]).strip().lower()
+        action_type = str(row["Action Type"]).strip().lower()
         row["Action Type"] = action_type_mapping.get(
-            actionType, row["Action Type"]
+            action_type, row["Action Type"]
         )
 
         # Update the DataFrame row
@@ -168,30 +181,32 @@ async def bspssepy_control_seq_table(CSVFile, debug_print=False, app=None):
 
         # Ensure `Values` column is always a dictionary
         if "Values" in bspssepy_sequence.columns:
-            ValuesData = str(row["Values"]).strip()
-            if ValuesData:
+            values_data = str(row["Values"]).strip()
+            if values_data:
                 try:
                     row["Values"] = ast.literal_eval(
-                        ValuesData
+                        values_data
                     )  # Convert to dictionary
                     if not isinstance(row["Values"], dict):
                         raise ValueError(
-                            f"Invalid format: Values must be a dictionary. Found: {type(row['Values'])}"
+                            f"Invalid format: Values must be a dictionary. "
+                            f"Found: {type(row['Values'])}"
                         )
 
-                    ValuesDic: dict = row["Values"]
-                    if "Tied Action" in ValuesDic.keys():
-                        TiedActionUID = ValuesDic["Tied Action"]
-                        row["Tied Action"] = int(TiedActionUID)
+                    values_dic: dict = row["Values"]
+                    if "Tied Action" in values_dic.keys():
+                        tied_action_uid = values_dic["Tied Action"]
+                        row["Tied Action"] = int(tied_action_uid)
                         row["Action Time"] = bspssepy_sequence.loc[
                             bspssepy_sequence["UID"].astype(int)
-                            == TiedActionUID,
+                            == tied_action_uid,
                             "Action Time",
                         ].values[0]
 
                 except Exception as e:
                     bp(
-                        f"[ERROR] Failed to parse 'Values' column at row {index}: {ValuesData} - {e}",
+                        f"[ERROR] Failed to parse 'Values' column at row "
+                        f"{index}: {values_data} - {e}",
                         app=app,
                     )
                     await asyncio.sleep(app.async_print_delay if app else 0)

@@ -35,20 +35,60 @@ from pathlib import Path
 import datetime
 import pandas as pd
 from fun.bspssepy.app.app_helper_funs import bp
-from .load_config import load_config
-from .csv_control_plan_config import bspssepy_control_seq_table
+from fun.bspssepy.config.load_config import load_config
+from fun.bspssepy.config.csv_control_plan_config import (
+    bspssepy_control_seq_table,
+)
 
 
 class config:
-    def __init__(
-        self,
-        ConfigPath=None,
-        CaseName=None,
-        Ver=None,
-        debug_print=None,
-        app=None,
-    ):
-        pass
+    def __init__(self):
+        self.case_name = None
+        self.ver = None
+        self.num_of_buses = None
+        self.v_buses_to_monitor = None
+        self.freq_buses_to_monitor = None
+        self.v_flag = None
+        self.freq_flag = None
+        self.sim_time_step = None
+        self.sim_freq_filter = None
+        self.psse_max_iter_newton_raphson = None
+        self.ignore_cnv_file = None
+        self.ignore_snp_file = None
+        self.debug_print = None
+        self.bspssepy_hard_time_limit = None
+        self.bspssepy_hard_time_limit_flag = None
+        self.bspssepy_time_step = None
+        self.bspssepy_progress_print_time = None
+        self.current_channel_index = None
+        self.channels = None
+        self.gen_config = None
+        self.ibr_config = None
+        self.enforce_action_lock = None
+        self.control_sequence_as_is = None
+        self.bypass_tied_actions = None
+        self.account_for_action_exec_delays = None
+        self.enforce_freq_safety_margin = None
+        self.freq_safety_margin_min = None
+        self.freq_safety_margin_max = None
+        self.tie_actions_by_exec_time = None
+        self.delay_agc_after_action = None
+        self.main_folder = None
+        self.case_folder = None
+        self.logs_folder = None
+        self.sim_folder = None
+        self.sys_time = None
+        self.sys_formatted_time = None
+        self.sav_file = None
+        self.dyr_file = None
+        self.cnv_file = None
+        self.snp_file = None
+        self.log_file = None
+        self.conv_code_file = None
+        self.sim_output_file = None
+        self.csv_control_plan = None
+        self.all_devices_list = None
+        self.bspssepy_sequence = None
 
     async def config_init(
         self,
@@ -100,88 +140,97 @@ class config:
         # trigger automatic calculation from case data.
         self.num_of_buses = 0
 
-        # Default value for BusesToMonitor_Voltage
-        # This is a list of buses whose voltage is to be monitored during the simulation.
-        # The user can specify specific buses (e.g., [1, 2, 3]) or use a range notation to specify a range of buses.
-        # This can be used to focus on specific buses for voltage monitoring, which helps in monitoring system stability.
-        self.v_buses_to_monitor = (
-            []
-        )  # Default is an empty list. User can specify buses to monitor.
+        # Default value for BusesToMonitor_Voltage This is a list of buses
+        # whose voltage is to be monitored during the simulation. The user can
+        # specify specific buses (e.g., [1, 2, 3]) or use a range notation to
+        # specify a range of buses. This can be used to focus on specific
+        # buses for voltage monitoring, which helps in monitoring system
+        # stability.
+        # Default is an empty list. User can specify buses to monitor..
+        self.v_buses_to_monitor = []
 
-        # Default value for BusesToMonitor_Frequency
-        # This is a list of buses whose frequency is to be monitored during the simulation.
-        # Similar to voltage monitoring, this can be used to track frequency at specific buses of interest.
-        self.freq_buses_to_monitor = (
-            []
-        )  # Default is an empty list. User can specify buses to monitor for frequency.
+        # Default value for BusesToMonitor_Frequency This is a list of buses
+        # whose frequency is to be monitored during the simulation. Similar to
+        # voltage monitoring, this can be used to track frequency at specific
+        # buses of interest.
+        # Default is an empty list. User can specify buses to monitor for
+        # frequency.
+        self.freq_buses_to_monitor = []
 
-        # Default value for VoltageFlag
-        # This flag controls how the voltage monitoring works:
-        #   0: Use the buses specified in BusesToMonitor_Voltage.
-        #   1: Monitor all generator buses.
-        #   2: Monitor all transformer buses.
-        #   3: Monitor both generator and transformer buses.
-        #   4: Monitor all load buses.
-        #   5: Monitor all buses.
-        # This gives the user flexibility in selecting which buses to monitor for voltage.
-        self.v_flag = 0  # Default is 0 (use the buses specified in BusesToMonitor_Voltage).
+        # Default value for VoltageFlag This flag controls how the voltage
+        # monitoring works: 0: Use the buses specified in
+        #   BusesToMonitor_Voltage. 1: Monitor all generator buses. 2: Monitor
+        #   all transformer buses. 3: Monitor both generator and transformer
+        #   buses. 4: Monitor all load buses. 5: Monitor all buses. This gives
+        #   the user flexibility in selecting which buses to monitor for
+        #   voltage.
+        # Default is 0 (use the buses specified in BusesToMonitor_Voltage).
+        self.v_flag = 0
 
-        # Default value for FrequencyFlag
-        # This flag controls how the frequency monitoring works:
-        #   0: Use the buses specified in BusesToMonitor_Frequency.
-        #   1: Monitor all generator buses.
-        #   2: Monitor all transformer buses.
-        #   3: Monitor both generator and transformer buses.
-        #   4: Monitor all load buses.
-        #   5: Monitor all buses.
-        # This flag offers flexibility in monitoring frequency at various locations in the system.
-        self.freq_flag = 0  # Default is 0 (use the buses specified in BusesToMonitor_Frequency).
+        # Default value for FrequencyFlag This flag controls how the frequency
+        # monitoring works: 0: Use the buses specified in
+        #   BusesToMonitor_Frequency. 1: Monitor all generator buses. 2:
+        #   Monitor all transformer buses. 3: Monitor both generator and
+        #   transformer buses. 4: Monitor all load buses. 5: Monitor all
+        #   buses. This flag offers flexibility in monitoring frequency at
+        #   various locations in the system.
+        # Default is 0 (use the buses specified in BusesToMonitor_Frequency).
+        self.freq_flag = 0
 
-        # Default value for SimulationTimeStep
-        # This specifies the time step for the simulation in seconds. The default value is set to 1ms (0.001 seconds),
-        # which is typically used for high-resolution simulations in power systems.
-        # The user can change this to smaller or larger time steps depending on the simulation accuracy needed.
-        self.sim_time_step = 1e-3  # Default is 1ms (0.001 seconds).
+        # Default value for SimulationTimeStep This specifies the time step
+        # for the simulation in seconds. The default value is set to 1ms
+        # (0.001 seconds), which is typically used for high-resolution
+        # simulations in power systems. The user can change this to smaller or
+        # larger time steps depending on the simulation accuracy needed.
+        # Default is 1ms (0.001 seconds).
+        self.sim_time_step = 1e-3
 
-        # Default value for Simulationfreqfilter
-        # This specifies the frequency filtering threshold for the simulation in seconds. The default value is
-        # 4 times the SimulationTimeStep. This helps smooth out high-frequency noise during simulations.
-        self.sim_freq_filter = (
-            4 * self.sim_time_step
-        )  # Default is 4 times the SimulationTimeStep.
+        # Default value for Simulationfreqfilter This specifies the frequency
+        # filtering threshold for the simulation in seconds. The default value
+        # is 4 times the SimulationTimeStep. This helps smooth out
+        # high-frequency noise during simulations. Default is 4 times the
+        # SimulationTimeStep
+        self.sim_freq_filter = 4 * self.sim_time_step
 
-        # Default value for PSSEMaxIterationNewtonRaphson
-        # This specifies the maximum number of iterations allowed for the PSSE Newton-Raphson solver during power flow calculations.
-        # Increasing the number may improve convergence for complex systems, but it also increases computation time.
+        # Default value for PSSEMaxIterationNewtonRaphson This specifies the
+        # maximum number of iterations allowed for the PSSE Newton-Raphson
+        # solver during power flow calculations. Increasing the number may
+        # improve convergence for complex systems, but it also increases
+        # computation time.
         self.psse_max_iter_newton_raphson = 100  # Default is 100 iterations.
 
-        # Default value for IgnoreCNVFile
-        # If set to True, this forces regeneration of the CNV file, regardless of its existence.
-        # The CNV file is used for system network data and is generated during the power flow analysis.
-        self.ignore_cnv_file = False  # Default is False, meaning the CNV file will be reused if it exists.
+        # Default value for IgnoreCNVFile If set to True, this forces
+        # regeneration of the CNV file, regardless of its existence. The CNV
+        # file is used for system network data and is generated during the
+        # power flow analysis.
+        # Default is False, meaning the CNV file will be reused if it exists.
+        self.ignore_cnv_file = False
 
-        # Default value for IgnoreSNPFile
-        # If set to True, this forces regeneration of the SNP file, regardless of its existence.
-        # The SNP file is used for storing system snapshot data during simulations.
-        self.ignore_snp_file = False  # Default is False, meaning the SNP file will be reused if it exists.
+        # Default value for IgnoreSNPFile If set to True, this forces
+        # regeneration of the SNP file, regardless of its existence. The SNP
+        # file is used for storing system snapshot data during simulations.
+        # Default is False, meaning the SNP file will be reused if it exists.
+        self.ignore_snp_file = False
 
         # assign debug_print to self.debug_print
         self.debug_print = debug_print
 
-        # BSPSSEPy Hard Time Limit in minutes (ignored if BSPSSEPyHardTimeLimitFlag is False)
+        # BSPSSEPy Hard Time Limit in minutes (ignored if
+        # BSPSSEPyHardTimeLimitFlag is False)
         self.bspssepy_hard_time_limit = 1  # minutes
 
         # If true, BSPSSEPy will enforce a hard time limit on the simulation.
         self.bspssepy_hard_time_limit_flag = True
 
-        # BSPSSEPy Time Step in seconds
-        # This timestep controls the python functions execution rate.
-        # This controls AGC, control actions, and other time-dependent functions.
-        # Default is 1 second.
-        # Note: This is different from the simulation time step specified for dynamic modeling in PSSE.
+        # BSPSSEPy Time Step in seconds This timestep controls the python
+        # functions execution rate. This controls AGC, control actions, and
+        # other time-dependent functions. Default is 1 second. Note: This is
+        # different from the simulation time step specified for dynamic
+        # modeling in PSSE.
         self.bspssepy_time_step = 1  # seconds
 
-        # BSPSSEPyProgressPrintTime controls the frequency of progress print messages in minutes.
+        # BSPSSEPyProgressPrintTime controls the frequency of progress print
+        # messages in minutes.
         self.bspssepy_progress_print_time = 1  # minutes
 
         # Starting from Channel 1
@@ -192,14 +241,16 @@ class config:
             []
         )  # Stores channel-related information for monitoring
 
-        # Channels Format:
-        # Each entry in the `self.Channels` list will be a dictionary containing the following keys:
-        #     - "Channel Type": The type of channel (e.g., "Frequency", "Voltage", "Angle", "Current").
-        #     - "Bus Number": The bus number being monitored (if applicable).
-        #     - "Element Index": Index of the element being monitored (e.g., generator number, branch index).
-        #     - "Element Name": Name of the element being monitored (e.g., bus name, generator name).
-        #     - "Channel Index": The channel index assigned by PSSE.
-        #     - "Additional Info": Any other relevant details (e.g., phase, measurement units).
+        # Channels Format: Each entry in the `self.Channels` list will be a
+        # dictionary containing the following keys: - "Channel Type": The type
+        #     of channel (e.g., "Frequency", "Voltage", "Angle", "Current"). -
+        #     "Bus Number": The bus number being monitored (if applicable). -
+        #     "Element Index": Index of the element being monitored (e.g.,
+        #     generator number, branch index). - "Element Name": Name of the
+        #     element being monitored (e.g., bus name, generator name). -
+        #     "Channel Index": The channel index assigned by PSSE. -
+        #     "Additional Info": Any other relevant details (e.g., phase,
+        #     measurement units).
 
         # Example:
         # self.Channels = [
@@ -221,18 +272,22 @@ class config:
         #     }
         # ]
 
-        # Default value for GeneratorConfig
-        # This specifies the configuration of generators in the system. Each NBS generator (non-blackstart generator) should have the following attributes:
+        # Default value for GeneratorConfig This specifies the configuration
+        # of generators in the system. Each NBS generator (non-blackstart
+        # generator) should have the following attributes:
         #   - Generator Name: The unique name of the generator
         #   - Bus Name: Name of the associated bus
-        #   - Status: Initial status of the generator ("OFF", "Cranking", etc.)
+        #   - Status: Initial status of the generator ("OFF", "Cranking",
+        #     etc.)
         #   - load Name: Name of the corresponding cranking load (if any)
         #   - Cranking Time: Duration of the cranking phase
         #   - Ramp Rate: Ramp-up rate
         #   - Generator Type: "NBS" (Non-Black-Start) or "BS" (Black-Start)
-        #   - Cranking load Array: Power array [PL, QL, IP, IQ, YP, YQ, Power Factor]
+        #   - Cranking load Array: Power array [PL, QL, IP, IQ, YP, YQ, Power
+        #     Factor]
         #
-        #   For BS Generators, the status should be "ON", and the rest of the parameters are all ignored.
+        #   For BS Generators, the status should be "ON", and the rest of the
+        #   parameters are all ignored.
         self.gen_config = []  # Default is an empty list.
 
         self.ibr_config = []  # Default is an empty list.
@@ -242,29 +297,47 @@ class config:
         )
 
         self.control_sequence_as_is = False
-        # If True, the control sequence is executed as is without looking at action time.
-        # To set this to True, EnforceActionLock must be True (to excute actions sequentially).
-        # If True and EnforceActionLock is False, program will throw an error and exits.
-        # If False, the program will execute the control sequence based on the action time.
+        # If True, the control sequence is executed as is without looking at
+        # action time. To set this to True, EnforceActionLock must be True (to
+        # excute actions sequentially). If True and EnforceActionLock is
+        # False, program will throw an error and exits. If False, the program
+        # will execute the control sequence based on the action time.
 
-        self.bypass_tied_actions = True  # Flag to excute TiedActions with their main action. If an action is linked/tied to others, it will be executed with them.
+        # Flag to excute TiedActions with their main action. If an action is
+        # linked/tied to others, it will be executed with them.
+        self.bypass_tied_actions = True
 
-        self.account_for_action_exec_delays = True  # If True, the system will adjust action timings to compensate for unforeseen execution delays (e.g., AGC frequency regulation or prolonged generator startup) while maintaining the planned time gaps.
+        # If True, the system will adjust action timings to compensate for
+        # unforeseen execution delays (e.g., AGC frequency regulation or
+        # prolonged generator startup) while maintaining the planned time
+        # gaps.
+        self.account_for_action_exec_delays = True
 
-        self.enforce_freq_safety_margin = True  # If True, the program will enforce a safety margin on the frequency to avoid
-        # the frequency to go below FreqSafetyMarginMin or above FreqSafetyMarginMax.
+        # If True, the program will enforce a safety margin on the frequency
+        # to avoid
+        self.enforce_freq_safety_margin = True
+
+        # the frequency to go below FreqSafetyMarginMin or above
+        # FreqSafetyMarginMax.
         self.freq_safety_margin_min = 59.5  # Minimum frequency allowed in Hz
         self.freq_safety_margin_max = 60.5  # Maximum frequency allowed in Hz
 
-        # Note: If EnforceFrequencySafetyMargin is True, the system will wait until "AGC" regulate the frequency to be within limits before executing the next action.
-        #       If EnforceFrequencySafetyMargin is False, the system will execute the next action regardless of the frequency.
+        # Note: If EnforceFrequencySafetyMargin is True, the system will wait
+        #       until "AGC" regulate the frequency to be within limits before
+        #       executing the next action. If EnforceFrequencySafetyMargin is
+        #       False, the system will execute the next action regardless of
+        #       the frequency.
 
-        self.tie_actions_by_exec_time = False  # If True, actions will be tied by their execution time. If action is also "tied" by their "values" information, they will be part of the parent
+        # If True, actions will be tied by their execution time. If action is
+        # also "tied" by their "values" information, they will be part of the
+        # parent
+        self.tie_actions_by_exec_time = False
 
         self.delay_agc_after_action = (
             0  # seconds -- delay AGC after action execution
         )
-        # if ~= 0, AGC internal states will be reset everytime a new action is executed
+        # if ~= 0, AGC internal states will be reset everytime a new action is
+        # executed
 
         if debug_print:
             bp("[DEBUG] Default attributes initialized.", app=app)
@@ -292,7 +365,8 @@ class config:
                 )
             if debug_print:
                 bp(
-                    f"[DEBUG] ConfigPath derived from CaseName and Version: {config_path}",
+                    f"[DEBUG] ConfigPath derived from "
+                    f"CaseName and Version: {config_path}",
                     app=app,
                 )
                 await asyncio.sleep(app.async_print_delay if app else 0)
@@ -333,15 +407,18 @@ class config:
         else:
             if debug_print:
                 bp(
-                    "[DEBUG] ConfigPath not provided or file does not exist. Using default values.",
+                    "[DEBUG] ConfigPath not provided or file does not exist. "
+                    "Using default values.",
                     app=app,
                 )
                 await asyncio.sleep(app.async_print_delay if app else 0)
 
-        # at this stage, if debug_print is None, this indicates that neither ConfigFile or debug_print in the main code is set.
+        # at this stage, if debug_print is None, this indicates that neither
+        # ConfigFile or debug_print in the main code is set.
         if debug_print is not None:
             # Default value for debug_print
-            self.debug_print = debug_print  # Default is False, set to True for debugging purposes.
+            # Default is False, set to True for debugging purposes.
+            self.debug_print = debug_print
             # debug_print = False
         elif self.debug_print is None:
             self.debug_print = False
@@ -420,11 +497,10 @@ class config:
         self.bspssepy_sequence.insert(0, "End Time", 0)
 
         if self.tie_actions_by_exec_time:
-            """
-            If enabled, this logic ensures that actions occurring at the same "Action Time"
-            are grouped under the first action of that time as the reference.
-            The "Tied Action" column will store the UID of the first action with that time.
-            """
+            # If enabled, this logic ensures that actions occurring at the same
+            # "Action Time" are grouped under the first action of that time as
+            # the reference. The "Tied Action" column will store the UID of the
+            # first action with that time.
 
             # Dictionary to track the first UID for each "Action Time"
             action_time_to_uid = {}
@@ -433,7 +509,8 @@ class config:
                 action_time = self.bspssepy_sequence.at[idx, "Action Time"]
                 uid = self.bspssepy_sequence.at[idx, "UID"]
 
-                # If this Action Time was not seen before, set it as the reference UID
+                # If this Action Time was not seen before, set it as the
+                # reference UID
                 if action_time not in action_time_to_uid:
                     action_time_to_uid[action_time] = (
                         uid  # Store this UID as the main reference
@@ -472,104 +549,99 @@ class config:
             )  # Reset index after sorting
         else:
             # Create a new DataFrame to store the reordered sequence
-            ReorderedSequence = []
+            reordered_sequence = []
 
-            # Convert DataFrame to a list of dictionaries for easier manipulation
-            SequenceList = self.bspssepy_sequence.to_dict(orient="records")
+            # Convert DataFrame to a list of dictionaries for easier
+            # manipulation
+            sequence_list = self.bspssepy_sequence.to_dict(orient="records")
 
             # Track actions that have tied actions
-            ProcessedUIDs = set()
+            processed_uids = set()
 
-            for action in SequenceList:
+            for action in sequence_list:
                 uid = action["UID"]
-                TiedAction = action["Tied Action"]
+                tied_action = action["Tied Action"]
 
-                if TiedAction != -1:
+                if tied_action != -1:
                     continue
 
                 # Skip if already added (to avoid duplication)
-                if uid in ProcessedUIDs:
+                if uid in processed_uids:
                     continue
 
                 # Add the main action first
-                ReorderedSequence.append(action)
-                ProcessedUIDs.add(uid)
+                reordered_sequence.append(action)
+                processed_uids.add(uid)
 
-                # Find and move tied actions immediately after their parent action
-                TiedActions = [
+                # Find and move tied actions immediately after their parent
+                # action
+                tied_actions = [
                     a
-                    for a in SequenceList
+                    for a in sequence_list
                     if str(a.get("Tied Action", "")) == str(uid)
                 ]
-                for tied_action in TiedActions:
-                    ReorderedSequence.append(tied_action)
-                    ProcessedUIDs.add(tied_action["UID"])  # Mark as processed
+                for tied_action in tied_actions:
+                    reordered_sequence.append(tied_action)
+                    processed_uids.add(
+                        tied_action["UID"]
+                    )  # Mark as processed
 
             # Convert back to DataFrame
-            self.bspssepy_sequence = pd.DataFrame(ReorderedSequence)
+            self.bspssepy_sequence = pd.DataFrame(reordered_sequence)
 
         # bp(self.bspssepy_sequence)
         # await asyncio.sleep(app.async_print_delay if app else 0)
 
         # Track the control sequence number
-        ControlSequenceIndex = 1
+        control_sequence_index = 1
 
         # Iterate over the DataFrame and assign control sequence numbers
         for idx in self.bspssepy_sequence.index:
-            TiedAction = self.bspssepy_sequence.at[idx, "Tied Action"]
+            tied_action = self.bspssepy_sequence.at[idx, "Tied Action"]
 
             # If it's a main action (not tied to anything)
-            if TiedAction == -1:
+            if tied_action == -1:
                 self.bspssepy_sequence.at[idx, "Control Sequence"] = (
-                    ControlSequenceIndex
+                    control_sequence_index
                 )
 
-                # If BypassTiedActions is enabled, make tied actions share the same sequence number
+                # If BypassTiedActions is enabled, make tied actions share the
+                # same sequence number
                 if self.bypass_tied_actions:
-                    TiedActions = self.bspssepy_sequence[
+                    tied_actions = self.bspssepy_sequence[
                         self.bspssepy_sequence["Tied Action"]
                         == self.bspssepy_sequence.at[idx, "UID"]
                     ]
-                    for tied_idx in TiedActions.index:
+                    for tied_idx in tied_actions.index:
                         self.bspssepy_sequence.at[
                             tied_idx, "Control Sequence"
-                        ] = ControlSequenceIndex
+                        ] = control_sequence_index
 
                 # Increment sequence index for the next main action
-                ControlSequenceIndex += 1
+                control_sequence_index += 1
 
-            # If BypassTiedActions is False, assign a new control sequence to each tied action
+            # If BypassTiedActions is False, assign a new control sequence to
+            # each tied action
             elif not self.bypass_tied_actions:
                 self.bspssepy_sequence.at[idx, "Control Sequence"] = (
-                    ControlSequenceIndex
+                    control_sequence_index
                 )
-                ControlSequenceIndex += 1  # Increment sequence for each action (including tied ones)
+                # Increment sequence for each action (including tied ones)
+                control_sequence_index += 1
 
         # Debug print the final sequence
         if debug_print:
             bp(
-                "[DEBUG] Control sequence table updated with correct sequence numbers.",
+                "[DEBUG] Control sequence table updated with correct "
+                "sequence numbers.",
                 app=app,
             )
             bp(self.bspssepy_sequence)
             await asyncio.sleep(app.async_print_delay if app else 0)
 
-        # bp(self.bspssepy_sequence)
-        # await asyncio.sleep(app.async_print_delay if app else 0)
-
         if debug_print:
             bp("[DEBUG] Control sequence table loaded.", app=app)
             await asyncio.sleep(app.async_print_delay if app else 0)
-            # await asyncio.sleep(app.async_print_delay if app else 0)
-
-        # with pd.option_context(
-        #     "display.max_rows", None,  # Show all rows
-        #     "display.max_columns", None,  # Show all columns
-        #     "display.width", 0,  # Auto-adjust width for full visibility
-        #     "display.colheader_justify", "center",  # Center column headers for readability
-        # ):
-        #     bp(self.bspssepy_sequence.to_string(index=False))
-        #     await asyncio.sleep(app.async_print_delay if app else 0)
 
     async def _create_directory(self, directory_path, description, app=None):
         """
