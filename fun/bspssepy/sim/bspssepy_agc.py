@@ -73,19 +73,21 @@ async def agc_control(
     Perform Automatic Generation Control (AGC) using frequency deviation data.
 
     Parameters:
-        bspssepy_gen (pd.DataFrame): DataFrame containing generator data with the following columns:
+        bspssepy_gen (pd.DataFrame): DataFrame containing generator data with
+        the following columns:
             - "AGC Participation Factor"
             - "Bus Number"
             - "Generator Name"
-        bspssepy_agc (pd.DataFrame): DataFrame containing summary of AGC status per generator, mainly used
-        for GUI updates and tracking of actions.
-        Channels (list): List of channel mappings (from config.Channels).
-        OUTFile (str, optional): Path to the .out file for fallback frequency data retrieval.
-        UseOutFile (bool): If True, always uses the .out file for frequency retrieval.
-        TimeStep (float): Simulation time step in seconds.
-        AGCTimeConstant (float): Time constant for the first-order AGC adjustment in seconds.
-        Deadband (float): Deadband for AGC action in Hz.
-        debug_print (bool): If True, prints detailed debug information.
+        bspssepy_agc (pd.DataFrame): DataFrame containing summary of AGC
+        status per generator, mainly used for GUI updates and tracking of
+        actions. Channels (list): List of channel mappings (from
+        config.Channels). OUTFile (str, optional): Path to the .out file for
+        fallback frequency data retrieval. UseOutFile (bool): If True, always
+        uses the .out file for frequency retrieval. TimeStep (float):
+        Simulation time step in seconds. AGCTimeConstant (float): Time
+        constant for the first-order AGC adjustment in seconds. Deadband
+        (float): Deadband for AGC action in Hz. debug_print (bool): If True,
+        prints detailed debug information.
 
     Returns:
         pd.DataFrame: Updated DataFrame with adjusted generator setpoints.

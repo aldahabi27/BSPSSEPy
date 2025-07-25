@@ -93,44 +93,6 @@ async def bspssepy_meas_update(
         bspssepy_ibr.at[i_ibr_row, "QGEN"] = q_elec
         bspssepy_ibr.at[i_ibr_row, "curr_cap"] = soc
 
-    """    
-    Qelec = (
-        await FetchChannelValue(
-            41,
-            debug_print=False,
-            app=app,
-        )
-        * 50
-    )
-    WQCMND = (
-        await FetchChannelValue(
-            39,
-            debug_print=False,
-            app=app,
-        )
-        * 50
-    )
-    a = await GetGenInfo(
-        ["NAME", "NUMBER", "MCNAME", "STATUS", "WMOD", "PGEN", "QGEN"]
-    )
-
-    with pd.option_context(
-        "display.max_rows",
-        None,  # Show all rows
-        "display.max_columns",
-        None,  # Show all columns
-        "display.width",
-        0,  # Auto-adjust width for full visibility
-        "display.colheader_justify",
-        "center",  # Center column headers for readability
-    ):
-        bp(a.to_string(index=False))
-        await asyncio.sleep(app.async_print_delay if app else 0)
-
-    bp([Pelec, WPCMND, Qelec, WQCMND])
-    await asyncio.sleep(app.async_print_delay if app else 0)
-    """
-
     # Updating Generator Measurements
     for i_gen_row, gen_row in bspssepy_gen.iterrows():
         gen_bus_num = gen_row["NUMBER"]
