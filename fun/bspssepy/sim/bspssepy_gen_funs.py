@@ -742,6 +742,16 @@ async def extend_gen_data(
                     1  # Increament Channel index
                 )
 
+        bspssepy_gen.at[gen_row_index, "FChannel"] = next(
+            (
+                ch["Channel Index"]
+                for ch in sim_config.channels
+                if ch.get("Channel Type") == "Frequency"
+                and ch.get("Bus Number") == gen_row.get("NUMBER")
+            ),
+            None,
+        )
+
         # Check if generator is a black-start generator
         if gen_type.lower() in [
             "blackstart",

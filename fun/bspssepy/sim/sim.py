@@ -10,11 +10,13 @@
 #   Contact: ilyas.farhat@outlook.com
 # ===========================================================
 
+from email import errors
 import sys
 import os
 import pandas as pd
 import asyncio
 
+from fun.bspssepy.sim import bspssepy_agc
 import psspy
 import psse3601
 
@@ -59,7 +61,11 @@ from fun.bspssepy.bspssepy_dict import *
 from fun.bspssepy.bspssepy_funs_dict import *
 from fun.bspssepy.sim.bspssepy_agc import *
 from fun.bspssepy.sim.bspssepy_channels import get_avg_freq
-from fun.bspssepy.app.app_helper_funs import bp, progress_bar_update
+from fun.bspssepy.app.app_helper_funs import (
+    bp,
+    progress_bar_update,
+    update_bspssepy_app_gui,
+)
 
 
 class sim:
@@ -1007,8 +1013,14 @@ class sim:
             # await asyncio.sleep(app.async_print_delay if app else 0)
 
             # Update the Measurements for all elements
-
-            meas_updated, errors, old_freq_dev = await bspssepy_meas_update(
+            (
+                self.meas_updated,
+                self.errors,
+                old_freq_dev,
+                self.bspssepy_agc,
+                self.bspssepy_gen,
+                self.bspssepy_ibr,
+            ) = await bspssepy_meas_update(
                 bspssepy_ibr=self.bspssepy_ibr,
                 bspssepy_agc=self.bspssepy_agc,
                 bspssepy_brn=self.bspssepy_brn,
@@ -1022,6 +1034,30 @@ class sim:
                 app=app,
             )
 
+            ######################################
+            # import pandas as pd
+            # import os
+
+            # # Clear console (cross-platform)
+            # def clear_console():
+            #     os.system("cls" if os.name == "nt" else "clear")
+
+            # clear_console()
+
+            # with pd.option_context(
+            #     "display.max_rows",
+            #     None,  # Show all rows
+            #     "display.max_columns",
+            #     None,  # Show all columns
+            #     "display.width",
+            #     0,  # Auto-adjust width for full visibility
+            #     "display.colheader_justify",
+            #     "center",  # Center column headers for readability
+            # ):
+            #     bp(self.bspssepy_agc.to_string(index=False))
+            #     await asyncio.sleep(app.async_print_delay if app else 0)
+
+            ######################################
             if self.debug_print:
                 bp(
                     f"[DEBUG] Current Simulation Time: {current_sim_time}",
@@ -1533,7 +1569,7 @@ class sim:
                     bspssepy_agc=self.bspssepy_agc,
                     channels=self.config.channels,
                     time_step=self.config.bspssepy_time_step,
-                    agc_time_constant=60.0,
+                    agc_time_constant=30.0,
                     deadband=0.001,  # Hz and Hz/s for rate of dev
                     debug_print=self.debug_print,
                     use_out_file=False,
@@ -1564,6 +1600,8 @@ class sim:
                 cut_print_msgs_flag = True
                 self.end_sim_flag = True
 
+            if current_sim_time > 3480:
+                pass
             # Print message only every BSPSSEPyProgressPrintTime minutes
             if (
                 (

@@ -170,6 +170,7 @@ async def get_app_dfs(
     )
 
     agc_df = bspssepy_agc
+    agc_df["Alpha"] = agc_df["Alpha"].apply(lambda x: round(x, round_digit))
     agc_df["ΔPᴳ"] = agc_df["ΔPᴳ"].apply(lambda x: round(x, round_digit))
     agc_df["Δf (Hz)"] = agc_df["Δf (Hz)"].apply(
         lambda x: round(x, round_digit)
@@ -178,70 +179,72 @@ async def get_app_dfs(
         lambda x: round(x, round_digit)
     )
 
+    # this code was moved to bspssepy_meas_update.py
+
     # Fetch all required channel values asynchronously
-    (
-        pelec_values,
-        pmech_values,
-        qelec_values,
-        gref_values,
-        vref_values,
-    ) = await fetch_gen_ch_val(bspssepy_gen, debug_print, app)
-    # Fetch the MVA base for each generator
-    mva_base_list = []
-    for idx, gen_row in bspssepy_gen.iterrows():
-        gen_id = gen_row["ID"]
-        bus_num = gen_row["NUMBER"]
+    # (
+    #     pelec_values,
+    #     pmech_values,
+    #     qelec_values,
+    #     gref_values,
+    #     vref_values,
+    # ) = await fetch_gen_ch_val(bspssepy_gen, debug_print, app)
+    # # Fetch the MVA base for each generator
+    # mva_base_list = []
+    # for idx, gen_row in bspssepy_gen.iterrows():
+    #     gen_id = gen_row["ID"]
+    #     bus_num = gen_row["NUMBER"]
 
-        # Get the base MVA value
-        ierr, gen_mva_base = psspy.macdat(bus_num, gen_id, "MBASE")
+    #     # Get the base MVA value
+    #     ierr, gen_mva_base = psspy.macdat(bus_num, gen_id, "MBASE")
 
-        if ierr == 0:
-            if debug_print:
-                bp(
-                    f"[DEBUG] Retrieved MVA Base for Generator at Bus {bus_num}"
-                    f", ID {gen_id}: {gen_mva_base} MVA",
-                    app=app,
-                )
-                await asyncio.sleep(app.async_print_delay if app else 0)
-        else:
-            bp(
-                f"[ERROR] Could not retrieve MVA Base for Generator at Bus"
-                f"{bus_num}, ID {gen_id}. Error code: {ierr}",
-                app=app,
-            )
-            await asyncio.sleep(app.async_print_delay if app else 0)
+    #     if ierr == 0:
+    #         if debug_print:
+    #             bp(
+    #                 f"[DEBUG] Retrieved MVA Base for Generator at Bus {bus_num}"
+    #                 f", ID {gen_id}: {gen_mva_base} MVA",
+    #                 app=app,
+    #             )
+    #             await asyncio.sleep(app.async_print_delay if app else 0)
+    #     else:
+    #         bp(
+    #             f"[ERROR] Could not retrieve MVA Base for Generator at Bus"
+    #             f"{bus_num}, ID {gen_id}. Error code: {ierr}",
+    #             app=app,
+    #         )
+    #         await asyncio.sleep(app.async_print_delay if app else 0)
 
-        mva_base_list.append(gen_mva_base)
+    #     mva_base_list.append(gen_mva_base)
 
-    # System_MVA_BASE = psspy.get_sbase()
-    # Convert PU to MW/MVar for each generator
-    pelec_mw = [
-        round(pe * mb, round_digit)
-        for pe, mb in zip(pelec_values, [100] * len(pelec_values))
-    ]
-    pelec_pu = [round(pe, round_digit) for pe in pelec_values]
+    # # System_MVA_BASE = psspy.get_sbase()
+    # # Convert PU to MW/MVar for each generator
+    # pelec_mw = [
+    #     round(pe * mb, round_digit)
+    #     for pe, mb in zip(pelec_values, [100] * len(pelec_values))
+    # ]
+    # pelec_pu = [round(pe, round_digit) for pe in pelec_values]
 
-    pmech_mw = [
-        round(pm * mb, round_digit)
-        for pm, mb in zip(pmech_values, mva_base_list)
-    ]
-    pmech_pu = [round(pm, round_digit) for pm in pmech_values]
+    # pmech_mw = [
+    #     round(pm * mb, round_digit)
+    #     for pm, mb in zip(pmech_values, mva_base_list)
+    # ]
+    # pmech_pu = [round(pm, round_digit) for pm in pmech_values]
 
-    qelec_mvar = [
-        round(qe * mb, round_digit)
-        for qe, mb in zip(qelec_values, [100] * len(pelec_values))
-    ]
-    qelec_pu = [round(qe, round_digit) for qe in qelec_values]
+    # qelec_mvar = [
+    #     round(qe * mb, round_digit)
+    #     for qe, mb in zip(qelec_values, [100] * len(pelec_values))
+    # ]
+    # qelec_pu = [round(qe, round_digit) for qe in qelec_values]
 
-    # Handle GREF scaling (assuming it follows the same rule as power)
-    gref_mw = [
-        round(gr * mb, round_digit)
-        for gr, mb in zip(gref_values, mva_base_list)
-    ]
-    gref_pu = [round(gr, round_digit) for gr in gref_values]
+    # # Handle GREF scaling (assuming it follows the same rule as power)
+    # gref_mw = [
+    #     round(gr * mb, round_digit)
+    #     for gr, mb in zip(gref_values, mva_base_list)
+    # ]
+    # gref_pu = [round(gr, round_digit) for gr in gref_values]
 
-    # Voltage remains in PU
-    vref_pu = [round(vr, round_digit) for vr in vref_values]
+    # # Voltage remains in PU
+    # vref_pu = [round(vr, round_digit) for vr in vref_values]
 
     # Create the DataFrame with formatted values
     GenDF = pd.DataFrame(
@@ -249,23 +252,22 @@ async def get_app_dfs(
             "Gen Name": bspssepy_gen["MCNAME"],
             "Bus #": bspssepy_gen["NUMBER"],
             "Bus Name": bspssepy_gen["NAME"],
-            "Δf": bspssepy_agc["Δf (Hz)"][
-                :-1
-            ],  # Assuming already in correct format
-            "Pᴱ MW (p.u.)": [
-                f"{mw} MW ({pu} p.u.)" for mw, pu in zip(pelec_mw, pelec_pu)
-            ],
-            "Pᴹ MW (p.u.)": [
-                f"{mw} MW ({pu} p.u.)" for mw, pu in zip(pmech_mw, pmech_pu)
-            ],
-            "Qᴱ MVar (p.u.)": [
-                f"{mvar} MVar ({pu} p.u.)"
-                for mvar, pu in zip(qelec_mvar, qelec_pu)
-            ],
-            "Gᴿᴱꟳ MW (p.u.)": [
-                f"{mw} MW ({pu} p.u.)" for mw, pu in zip(gref_mw, gref_pu)
-            ],
-            "Vᴿᴱꟳ (p.u.)": vref_pu,  # Voltage remains in PU
+            "Δf": bspssepy_gen["freq"].apply(lambda x: round(x, round_digit)),
+            "Pᴱ MW": bspssepy_gen["p_elec"].apply(
+                lambda x: round(x, round_digit)
+            ),
+            "Pᴹ MW": bspssepy_gen["p_mech"].apply(
+                lambda x: round(x, round_digit)
+            ),
+            "Qᴱ MVar": bspssepy_gen["q_elec"].apply(
+                lambda x: round(x, round_digit)
+            ),
+            "Gᴿᴱꟳ MW": bspssepy_gen["g_ref"].apply(
+                lambda x: round(x, round_digit)
+            ),
+            "Vᴿᴱꟳ (p.u.)": bspssepy_gen["v_ref"].apply(
+                lambda x: round(x, round_digit)
+            ),
         }
     )
 
@@ -394,10 +396,10 @@ async def update_bspssepy_app_gui(
         app.ibr_table.loading = True
         await asyncio.sleep(0)
 
-    df = await get_app_dfs(app=app)
+    dfs = await get_app_dfs(app=app)
 
     # Apply only the changed values instead of resetting everything
-    update_gui_tables(app, df)
+    update_gui_tables(app, dfs)
     # app.refresh()
     # await asyncio.sleep(0)
 
@@ -777,7 +779,7 @@ async def bspssepy_app_reset_tables(
     bspssepy_load = app.bspssepy.sim.bspssepy_load
     bspssepy_trn = app.bspssepy.sim.bspssepy_trn
     bspssepy_gen = app.bspssepy.sim.bspssepy_gen
-    bspssepy_agc_df = app.bspssepy.sim.bspssepy_agc
+    bspssepy_agc = app.bspssepy.sim.bspssepy_agc
     bspssepy_ibr = app.bspssepy.sim.bspssepy_ibr
 
     # Debugging information
@@ -826,7 +828,7 @@ async def bspssepy_app_reset_tables(
             }
         )
 
-        agc_df = bspssepy_agc_df
+        agc_df = bspssepy_agc
 
         # # Fetch all required channel values asynchronously
         pelec_values, pmech_values, qelec_values, gref_values, vref_values = (
@@ -845,7 +847,7 @@ async def bspssepy_app_reset_tables(
                 "Gen Name": bspssepy_gen["MCNAME"],
                 "Bus #": bspssepy_gen["NUMBER"],
                 "Bus Name": bspssepy_gen["NAME"],
-                "Δf": bspssepy_agc_df["Δf (Hz)"][:-1],
+                "Δf": bspssepy_gen["freq"],
                 "Pᴱ": pelec_values,
                 "Pᴹ": pmech_values,
                 "Qᴱ": qelec_values,

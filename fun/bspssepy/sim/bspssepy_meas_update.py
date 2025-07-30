@@ -1,10 +1,12 @@
 """_summary_"""
 
 import pandas as pd
+import asyncio
 
 # pyright: reportMissingImports=false
 import psspy  # noqa: F401 pylint: disable=import-error
 from .bspssepy_channels import fetch_channel_value
+from fun.bspssepy.app.app_helper_funs import bp
 
 
 async def bspssepy_meas_update(
@@ -227,4 +229,26 @@ async def bspssepy_meas_update(
         avg_freq_rate
     )
 
-    return meas_updated, errors, old_freq_dev
+    # import pandas as pd
+
+    # with pd.option_context(
+    #     "display.max_rows",
+    #     None,  # Show all rows
+    #     "display.max_columns",
+    #     None,  # Show all columns
+    #     "display.width",
+    #     0,  # Auto-adjust width for full visibility
+    #     "display.colheader_justify",
+    #     "center",  # Center column headers for readability
+    # ):
+    #     bp(bspssepy_agc.to_string(index=False))
+    #     await asyncio.sleep(app.async_print_delay if app else 0)
+
+    return (
+        meas_updated,
+        errors,
+        old_freq_dev,
+        bspssepy_agc,
+        bspssepy_gen,
+        bspssepy_ibr,
+    )
