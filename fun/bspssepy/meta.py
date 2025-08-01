@@ -4,7 +4,7 @@
 from datetime import datetime
 
 ver_num = "0.5"
-build_num = 10
+build_num = 15
 
 
 def current_timestamp():
