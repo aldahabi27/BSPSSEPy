@@ -1,4 +1,4 @@
-% This code is to plot the simulation output from the selected csv file
+This code is to plot the simulation output from the selected csv file
 % (exported by bspssepy).
 %
 %
@@ -17,6 +17,9 @@ csv_file = "I:\Work\Research\Control & Power Systems\JWSP Research\HONI Project\
 csv_file = "I:\Work\Research\Control & Power Systems\JWSP Research\HONI Project\PSSE\BSPSSEPy\case\IEEE9\Simulations\IEEE9_Ver19_131612_220725.csv";
 csv_file = "I:\Work\Research\Control & Power Systems\JWSP Research\HONI Project\PSSE\BSPSSEPy\case\IEEE9\Simulations\IEEE9_Ver19_141514_220725.csv";
 csv_file = "I:\Work\Research\Control & Power Systems\JWSP Research\HONI Project\PSSE\BSPSSEPy\case\IEEE9\Simulations\IEEE9_Ver19_164350_220725.csv";
+
+
+
 opts = delimitedTextImportOptions('DataLines',3,VariableNamesLine=2,VariableNamingRule='preserve');
 bspssepy_data = readtable(csv_file ,opts,"ReadVariableNames", true);
 
