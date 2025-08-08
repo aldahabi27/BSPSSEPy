@@ -1,7 +1,7 @@
 # Welcome to the BSPSSEPy Program
 
-**Version:** 0.5  
-**Last Updated:** 01 Aug 2025  
+**Version:** 0.6
+**Last Updated:** 10 Aug 2025
 **Developed by:** Ilyas Farhat  
 **Contact:** ilyas.farhat@outlook.com  
 **Copyright (c) 2024–2025**, Ilyas Farhat  
@@ -13,7 +13,7 @@ _All rights reserved._
 
 BSPSSEPy Application is a Black-Start simulation tool based on PSSE Power Simulator, that uses the Python PSSE Library to run these simulations. BSPSSEPy extends the dynamic simulation capabilities of PSSE to model:
 
-- Dynamic Black-Start behavior (phases) of non-black-start generators. It models their cranking phase, ramp-up phase (if the generator governor model does not model ramping limits.
+- Dynamic Black-Start behavior (phases) of non-black-start generators. It models their cranking phase, ramp-up phase (if the generator governor model does not model ramping limits).
 - Can execute a black-start plan and apply AGC control during the restoration process.
 - Dynamically tracks the elements in the network and monitor voltages and frequencies.
 
@@ -21,10 +21,9 @@ BSPSSEPy Application is a Black-Start simulation tool based on PSSE Power Simula
 
 ## Goals in Version 0.6 [in progress]
 
-- Generating new documentation following the new structure of the program [priority]
-- Continue migrating all measurements updaates to the new function.
-- Continue rewriting application code following PEP8 standard.
--
+- Generating new documentation following the new structure of the program [__priority__]
+- Continue migrating all measurements updates to the new function [_paused_].
+- Continue rewriting application code following PEP8 standard [_paused_].
 
 ---
 
