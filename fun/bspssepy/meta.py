@@ -3,8 +3,8 @@
 # bspssepy/meta.py
 from datetime import datetime
 
-ver_num = "0.5"
-build_num = 15
+ver_num = "0.6"
+build_num = 1
 
 
 def current_timestamp():

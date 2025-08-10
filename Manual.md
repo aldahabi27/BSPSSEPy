@@ -1,6 +1,6 @@
 # Welcome to the BSPSSEPy Program
 
-> **Version:** 0.6  
+**Version:** 0.6  
 **Last Updated:** 10 Aug 2025  
 **Developed by:** Ilyas Farhat  
 **Contact:** [ilyas.farhat@outlook.com](mailto:ilyas.farhat@outlook.com)  
@@ -18,6 +18,7 @@ BSPSSEPy is a Black-Start simulation tool built on the PSSE Power Simulator, usi
 * Continuously track network elements and monitor voltage and frequency stability.
 
 ---
+<div style="page-break-before: always; break-before: page;"></div>
 
 ## First-Time Setup & Download
 
@@ -50,6 +51,7 @@ BSPSSEPy is a Black-Start simulation tool built on the PSSE Power Simulator, usi
 > [Microsoft Store Link – Windows Terminal](https://apps.microsoft.com/detail/9n0dx20hk701)
    
 ---
+<div style="page-break-before: always; break-before: page;"></div>
 
 ## Prerequisites
 
@@ -86,6 +88,7 @@ them. However, ensure you have these core Python modules preinstalled
 16. `textual`
 
 ---
+<div style="page-break-before: always; break-before: page;"></div>
 
 ## First Run – Installing Libraries
 
@@ -150,6 +153,7 @@ python .\__main__.py
   </p> 
 
 ---
+<div style="page-break-before: always; break-before: page;"></div>
 
 ## Running a Simulation
 
@@ -169,6 +173,7 @@ case/IEEE9/
 ```
 
 ---
+<div style="page-break-before: always; break-before: page;"></div>
 
 ### Step 1: Prepare Power System Case Files
 
@@ -195,7 +200,7 @@ Prepare a `.sav` power system case file and a `.dyr` dynamic data file in PSSE. 
 Optional but recommended: prepare an **SLD file** in PSSE for better visualization during analysis.
 
 ---
-
+<div style="page-break-before: always; break-before: page;"></div>
 
 ### Step 2: BSPSSEPy Config File (drop‑in template)
 
@@ -439,6 +444,7 @@ delay_agc_after_action = 30
 ```
 
 ---
+<div style="page-break-before: always; break-before: page;"></div>
 
 ### Step 3: PSSE Dynamic Conversion File Example
 
@@ -470,6 +476,7 @@ psspy.tysl(0)  # Repeats to ensure full update after conversion.
 ```
 
 ---
+<div style="page-break-before: always; break-before: page;"></div>
 
 ### Step 4: BSPSSEPy CSV Plan
 
@@ -521,3 +528,548 @@ IEEE9_Ver1.csv
 * **Action Status:** Reserved for runtime flags or internal state tracking
   (keep it 0 for Black-Start Simulations).
 * **Values:** Dictionary of parameters to change (e.g., `{'P': 8}` to set generator active power to 8 MW).
+---
+<div style="page-break-before: always; break-before: page;"></div>
+
+## IEEE9 Bus System Complete Example – Full Case Study (2 Versions)
+
+**Version 1 (Ver1) – No BESS**
+
+To run a full Black-Start simulation for the IEEE 9-Bus System in BSPSSEPy, you will need the following six files:
+
+1. IEEE9\_Ver1.sav  – PSSE saved case file.
+2. IEEE9\_Ver1.dyr  – Dynamic data file.
+3. IEEE9\_Ver1.sld  – PSSE one-line diagram file (not used in BSPSSEPy, but
+   good to have it).
+4. IEEE9\_Ver1.csv  – Simulation control plan.
+5. IEEE9\_Ver1\_Config.py – Configuration script.
+6. IEEE9\_Ver1\_Conv.py   – Converter or helper script.
+
+### Preparing PSSE Files (sav, dyr, sld) for the Case Study (Ver1)
+
+We will follow a step-by-step approach to build the IEEE 9-Bus case in PSSE from scratch:
+
+<div style="page-break-before: always; break-before: page;"></div>
+
+**Step 1 — Launch PSSE**  
+Open the PSSE application. You should see the default start page, showing the Study Project Tasks pane with the option to create a new study project.
+
+<p align="center"> <a href="doc/images/ieee9_ver1/00 PSSE - IEEE9_Ver1.png"> <img src="doc/images/ieee9_ver1/00 PSSE - IEEE9_Ver1.png" alt="PSSE start page after launch" width="800"> </a> </p>
+
+---
+<div style="page-break-before: always; break-before: page;"></div>
+
+**Step 2 — Create a New Case**  
+Click on the **New** icon in the toolbar (highlighted in red in the screenshot) to start creating a new PSSE case.
+
+<p align="center">  
+  <a href="doc/images/ieee9_ver1/01 PSSE - IEEE9_Ver1.png">  
+    <img src="doc/images/ieee9_ver1/01 PSSE - IEEE9_Ver1.png" alt="Clicking New to create a PSSE case" width="800">  
+  </a>  
+</p>
+
+---
+<div style="page-break-before: always; break-before: page;"></div>
+
+**Step 3 — Select Case Data**  
+In the *New* dialog, choose **Case Data** from the list of options, then click **OK** to proceed.
+
+<p align="center">  
+  <a href="doc/images/ieee9_ver1/02 PSSE - IEEE9_Ver1.png">  
+    <img src="doc/images/ieee9_ver1/02 PSSE - IEEE9_Ver1.png" alt="Select Case Data in PSSE new case dialog" width="800">  
+  </a>  
+</p>
+
+---
+<div style="page-break-before: always; break-before: page;"></div>
+
+**Step 4 — Set Base Parameters**  
+In the *Build New Case* dialog, set the **Base Frequency** to `60` Hz and confirm the **Base MVA** value (default `100.00`). Leave other fields at their default settings, then click **OK** to create the new case.
+
+<p align="center">  
+  <a href="doc/images/ieee9_ver1/03 PSSE - IEEE9_Ver1.png">  
+    <img src="doc/images/ieee9_ver1/03 PSSE - IEEE9_Ver1.png" alt="Set base parameters for new PSSE case" width="800">  
+  </a>  
+</p>
+
+---
+<div style="page-break-before: always; break-before: page;"></div>
+
+**Step 5 — Empty Case Ready**
+After setting the base parameters, PSSE will open a new case window. This case is currently empty, ready for you to start building your network model.
+
+<p align="center">  
+  <a href="doc/images/ieee9_ver1/04 PSSE - IEEE9_Ver1.png">  
+    <img src="doc/images/ieee9_ver1/04 PSSE - IEEE9_Ver1.png" alt="Empty PSSE case after creation" width="800">  
+  </a>  
+</p>
+
+---
+<div style="page-break-before: always; break-before: page;"></div>
+
+**Step 6 — Preparing to Populate Network Data Tables**  
+We will now begin entering the bus, machine, and load data into the case. These tables will be filled one by one using the provided Excel file.
+
+[Click here to open the IEEE9 Example Tables Excel file](doc/IEEE9_Example_Tables.xlsx)
+
+You will use this file to copy the table contents directly into PSSE, rather
+than typing them manually.
+
+<p align="center">  
+  <a href="doc/images/ieee9_ver1/05 PSSE - IEEE9_Ver1.png">  
+    <img src="doc/images/ieee9_ver1/05 PSSE - IEEE9_Ver1.png" alt="PSSE network data tables ready for input" width="800">  
+  </a>  
+</p>
+
+---
+<div style="page-break-before: always; break-before: page;"></div>
+
+**Step 7 — Copy and Paste the Bus Table into PSSE**  
+In `IEEE9_Example_Tables.xlsx`, while on the **IEEE9\_Ver1.sav** sheet, locate the **Buses Table**. Select the entire table content **without the header row**. The header usually contains labels like *Bus Number*, *Base kV*, *Area*, etc., and should not be copied. Once selected, copy the data (**Ctrl+C**).
+
+<p align="center">  
+  <a href="doc/images/ieee9_ver1/06 PSSE - IEEE9_Ver1.png">  
+    <img src="doc/images/ieee9_ver1/06 PSSE - IEEE9_Ver1.png" alt="Selecting and copying the Buses Table from Excel" width="800">  
+  </a>  
+</p>
+
+Back in PSSE, ensure you are on the **Bus** tab in the *Network data* section.
+Click on the **first empty cell** in the table, then paste the copied values
+(**Ctrl+V**).
+
+<p align="center">  
+  <a href="doc/images/ieee9_ver1/07 PSSE - IEEE9_Ver1.png">  
+    <img src="doc/images/ieee9_ver1/07 PSSE - IEEE9_Ver1.png" alt="Pasting the Bus Table into PSSE" width="800">  
+  </a>  
+</p>
+
+This will insert the bus data directly into the case.
+
+<p align="center">  
+  <a href="doc/images/ieee9_ver1/08 PSSE - IEEE9_Ver1.png">  
+    <img src="doc/images/ieee9_ver1/08 PSSE - IEEE9_Ver1.png" alt="Pasting the Bus Table into PSSE" width="800">  
+  </a>  
+</p>
+
+---
+<div style="page-break-before: always; break-before: page;"></div>
+
+**Step 8 — Copy and Paste the Machine Table into PSSE**  
+In `IEEE9_Example_Tables.xlsx`, ensure you are still on the **IEEE9\_Ver1.sav** sheet. Locate the **Machine Table**. Select the entire table content **without the header row**, then copy the data (**Ctrl+C**).
+
+Back in PSSE, go to the **Machine** tab in the *Network data* section. Click on the **first empty cell** in the table, then paste the copied values (**Ctrl+V**). This will insert the machine data directly into the case.
+
+<p align="center">  
+  <a href="doc/images/ieee9_ver1/09 PSSE - IEEE9_Ver1.png">  
+    <img src="doc/images/ieee9_ver1/09 PSSE - IEEE9_Ver1.png" alt="Pasting the Machine Table into PSSE" width="800">  
+  </a>  
+</p>
+
+---
+<div style="page-break-before: always; break-before: page;"></div>
+
+**Step 9 — Copy and Paste the Load Table into PSSE**  
+In `IEEE9_Example_Tables.xlsx`, ensure you are still on the **IEEE9\_Ver1.sav** sheet. Locate the **Load Table**. Select the entire table content **without the header row**, then copy the data (**Ctrl+C**).
+
+Back in PSSE, go to the **Load** tab in the *Network data* section. Click on the **first empty cell** in the table, then paste the copied values (**Ctrl+V**). This will insert the load data directly into the case.
+
+<p align="center">  
+  <a href="doc/images/ieee9_ver1/10 PSSE - IEEE9_Ver1.png">  
+    <img src="doc/images/ieee9_ver1/10 PSSE - IEEE9_Ver1.png" alt="Pasting the Load Table into PSSE" width="800">  
+  </a>  
+</p>
+
+---
+<div style="page-break-before: always; break-before: page;"></div>
+
+**Step 10 — *Important Note on Generator Bus Codes***  
+*After pasting the machines table earlier, some buses might have had their **Code** values changed automatically by PSSE. For blackout simulation purposes, generator buses should be modeled as "islands," meaning they must be set as swing buses for their respective area/island. Double-check that all generator buses have **Code 2 or 3** assigned.*
+
+<p align="center">  
+  <a href="doc/images/ieee9_ver1/11 PSSE - IEEE9_Ver1.png">  
+    <img src="doc/images/ieee9_ver1/11 PSSE - IEEE9_Ver1.png" alt="Verifying generator bus codes after pasting machine table" width="800">  
+  </a>  
+</p>
+
+---
+<div style="page-break-before: always; break-before: page;"></div>
+
+**Step 11 — Copy and Paste the AC Line Table into PSSE**  
+In `IEEE9_Example_Tables.xlsx`, while still on the **IEEE9\_Ver1.sav** sheet, locate the **Branch > AC Line** table. Select the entire table content **without the header row**, then copy the data (**Ctrl+C**).
+
+Back in PSSE, go to the **Branch** tab group and select the **AC Line** tab. Click on the **first empty cell** in the table, then paste the copied values (**Ctrl+V**). This will insert the AC line data directly into the case.
+
+<p align="center">  
+  <a href="doc/images/ieee9_ver1/12 PSSE - IEEE9_Ver1.png">  
+    <img src="doc/images/ieee9_ver1/12 PSSE - IEEE9_Ver1.png" alt="Pasting the AC Line Table into PSSE" width="800">  
+  </a>  
+</p>
+
+---
+<div style="page-break-before: always; break-before: page;"></div>
+
+**Step 12 — Copy and Paste the 2 Winding Transformer Table into PSSE**  
+In `IEEE9_Example_Tables.xlsx`, while still on the **IEEE9\_Ver1.sav** sheet, locate the **Branch > 2 Winding** table. Select the entire table content **without the header row**, then copy the data (**Ctrl+C**).
+
+Back in PSSE, go to the **Branch** tab group and select the **2 Winding** tab. Click on the **first empty cell** in the table, then paste the copied values (**Ctrl+V**). This will insert the transformer data directly into the case.
+
+<p align="center">  
+  <a href="doc/images/ieee9_ver1/13 PSSE - IEEE9_Ver1.png">  
+    <img src="doc/images/ieee9_ver1/13 PSSE - IEEE9_Ver1.png" alt="Pasting the 2 Winding Transformer Table into PSSE" width="800">  
+  </a>  
+</p>
+
+---
+<div style="page-break-before: always; break-before: page;"></div>
+
+**Step 13 — Save the Case File**  
+
+1. In PSSE, click the **Save** button (toolbar icon or `File > Save`).
+
+<p align="center">  
+  <a href="doc/images/ieee9_ver1/14 PSSE - IEEE9_Ver1.png">  
+    <img src="doc/images/ieee9_ver1/14 PSSE - IEEE9_Ver1.png" alt="Saving the Case File" width="800">  
+  </a>  
+</p>
+
+1. In the **Save Network Data** dialog, select the **Case Data** tab.
+2. Set the **case name** to `IEEE9_Ver1`.
+3. Click on `...` to set the save location.
+4. Navigate to the **case** folder inside your **BSPSSEPy** directory.
+5. Click on `New folder`.
+6. Create a **new folder** named after the main case name (e.g., `IEEE9`, without the version number).
+7. Open this folder.
+8. Save the `.sav` file inside it by clicking **Save**.
+9. Click **OK** to confirm in the dialog.
+
+<p align="center">  
+  <a href="doc/images/ieee9_ver1/15 PSSE - IEEE9_Ver1.png">  
+    <img src="doc/images/ieee9_ver1/15 PSSE - IEEE9_Ver1.png" alt="Save File Dialog with Folder Selection" width="800">  
+  </a>  
+</p>
+
+Once saved, check the Output Bar in PSSE to confirm the message: **Case saved in file** followed by the correct path, ensuring the file is in the intended location.
+
+<p align="center">  
+  <a href="doc/images/ieee9_ver1/16 PSSE - IEEE9_Ver1.png">  
+    <img src="doc/images/ieee9_ver1/16 PSSE - IEEE9_Ver1.png" alt="Save Confirmation in Output Bar" width="800">  
+  </a>  
+</p>
+
+---
+<div style="page-break-before: always; break-before: page;"></div>
+
+**Step 14 — Solve the Power Flow and Confirm the Setup**
+
+1. In PSSE, click the **Solve Power Flow** button on the toolbar.
+
+<p align="center">  
+  <a href="doc/images/ieee9_ver1/17 PSSE - IEEE9_Ver1.png">  
+    <img src="doc/images/ieee9_ver1/17 PSSE - IEEE9_Ver1.png" alt="Solve Power Flow Icon" width="800">  
+  </a>  
+</p>
+
+2. In the **Power Flow Solutions** window:
+
+   * Select the **Newton** tab.
+   * Select **Flat start**.
+   * Click **Solve**.
+
+<p align="center">  
+  <a href="doc/images/ieee9_ver1/18 PSSE - IEEE9_Ver1.png">  
+    <img src="doc/images/ieee9_ver1/18 PSSE - IEEE9_Ver1.png" alt="Power Flow Settings for Flat Start" width="800">  
+  </a>  
+</p>
+
+3. Confirm that the system converged:
+
+   * Look for **Met convergence tolerances** (green box) in the status bar.
+   * Ensure the **largest mismatch** value is small.
+
+<p align="center">  
+  <a href="doc/images/ieee9_ver1/19 PSSE - IEEE9_Ver1.png">  
+    <img src="doc/images/ieee9_ver1/19 PSSE - IEEE9_Ver1.png" alt="Convergence Check" width="800">  
+  </a>  
+</p>
+
+4. (Optional) For better accuracy:
+
+   * Change **Flat start** to **Do not flat start**.
+   * Solve again multiple times until the mismatch is minimal.
+
+<p align="center">  
+  <a href="doc/images/ieee9_ver1/20 PSSE - IEEE9_Ver1.png">  
+    <img src="doc/images/ieee9_ver1/20 PSSE - IEEE9_Ver1.png" alt="Improved Convergence" width="800">  
+  </a>  
+</p>
+
+5. Save the updated, solved case file.
+
+<p align="center">  
+  <a href="doc/images/ieee9_ver1/21 PSSE - IEEE9_Ver1.png">  
+    <img src="doc/images/ieee9_ver1/21 PSSE - IEEE9_Ver1.png" alt="Final Saved Case" width="800">  
+  </a>  
+</p>
+
+---
+<div style="page-break-before: always; break-before: page;"></div>
+
+**Step 15 — Setup the Dynamic DYR File Configuration**  
+1. In PSSE, click the **Dynamics Spreadsheet** icon to begin setting up the dynamics configurations.
+
+<p align="center">  
+  <a href="doc/images/ieee9_ver1/22 PSSE - IEEE9_Ver1.png">  
+    <img src="doc/images/ieee9_ver1/22 PSSE - IEEE9_Ver1.png" alt="Open Dynamics Spreadsheet" width="800">  
+  </a>  
+</p>
+
+2. This will open the Dynamics Data view. Currently, the DYR file is empty, meaning no dynamic models have been set up yet for the generators.
+
+<p align="center">  
+  <a href="doc/images/ieee9_ver1/23 PSSE - IEEE9_Ver1.png">  
+    <img src="doc/images/ieee9_ver1/23 PSSE - IEEE9_Ver1.png" alt="Empty DYR File" width="800">  
+  </a>  
+</p>
+
+3. We will populate the generators’ model parameters from the provided Excel spreadsheet in the next steps.
+   *[Click here to open the IEEE9 Example Tables Excel file](doc/IEEE9_Example_Tables.xlsx)*
+
+---
+<div style="page-break-before: always; break-before: page;"></div>
+
+**Step 16 — Assign Generator Model Parameters**  
+1. **Select Generator Model** — Double-click the generator model cell for the desired machine.
+
+<p align="center">  
+  <a href="doc/images/ieee9_ver1/24 PSSE - IEEE9_Ver1.png">  
+    <img src="doc/images/ieee9_ver1/24 PSSE - IEEE9_Ver1.png" alt="Select Generator Model" width="800">  
+  </a>  
+</p>
+
+2. **Open Model Parameters Window** — After selecting the model, the parameter window should appear.
+
+<p align="center">  
+  <a href="doc/images/ieee9_ver1/25 PSSE - IEEE9_Ver1.png">  
+    <img src="doc/images/ieee9_ver1/25 PSSE - IEEE9_Ver1.png" alt="Model Parameters Window" width="800">  
+  </a>  
+</p>
+
+3. **Get Data from Excel File** — Open the provided Excel file, switch to the *IEEE9\_Ver1.dyr* sheet, and select the data corresponding to the current tab in the model parameters window. Copy the data only.
+
+<p align="center">  
+  <a href="doc/images/ieee9_ver1/26 PSSE - IEEE9_Ver1.png">  
+    <img src="doc/images/ieee9_ver1/26 PSSE - IEEE9_Ver1.png" alt="Excel Sheet Data Selection" width="800">  
+  </a>  
+</p>
+
+4. **Paste Data into PSSE** — Highlight the first cell in the model parameters window and paste the copied data. Ensure it aligns correctly. Repeat this process for the remaining tabs (**ICONs**, **VARS**, **STATES**). Once complete, click **OK**. The model should now appear as active.
+
+<p align="center">  
+  <a href="doc/images/ieee9_ver1/27 PSSE - IEEE9_Ver1.png">  
+    <img src="doc/images/ieee9_ver1/27 PSSE - IEEE9_Ver1.png" alt="Paste Model Parameters" width="800">  
+  </a>  
+</p>
+
+---
+<div style="page-break-before: always; break-before: page;"></div>
+
+**Step 17 — Assign Exciter Model Parameters**  
+
+1. **Confirm Generator Model is Active** — Ensure the generator model cell now shows the assigned model name.
+2. **Select Exciter Model** — Double-click the exciter model cell for the desired machine.
+3. **Repeat Parameter Assignment Procedure** — Follow the same procedure as with the generator model: open the parameter window, copy data from the Excel file for the corresponding tabs (**CONs**, **ICONs**, **VARS**, **STATES**), paste into PSSE, and click **OK**.
+
+<p align="center">  
+  <a href="doc/images/ieee9_ver1/28 PSSE - IEEE9_Ver1.png">  
+    <img src="doc/images/ieee9_ver1/28 PSSE - IEEE9_Ver1.png" alt="Assign Exciter Model" width="800">  
+  </a>  
+</p>
+
+---
+<div style="page-break-before: always; break-before: page;"></div>
+
+**Step 18 — Assign Turbine Governor Model Parameters**  
+
+1. **Select the Appropriate Governor Model** — Double‑click the *Turbine
+   Governor* cell for the desired machine and choose the correct model from
+   the list.
+   
+<p align="center">  
+  <a href="doc/images/ieee9_ver1/29 PSSE - IEEE9_Ver1.png">  
+    <img src="doc/images/ieee9_ver1/29 PSSE - IEEE9_Ver1.png" alt="Select Governor Model" width="800">  
+  </a>  
+</p>
+
+2. **Skip Linked Machine Setup (If Not Applicable)** — If a pop‑up window
+   appears for linked machine configuration (e.g., for hydro units with shared
+   sources) and your system does not include such links, click **Cancel**.
+
+<p align="center">  
+  <a href="doc/images/ieee9_ver1/30 PSSE - IEEE9_Ver1.png">  
+    <img src="doc/images/ieee9_ver1/30 PSSE - IEEE9_Ver1.png" alt="Cancel Linked Machines" width="800">  
+  </a>  
+</p>
+
+
+3. **Enter Model Parameters** — Open the parameter window, copy the relevant
+   data from the Excel file for all required tabs (**CONs**, **ICONs**,
+   **VARS**, **STATES**), and paste into PSSE.
+
+<p align="center">  
+  <a href="doc/images/ieee9_ver1/31 PSSE - IEEE9_Ver1.png">  
+    <img src="doc/images/ieee9_ver1/31 PSSE - IEEE9_Ver1.png" alt="Paste Governor Model Data" width="800">  
+  </a>  
+</p>
+
+
+4. **Acknowledge Warnings** — If a warning message appears after data entry, review the content and click **OK** to proceed if the configuration is acceptable.
+
+
+<p align="center">  
+  <a href="doc/images/ieee9_ver1/32 PSSE - IEEE9_Ver1.png">  
+    <img src="doc/images/ieee9_ver1/32 PSSE - IEEE9_Ver1.png" alt="Acknowledge Warnings" width="800">  
+  </a>  
+</p>
+
+---
+<div style="page-break-before: always; break-before: page;"></div>
+
+**Step 19 — Finalize Model Assignments and Save DYR File**  
+
+1. **Repeat for Remaining Generators** — Apply the same procedure used for
+   Generator 1 to set up the generator, exciter, and turbine governor models
+   for Generator 2 and Generator 3.
+
+<p align="center">  
+  <a href="doc/images/ieee9_ver1/33 PSSE - IEEE9_Ver1.png">  
+    <img src="doc/images/ieee9_ver1/33 PSSE - IEEE9_Ver1.png" alt="Repeat for Gen 2 and Gen 3" width="800">  
+  </a>  
+</p>
+
+2. **Confirm Model Activation** — Ensure all three generators show the correct
+   models assigned in their respective columns.
+
+<p align="center">  
+  <a href="doc/images/ieee9_ver1/34 PSSE - IEEE9_Ver1.png">  
+    <img src="doc/images/ieee9_ver1/34 PSSE - IEEE9_Ver1.png" alt="DYR File Ready to Save" width="800">  
+  </a>  
+</p>
+
+3. **Save the Dynamic Data File (DYR)** — Once all models are set, save the *.dyr* file to preserve the dynamic model configuration.
+
+<p align="center">  
+  <a href="doc/images/ieee9_ver1/35 PSSE - IEEE9_Ver1.png">  
+    <img src="doc/images/ieee9_ver1/35 PSSE - IEEE9_Ver1.png" alt="How to Save the DYR File" width="800">  
+  </a>  
+</p>
+
+---
+<div style="page-break-before: always; break-before: page;"></div>
+
+**Step 20 — Prepare Case Files for BSPSSEPy**  
+At this stage, the PSSE-related files needed to run the dynamic simulation in BSPSSEPy are ready. Specifically, you should have the following files saved in your `case/IEEE9` directory:
+
+* **IEEE9\_Ver1.sav** — The network case file.
+* **IEEE9\_Ver1.dyr** — The dynamic data file.
+
+<p align="center">  
+  <a href="doc/images/ieee9_ver1/36 PSSE - IEEE9_Ver1.png">  
+    <img src="doc/images/ieee9_ver1/36 PSSE - IEEE9_Ver1.png" alt="Two PSSE Files Ready" width="800">  
+  </a>  
+</p>
+
+Next, you will need the **plan CSV file**, which contains the sequence of actions for the simulation. You have two options:
+
+1. **Download or copy the provided CSV file:** [IEEE9 Version 1 Plan - CSV File](doc/IEEE9_Ver1.csv). The CSV file is available at: `doc/IEEE9_Ver1.csv`.
+2. **Generate the CSV file from MAT-BS:** Contact me at *[ilyas.farhat@outlook.com](mailto:ilyas.farhat@outlook.com)* for details. (A webpage link will be added here in the future.)
+
+Additionally, ensure you have the following Python helper scripts in your case directory:
+
+* [IEEE9\_Ver1\_Config.py](doc/IEEE9_Ver1_Config.py) — Configuration file.
+* [IEEE9\_Ver1\_Conv.py](doc/IEEE9_Ver1_Conv.py) — Converter file.
+
+<p align="center">  
+  <a href="doc/images/ieee9_ver1/37 PSSE - IEEE9_Ver1.png">  
+    <img src="doc/images/ieee9_ver1/37 PSSE - IEEE9_Ver1.png" alt="CSV, Config, and Conv Files" width="800">  
+  </a>  
+</p>
+
+*If you used same info/naming scheme, you may copy the sld file from here: [IEEE9_Ver1.sld](doc/IEEE9_Ver1.sld)*
+
+---
+<div style="page-break-before: always; break-before: page;"></div>
+
+**Step 21 — Opening BSPSSEPy Program**  
+Once all required files are prepared, you can now launch the BSPSSEPy program.
+
+1. Open a terminal (Command Prompt or PowerShell).
+2. Navigate to the BSPSSEPy main folder. For example:
+
+   ```bash
+   cd "C:\BSPSSEPy"
+   ```
+3. Run the BSPSSEPy program by executing:
+
+   ```bash
+   python .\__main__.py
+   ```
+
+<p align="center">  
+  <a href="doc/images/ieee9_ver1/38 PSSE - IEEE9_Ver1.png">  
+    <img src="doc/images/ieee9_ver1/38 PSSE - IEEE9_Ver1.png" alt="Launching BSPSSEPy" width="800">  
+  </a>  
+</p>
+
+---
+<div style="page-break-before: always; break-before: page;"></div>
+
+**Step 22 — Running BSPSSEPy App**  
+Run the BSPSSEPy application, select the `IEEE9_Ver1` case, and execute the plan.
+<p align="center">
+  <video width="800" controls>
+    <source src="doc/images/ieee9_ver1/BSPSSEPy - IEEE9_Ver1.mp4" type="video/mp4">
+    Your browser does not support the video tag.
+  </video>
+</p>
+
+---
+<div style="page-break-before: always; break-before: page;"></div>
+
+**Step 23 — Viewing Simulation Results**  
+Simulation results are saved in the `simulations` folder inside the `IEEE9` case folder within the BSPSSEPy application directory.
+<p align="center">  
+  <a href="doc/images/ieee9_ver1/39 PSSE - IEEE9_Ver1.png">  
+    <img src="doc/images/ieee9_ver1/39 PSSE - IEEE9_Ver1.png" alt="Launching BSPSSEPy" width="800">  
+  </a>  
+</p>
+
+Two ways to view the results:
+
+1. **CSV Output File** — Contains all channels recorded during the simulation
+   (as defined in the Config file). This file can be used with a MATLAB
+   plotting script (contact me at
+   [ilyas.farhat@outlook.com](mailto:ilyas.farhat@outlook.com) for details).
+
+2. **.out File** — Contains the same measurements for plotting directly in PSS®E.
+
+<p align="center">  
+  <a href="doc/images/ieee9_ver1/40 PSSE - IEEE9_Ver1.png">  
+    <img src="doc/images/ieee9_ver1/40 PSSE - IEEE9_Ver1.png" alt="Launching BSPSSEPy" width="800">  
+  </a>  
+</p>
+
+**Viewing .out file in PSS®E:**
+
+* Open the `simulations` folder (see image below).
+* Drag and drop the `.out` file into the PSS®E window.
+* In PSS®E, go to **View → Plot Tree**.
+* Drag a measurement (e.g., Bus 1 frequency) into the plotting area.
+
+<p align="center">
+  <img src="doc/images/ieee9_ver1/39 PSSE - IEEE9_Ver1.png" width="800"><br>
+  <img src="doc/images/ieee9_ver1/42 PSSE - IEEE9_Ver1.png" width="800"><br>
+  <img src="doc/images/ieee9_ver1/43 PSSE - IEEE9_Ver1.png" width="800"><br>
+  <img src="doc/images/ieee9_ver1/44 PSSE - IEEE9_Ver1.png" width="800"><br>
+  <img src="doc/images/ieee9_ver1/46 PSSE - IEEE9_Ver1.png" width="800"><br>
+  <img src="doc/images/ieee9_ver1/47 PSSE - IEEE9_Ver1.png" width="800">
+</p>

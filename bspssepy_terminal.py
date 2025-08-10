@@ -4,6 +4,8 @@ config_path = r"""I:\Work\Research\Control & Power Systems\JWSP Research\HONI
 
 config_path = r"""I:\Work\Research\Control & Power Systems\JWSP Research\HONI Project\PSSE\BSPSSEPy\case\3BUS\3BUS_Ver3_Config.py"""
 
+config_path = r"""I:\Work\Research\Control & Power Systems\JWSP Research\HONI Project\PSSE\BSPSSEPy\case\IEEE9\IEEE9_Ver1_Config.py"""
+
 
 # Essential Imports to install missing libraries
 import subprocess
