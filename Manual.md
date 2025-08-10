@@ -1033,6 +1033,9 @@ Run the BSPSSEPy application, select the `IEEE9_Ver1` case, and execute the plan
   </video>
 </p>
 
+**[Video Link](doc/images/ieee9_ver1/BSPSSEPy%20-%20IEEE9_Ver1.mp4)**
+
+
 ---
 <div style="page-break-before: always; break-before: page;"></div>
 
