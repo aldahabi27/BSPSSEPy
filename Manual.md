@@ -1025,6 +1025,7 @@ Once all required files are prepared, you can now launch the BSPSSEPy program.
 
 **Step 22 — Running BSPSSEPy App**  
 Run the BSPSSEPy application, select the `IEEE9_Ver1` case, and execute the plan.
+
 <p align="center">
   <video width="800" controls>
     <source src="doc/images/ieee9_ver1/BSPSSEPy - IEEE9_Ver1.mp4" type="video/mp4">
