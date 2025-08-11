@@ -188,12 +188,19 @@
       "command-palette:Open command palette": false
     }
   },
-  "active": "977e3594fe13155f",
+  "active": "8c6b7523f1fdc867",
   "lastOpenFiles": [
+    "case/IEEE9/study.rawx",
+    "case/IEEE9/IEEE9_Ver2_Config.py",
+    "case/IEEE9/IEEE9_Ver2.sav",
+    "case/IEEE9/IEEE9_Ver2.dyr",
+    "case/IEEE9/IEEE9_Ver2_Conv.py",
+    "case/IEEE9/IEEE9_Ver1_Config - Copy.py",
+    "case/IEEE9/IEEE9_Ver1 - Copy.sav",
+    "case/IEEE9/IEEE9_Ver1 - Copy.dyr",
+    "case/IEEE9/IEEE9_Ver1_Conv - Copy.py",
     "doc/~$IEEE9_Example_Tables.xlsx",
     "Manual22.pdf",
-    "Manual1.pdf",
-    "Manual.pdf",
     "doc.md",
     "Manual.md"
   ]

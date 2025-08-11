@@ -533,7 +533,7 @@ IEEE9_Ver1.csv
 
 ## IEEE9 Bus System Complete Example – Full Case Study (2 Versions)
 
-**Version 1 (Ver1) – No BESS**
+### Version 1 (Ver1) – No BESS
 
 To run a full Black-Start simulation for the IEEE 9-Bus System in BSPSSEPy, you will need the following six files:
 
@@ -545,7 +545,8 @@ To run a full Black-Start simulation for the IEEE 9-Bus System in BSPSSEPy, you 
 5. IEEE9\_Ver1\_Config.py – Configuration script.
 6. IEEE9\_Ver1\_Conv.py   – Converter or helper script.
 
-### Preparing PSSE Files (sav, dyr, sld) for the Case Study (Ver1)
+
+**Preparing PSSE Files (sav, dyr) for the Case Study (Ver1)**
 
 We will follow a step-by-step approach to build the IEEE 9-Bus case in PSSE from scratch:
 
@@ -1077,3 +1078,35 @@ Two ways to view the results:
   <img src="doc/images/ieee9_ver1/46 PSSE - IEEE9_Ver1.png" width="800"><br>
   <img src="doc/images/ieee9_ver1/47 PSSE - IEEE9_Ver1.png" width="800">
 </p>
+
+
+<div style="page-break-before: always; break-before: page;"></div>
+
+### Version 2 (Ver2) – With BESS
+
+In this case, we will reuse the files prepared for Ver1 and modify them to include BESS. At the end, we will have the following six files:
+
+1. IEEE9\_Ver2.sav  – PSSE saved case file.
+2. IEEE9\_Ver2.dyr  – Dynamic data file.
+3. IEEE9\_Ver2.sld  – PSSE one-line diagram file (not used in BSPSSEPy, but
+   good to have it).
+4. IEEE9\_Ver2.csv  – Simulation control plan.
+5. IEEE9\_Ver2\_Config.py – Configuration script.
+6. IEEE9\_Ver2\_Conv.py   – Converter or helper script (same as IEEE9_Ver1_Conv.py).
+
+
+**Preparing PSSE Files (sav, dyr) for the Case Study (Ver2)**
+
+We will follow a step-by-step approach to build the IEEE 9-Bus case in PSSE from IEEE9_Ver1 files:
+
+<div style="page-break-before: always; break-before: page;"></div>
+
+**Step 1 — Copy and paste IEEE9_Ver1 files in the same location**
+Go to BSPSSEPy\case\IEEE9 and copy IEEE9_Ver1 files and paste them in the same location. In particular, these files:
+
+1. IEEE9_Ver1.sav --> rename it to IEEE9_Ver2.sav
+2. IEEE9_Ver1.dyr --> rename it to IEEE9_Ver2.dyr
+3. IEEE9_Ver1_Config.py --> rename it to IEEE9_Ver2_Config.py
+4. IEEE9_Ver1_Conv.py --> rename it to IEEE9_Ver2_Conv.py
+
+
