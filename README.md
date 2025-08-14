@@ -1,7 +1,7 @@
 # Welcome to the BSPSSEPy Program
 
 **Version:** 0.6
-**Last Updated:** 10 Aug 2025
+**Last Updated:** 14 Aug 2025
 **Developed by:** Ilyas Farhat  
 **Contact:** ilyas.farhat@outlook.com  
 **Copyright (c) 2024–2025**, Ilyas Farhat  
@@ -21,7 +21,19 @@ BSPSSEPy Application is a Black-Start simulation tool based on PSSE Power Simula
 
 ## Goals in Version 0.6 [in progress]
 
-- Generating new documentation following the new structure of the program [__priority__]
+- Generating new documentation following the new structure of the program
+  [__priority__]
+    - `manual.md` is the user guide manual on how to run simulations using
+      BSPSSEPy application. To view the document, use MD viewer like:
+      [`Obsidian`](https://obsidian.md), [`VS
+      Code`](https://code.visualstudio.com) or browser extensions such as
+      [**`Markdown
+      Viewer`**](https://chromewebstore.google.com/detail/ckkdlimhmcjmikdlpkmbgfkaikojcbjk?utm_source=item-share-cb)
+      (**recommended**) or
+      other softwares that can render md files.
+    - `manual.pdf` and `manual_A3.pdf` are pdf exports from `manual.md`, _but
+      links are broken in these files_.
+    - 
 - Continue migrating all measurements updates to the new function [_paused_].
 - Continue rewriting application code following PEP8 standard [_paused_].
 

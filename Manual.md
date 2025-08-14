@@ -964,6 +964,13 @@ Once saved, check the Output Bar in PSSE to confirm the message: **Case saved in
   </a>  
 </p>
 
+
+<p align="center">  
+  <a href="doc/images/ieee9_ver1/36 PSSE - IEEE9_Ver1.png">  
+    <img src="doc/images/ieee9_ver1/36 PSSE - IEEE9_Ver1.png" alt="How to Save the DYR File" width="800">  
+  </a>  
+</p>
+
 ---
 <div style="page-break-before: always; break-before: page;"></div>
 
@@ -972,12 +979,6 @@ At this stage, the PSSE-related files needed to run the dynamic simulation in BS
 
 * **IEEE9\_Ver1.sav** — The network case file.
 * **IEEE9\_Ver1.dyr** — The dynamic data file.
-
-<p align="center">  
-  <a href="doc/images/ieee9_ver1/36 PSSE - IEEE9_Ver1.png">  
-    <img src="doc/images/ieee9_ver1/36 PSSE - IEEE9_Ver1.png" alt="Two PSSE Files Ready" width="800">  
-  </a>  
-</p>
 
 Next, you will need the **plan CSV file**, which contains the sequence of actions for the simulation. You have two options:
 
@@ -1052,8 +1053,7 @@ Two ways to view the results:
 
 1. **CSV Output File** — Contains all channels recorded during the simulation
    (as defined in the Config file). This file can be used with a MATLAB
-   plotting script (contact me at
-   [ilyas.farhat@outlook.com](mailto:ilyas.farhat@outlook.com) for details).
+   plotting script (contact me at [ilyas.farhat@outlook.com](mailto:ilyas.farhat@outlook.com) for details).
 
 2. **.out File** — Contains the same measurements for plotting directly in PSS®E.
 
@@ -1079,7 +1079,7 @@ Two ways to view the results:
   <img src="doc/images/ieee9_ver1/47 PSSE - IEEE9_Ver1.png" width="800">
 </p>
 
-
+---
 <div style="page-break-before: always; break-before: page;"></div>
 
 ### Version 2 (Ver2) – With BESS
@@ -1099,14 +1099,207 @@ In this case, we will reuse the files prepared for Ver1 and modify them to inclu
 
 We will follow a step-by-step approach to build the IEEE 9-Bus case in PSSE from IEEE9_Ver1 files:
 
+---
 <div style="page-break-before: always; break-before: page;"></div>
 
-**Step 1 — Copy and paste IEEE9_Ver1 files in the same location**
-Go to BSPSSEPy\case\IEEE9 and copy IEEE9_Ver1 files and paste them in the same location. In particular, these files:
+**Step 1 — Copy and Rename IEEE9_Ver1 Files**  
+To begin creating the IEEE9_Ver2 case, we will start by duplicating the existing IEEE9_Ver1 files and renaming them accordingly. This ensures we retain the original setup while preparing a separate version for editing.
 
-1. IEEE9_Ver1.sav --> rename it to IEEE9_Ver2.sav
-2. IEEE9_Ver1.dyr --> rename it to IEEE9_Ver2.dyr
-3. IEEE9_Ver1_Config.py --> rename it to IEEE9_Ver2_Config.py
-4. IEEE9_Ver1_Conv.py --> rename it to IEEE9_Ver2_Conv.py
+1. Navigate to the BSPSSEPy\case\IEEE9 directory.
+    
+2. Locate the following IEEE9_Ver1 files:
+    
+    - `IEEE9_Ver1.sav`
+        
+    - `IEEE9_Ver1.dyr`
+        
+    - `IEEE9_Ver1_Config.py`
+        
+    - `IEEE9_Ver1_Conv.py`
+        
+3. Copy these files and paste them in the same folder.
+    
+4. Rename the duplicated files to:
+    
+    - `IEEE9_Ver2.sav`
+        
+    - `IEEE9_Ver2.dyr`
+        
+    - `IEEE9_Ver2_Config.py`
+        
+    - `IEEE9_Ver2_Conv.py`
+        
+
+This creates a dedicated set of Ver2 files that we will edit in the next steps to include the desired changes (e.g., adding BESS to the case).
+
+<p align="center">  
+  <a href="doc/images/ieee9_ver2/00 PSSE - IEEE9_Ver2.png">  
+    <img src="doc/images/ieee9_ver2/00 PSSE - IEEE9_Ver2.png" alt="Launching BSPSSEPy" width="800">  
+  </a>  
+</p>
+
+---
+<div style="page-break-before: always; break-before: page;"></div>
+
+**Step 2 — Add BESS5 to the Machine Table**  
+In this step, we will insert a new BESS machine entry into the IEEE9_Ver2 case.
+
+1. **Load the Case File** — In PSSE, load `IEEE9_Ver2.sav` from the `BSPSSEPy\case\IEEE9` directory.
+
+<p align="center">  
+  <a href="doc/images/ieee9_ver2/01 PSSE - IEEE9_Ver2.png">  
+    <img src="doc/images/ieee9_ver2/01 PSSE - IEEE9_Ver2.png" alt="Launching BSPSSEPy" width="800">  
+  </a>  
+</p>
+
+2. **Open Machine Table** — Go to the _Buses and Equipment_ tab group, then click the **Machine** tab. Highlight the first empty cell of a new row where the new data will be inserted.
+
+<p align="center">  
+  <a href="doc/images/ieee9_ver2/02 PSSE - IEEE9_Ver2.png">  
+    <img src="doc/images/ieee9_ver2/02 PSSE - IEEE9_Ver2.png" alt="Launching BSPSSEPy" width="800">  
+  </a>  
+</p>
+
+3. **Select BESS Entry in Excel** — Open the provided Excel file: *[IEEE9 Example Tables Excel file](doc/IEEE9_Example_Tables.xlsx)*, select the `IEEE9_Ver2.sav` sheet, and locate the **BESS5** row in the Machine Table. Select the entire row to ensure all required columns are copied correctly.
+
+4. **Paste into PSSE** — Return to PSSE and paste (**Ctrl+V**) the copied row into the highlighted cell.  
+   PSSE may prompt you to change the bus type code to correctly model the new machine—click **Yes** to approve the change.
+
+<p align="center">  
+  <a href="doc/images/ieee9_ver2/03 PSSE - IEEE9_Ver2.png">  
+    <img src="doc/images/ieee9_ver2/03 PSSE - IEEE9_Ver2.png" alt="Launching BSPSSEPy" width="800">  
+  </a>  
+</p>
+
+This will add the BESS5 unit to the IEEE9_Ver2 case, ready for further configuration in the upcoming steps.
+
+---
+<div style="page-break-before: always; break-before: page;"></div>
+
+
+**Step 3 — Confirm Bus Code and Save Updated .sav file**  
+After adding **BESS5** and approving the bus type change, confirm that the new bus code is correctly set in the **Bus** tab.
+
+1. Go to the **Buses and Equipment** tab group, then click the **Bus** tab.
+2. Locate **BUS5** in the list and verify that its **Code** value has been updated to `2` (Generation Bus).
+
+<p align="center">  
+  <a href="doc/images/ieee9_ver2/04 PSSE - IEEE9_Ver2.png">  
+    <img src="doc/images/ieee9_ver2/04 PSSE - IEEE9_Ver2.png" alt="Launching BSPSSEPy" width="800">  
+  </a>  
+</p>
+
+Next, save the updated case data file so that your setup changes are preserved. In PSSE, go to **File → Save**, choose the **Case Data** tab, ensure the **Destination** is set to your working `IEEE9_Ver2.sav` file path, and click **OK**.
+
+<p align="center">  
+  <a href="doc/images/ieee9_ver2/13 PSSE - IEEE9_Ver2.png">  
+    <img src="doc/images/ieee9_ver2/13 PSSE - IEEE9_Ver2.png" alt="Save Updated .dyr File" width="800">  
+  </a>  
+</p>
+
+---
+<div style="page-break-before: always; break-before: page;"></div>
+
+**Step 4 — Load the Dynamic Data File (.dyr)**  
+Now it is time to set up the BESS models by loading the dynamic data file for the IEEE9_Ver2 case.
+
+1. In PSSE, go to the **Study Project Explorer** pane.
+2. Under **Data Files**, locate and load `IEEE9_Ver2.dyr` from the `BSPSSEPy\case\IEEE9` directory.
+3. Verify that the **Renewable Machine** tab under **Device Models** is visible and ready for model configuration.
+
+<p align="center">  
+  <a href="doc/images/ieee9_ver2/05 PSSE - IEEE9_Ver2.png">  
+    <img src="doc/images/ieee9_ver2/05 PSSE - IEEE9_Ver2.png" alt="Load IEEE9_Ver2.dyr into PSSE" width="800">  
+  </a>  
+</p>
+
+---
+<div style="page-break-before: always; break-before: page;"></div>
+
+**Step 5 — Set Up the Generator Model for BESS**  
+We will now configure the **Generator Model** for the BESS unit at **BUS5**. The selected model is **REGCC**, which represents the Renewable Energy Generator Control Component.
+
+**Assign the REGCC Model**  
+
+1. In the **Renewable Machine** tab under **Device Models**, double-click on the **Generator** model cell for BUS5.  
+2. From the list of available generator models, select **REGCC**.  
+3. Click **OK** to confirm.
+
+<p align="center">  
+  <a href="doc/images/ieee9_ver2/07 PSSE - IEEE9_Ver2.png">  
+    <img src="doc/images/ieee9_ver2/07 PSSE - IEEE9_Ver2.png" alt="Select REGCC Generator Model" width="800">  
+  </a>  
+</p>
+
+**Copy Model Parameters from Excel**  
+
+1. Open the provided *IEEE9 Example Tables* Excel file and go to the `IEEE9_Ver2.dyr` sheet.  
+2. Locate the **REGCC Model** section and find the four parameter tabs:  
+   - **Model CONS**  
+   - **Model ICONS**  
+   - **Model VARS**  
+   - **Model STATES**  
+3. For each tab:  
+   - Select only the parameter values (not the column headers) in Excel and copy them (**Ctrl+C**).  
+   - In PSSE, go to the corresponding model parameter tab and paste the values (**Ctrl+V**) starting at the first cell.
+
+<p align="center">  
+  <a href="doc/images/ieee9_ver2/06 PSSE - IEEE9_Ver2.png">  
+    <img src="doc/images/ieee9_ver2/06 PSSE - IEEE9_Ver2.png" alt="Copy and Paste REGCC Model Parameters" width="800">  
+  </a>  
+</p>
+
+**Save and Confirm**  
+
+1. Once all values for **CONS**, **ICONS**, **VARS**, and **STATES** are entered, click **OK** to save the model parameters.  
+2. If a warning message appears stating that “Model data contains warnings and/or errors,” click **OK** to proceed. This may occur due to parameter values but will not prevent continuing.
+
+<p align="center">  
+  <a href="doc/images/ieee9_ver2/08 PSSE - IEEE9_Ver2.png">  
+    <img src="doc/images/ieee9_ver2/08 PSSE - IEEE9_Ver2.png" alt="Model Data Warning" width="800">  
+  </a>  
+</p>
+
+---
+<div style="page-break-before: always; break-before: page;"></div>
+
+**Step 6 — Set Up the Electrical Model for BESS**  
+With the generator model assigned, we now configure the electrical model for the BESS unit at **BUS5**. In the **Renewable Machine** tab under **Device Models**, double-click on the **Electrical** model cell for BUS5. In the model selection window, choose **REECC1** from the list and click **OK** to confirm.
+
+<p align="center">  
+  <a href="doc/images/ieee9_ver2/09 PSSE - IEEE9_Ver2.png">  
+    <img src="doc/images/ieee9_ver2/09 PSSE - IEEE9_Ver2.png" alt="Select REECC1 Electrical Model" width="800">  
+  </a>  
+</p>
+
+Next, open the *IEEE9 Example Tables* Excel file and navigate to the `IEEE9_Ver2.dyr` sheet. Locate the **REECC1 Model** section and copy the parameter values for **Model CONS**, **Model ICONS**, **Model VARS**, and **Model STATES**. For each parameter set, select only the values in Excel (excluding headers), copy them (**Ctrl+C**), and paste them (**Ctrl+V**) into the corresponding tab in PSSE starting from the first cell.
+
+<p align="center">  
+  <a href="doc/images/ieee9_ver2/10 PSSE - IEEE9_Ver2.png">  
+    <img src="doc/images/ieee9_ver2/10 PSSE - IEEE9_Ver2.png" alt="Copy and Paste REECC1 Model Parameters" width="800">  
+  </a>  
+</p>
+
+Once all parameter tabs are filled, click **OK** to save the model configuration.
+
+---
+<div style="page-break-before: always; break-before: page;"></div>
+
+**Step 7 — Confirm Models are Active and Save Updated .dyr File**  
+Once the REGCC and REECC1 models are configured, verify that they are active by checking the **Renewable Machine** tab under **Device Models**. The **Generator** model should display **REGCC** and the **Electrical** model should display **REECC1**. This confirms that both models are now active for the BESS unit at BUS5.
+
+<p align="center">  
+  <a href="doc/images/ieee9_ver2/11 PSSE - IEEE9_Ver2.png">  
+    <img src="doc/images/ieee9_ver2/11 PSSE - IEEE9_Ver2.png" alt="Confirm Models are Active" width="800">  
+  </a>  
+</p>
+
+Next, save the updated dynamic data file so that your model changes are preserved. In PSSE, go to **File → Save**, choose the **Dynamics Model Data** tab, ensure the **Destination** is set to your working `IEEE9_Ver2.dyr` file path, and click **OK**.
+
+<p align="center">  
+  <a href="doc/images/ieee9_ver2/12 PSSE - IEEE9_Ver2.png">  
+    <img src="doc/images/ieee9_ver2/12 PSSE - IEEE9_Ver2.png" alt="Save Updated .dyr File" width="800">  
+  </a>  
+</p>
 
 
