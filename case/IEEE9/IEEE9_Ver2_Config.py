@@ -3,7 +3,7 @@
 #
 # Use this template to set the configuration for your PSSE case. The specs below are arbitrary.
 #
-#    Last Update for this file was on BSPSSEPy Ver 0.6 (10 Aug. 2025)
+#    Last Update for this file was on BSPSSEPy Ver 0.2 (13 Dec. 2024)
 #
 #       BSPSSEPy Application
 #       Copyright (c) 2024, Ilyas Farhat
@@ -24,7 +24,7 @@
 case_name = "IEEE9"
 
 # Version number from the .sav file name (e.g., 3Bus_Ver2.sav). Use -1 if no version is specified.
-ver = 1
+ver = 2
 
 # Number of buses in the system. If unsure, leave as 0, and the code will derive this automatically from the case data.
 num_of_buses = 50
@@ -36,15 +36,15 @@ v_buses_to_monitor = range(1, 10)
 
 # Specify buses to monitor frequency as a list of bus numbers.
 # Flag 'FrequencyFlag' may override this setting.
-freq_buses_to_monitor = [1, 2, 3]
+freq_buses_to_monitor = [1, 2, 3, 5]
 
-# Flag for voltage monitoring behavior (inactive yet - don't remove):
+# Flag for voltage monitoring behavior:
 # 0 = use specified buses, 1 = all generator buses,
 # 2 = all transformer buses, 3 = gen+TF buses,
 # 4 = all load buses, 5 = all buses.
 v_flag = 0
 
-# Flag for frequency monitoring behavior (inactive yet - don't remove):
+# Flag for frequency monitoring behavior:
 # 0 = use specified buses, 1 = all generator buses,
 # 2 = all transformer buses, 3 = gen+TF buses,
 # 4 = all load buses, 5 = all buses.
@@ -106,8 +106,14 @@ gen_config = [
         "Cranking Time": 4.0,  # minutes
         "Ramp Rate": 0.2 * 247.5,  # MW/min
         "Generator Type": "BS",  # BS or NBS
-        # Because it is BS generator, it won't have any associated cranking load
-        "Cranking load Array": [0, 0, 0, 0, 0, 0],
+        "Cranking load Array": [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+        ],  # Because it is BS generator, it won't have any associated cranking load
         "AGC Participation Factor": 1,  # 1/3,
         "load Damping Constant": 0,  # D
         "Effective Speed Droop": 0.05,  # R
@@ -162,6 +168,25 @@ gen_config = [
         "Inertia Constant": 4.2880,  # Inertia constant in seconds (H)
     },
     # Add more generators as needed
+]
+
+
+# IBRs Configuration
+ibr_config = [
+    {
+        "IBR Name": "BESS5",
+        "Bus Name": "Bus5",
+        "Status": 0,  # 0: OFF, 1: Online
+        "IBR Type": "BESS",  # Type of IBR (e.g., BESS, Wind, Solar)
+        "Ramp Rate": 0,  # Placeholder for ramp rate, if needed - currently
+        # being skipped and will try to rely on the dynamic
+        # model
+        "GFM Flag": True,  # If True, the IBR will operate in GFM mode
+        # (currently all of this is handled in the dynamic
+        # model configuration in the dyr file)
+        "Initial Capacity": 0.2,  # Initial Capacity for BESS in p.u. of the
+        # MBASE
+    }
 ]
 
 

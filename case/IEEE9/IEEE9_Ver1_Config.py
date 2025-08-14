@@ -3,7 +3,7 @@
 #
 # Use this template to set the configuration for your PSSE case. The specs below are arbitrary.
 #
-#    Last Update for this file was on BSPSSEPy Ver 0.6 (10 Aug. 2025)
+#    Last Update for this file was on BSPSSEPy Ver 0.2 (13 Dec. 2024)
 #
 #       BSPSSEPy Application
 #       Copyright (c) 2024, Ilyas Farhat
@@ -38,13 +38,13 @@ v_buses_to_monitor = range(1, 10)
 # Flag 'FrequencyFlag' may override this setting.
 freq_buses_to_monitor = [1, 2, 3]
 
-# Flag for voltage monitoring behavior (inactive yet - don't remove):
+# Flag for voltage monitoring behavior:
 # 0 = use specified buses, 1 = all generator buses,
 # 2 = all transformer buses, 3 = gen+TF buses,
 # 4 = all load buses, 5 = all buses.
 v_flag = 0
 
-# Flag for frequency monitoring behavior (inactive yet - don't remove):
+# Flag for frequency monitoring behavior:
 # 0 = use specified buses, 1 = all generator buses,
 # 2 = all transformer buses, 3 = gen+TF buses,
 # 4 = all load buses, 5 = all buses.
@@ -66,7 +66,7 @@ ignore_cnv_file = True
 ignore_snp_file = True
 
 # BSPSSEPy Hard Time Limit in minutes (ignored if BSPSSEPyHardTimeLimitFlag is False)
-bspssepy_hard_time_limit = 130  # 30 #minutes
+bspssepy_hard_time_limit = 160  # minutes
 
 # If true, BSPSSEPy will enforce a hard time limit on the simulation.
 # BSPSSEPyHardTimeLimitFlag = True
@@ -106,8 +106,14 @@ gen_config = [
         "Cranking Time": 4.0,  # minutes
         "Ramp Rate": 0.2 * 247.5,  # MW/min
         "Generator Type": "BS",  # BS or NBS
-        # Because it is BS generator, it won't have any associated cranking load
-        "Cranking load Array": [0, 0, 0, 0, 0, 0],
+        "Cranking load Array": [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+        ],  # Because it is BS generator, it won't have any associated cranking load
         "AGC Participation Factor": 1,  # 1/3,
         "load Damping Constant": 0,  # D
         "Effective Speed Droop": 0.05,  # R

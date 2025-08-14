@@ -1,3 +1,5 @@
+# This file contains the conversion commands of the PSSE Case. For more help, check examples about why and how to convert the components
+
 psspy.fdns(
     [1, 0, 1, 1, 1, 0, 99, 0]
 )  # apply fixed slope decoupled NR power flow calc.
