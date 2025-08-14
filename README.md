@@ -1,8 +1,8 @@
 # Welcome to the BSPSSEPy Program
 
-**Version:** 0.6
-**Last Updated:** 14 Aug 2025
-**Developed by:** Ilyas Farhat  
+**Version:** 0.6  
+**Last Updated:** 14 Aug 2025  
+**Developed by:** Ilyas Farhat   
 **Contact:** ilyas.farhat@outlook.com  
 **Copyright (c) 2024–2025**, Ilyas Farhat  
 _All rights reserved._
